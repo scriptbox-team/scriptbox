@@ -1,0 +1,15 @@
+{
+  "name": "scriptbox-server",
+  "version": "0.0.1",
+  "description": "A server for the sandbox programming platformer Scriptbox",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://www.github.com/AaronCFreytag/scriptbox-server"
+  },
+  "author": "Aaron Freytag",
+  "license": "GPL-3.0"
+}
