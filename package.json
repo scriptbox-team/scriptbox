@@ -4,12 +4,27 @@
   "description": "A server for the sandbox programming platformer Scriptbox",
   "main": "main.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "test": "jest",
+    "watch": "tsc -w",
+    "build": "tsc",
+    "start": "npm run build && node dist/main.js"
   },
   "repository": {
     "type": "git",
     "url": "http://www.github.com/AaronCFreytag/scriptbox-server"
   },
   "author": "Aaron Freytag",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@types/jest": "^24.0.6",
+    "jest": "^24.1.0",
+    "jest-websocket-mock": "^1.1.1",
+    "mock-socket": "^8.0.5",
+    "ts-jest": "^24.0.0",
+    "tslint": "^5.12.1",
+    "tslint-eslint-rules": "^5.4.0",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.3.3333"
+  }
 }

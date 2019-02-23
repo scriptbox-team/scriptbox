@@ -1,0 +1,28 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {},
+    "rules": {
+        "no-console": [false],
+        "trailing-comma": [false],
+        "jsdoc-format": true,
+        "no-empty": false,
+        "brace-style": [
+            true,
+            "stroustrup",
+            {
+                "allowSingleLine": true
+            }
+        ],
+        "one-line": [false],
+        "ordered-imports": [true, {
+          "import-sources-order": "any",
+          "named-imports-order": "case-insensitive"
+        }]
+    },
+    "rulesDirectory": [
+        "node_modules/tslint-eslint-rules/dist/rules"
+    ]
+}
