@@ -5,6 +5,12 @@
     ],
     "jsRules": {},
     "rules": {
+        "variable-name": [
+            true,
+            "check-format",
+            "allow-leading-underscore",
+            "ban-keywords"
+        ],
         "no-console": [false],
         "trailing-comma": [false],
         "jsdoc-format": true,
@@ -18,7 +24,7 @@
         ],
         "one-line": [false],
         "ordered-imports": [true, {
-          "import-sources-order": "any",
+          "import-sources-order": "case-insensitive",
           "named-imports-order": "case-insensitive"
         }]
     },
