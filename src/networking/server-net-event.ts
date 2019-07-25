@@ -9,7 +9,8 @@ export enum ServerEventType {
     ConnectionInfoRequest = 1001,
     ConnectionAcknowledgement = 1002,
     Disconnection = 1003,
-    ChatMessage = 1004
+    ChatMessage = 1004,
+    DisplayPackage = 1005
 }
 
 /**

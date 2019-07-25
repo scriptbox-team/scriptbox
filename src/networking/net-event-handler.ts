@@ -1,7 +1,7 @@
 import Player from "core/players/player";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
-import ClientInputPacket from "networking/packets/client-input-packet";
+import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import Packet from "networking/packets/packet";
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import PlayerNetworkManager from "./player-network-manager";
@@ -19,7 +19,7 @@ export default class NetEventHandler {
     public playerRemove?: (packet: ClientDisconnectPacket, player: Player | undefined) => void;
     private _connectionDelegates: Array<(packet: ClientConnectionPacket, player: Player | undefined) => void>;
     private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Player | undefined) => void>;
-    private _inputDelegates: Array<(packet: ClientInputPacket, player: Player | undefined) => void>;
+    private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Player | undefined) => void>;
     private _playerNetworkManager: PlayerNetworkManager;
 
     /**
@@ -31,7 +31,7 @@ export default class NetEventHandler {
         this._playerNetworkManager = playerNetworkManager;
         this._connectionDelegates = new Array<(packet: ClientConnectionPacket, player: Player | undefined) => void>();
         this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Player | undefined) => void>();
-        this._inputDelegates = new Array<(packet: ClientInputPacket, player: Player | undefined) => void>();
+        this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Player | undefined) => void>();
     }
     /**
      * Add a delegate for when a client connects.
@@ -56,11 +56,11 @@ export default class NetEventHandler {
     /**
      * Add a delegate for when a client makes an input
      *
-     * @param {((packet: ClientInputPacket, player: Player | undefined) => void)} func
+     * @param {((packet: ClientKeyboardInputPacket, player: Player | undefined) => void)} func
      * The delegate to run when a player performs an input
      * @memberof NetEventHandler
      */
-    public addInputDelegate(func: (packet: ClientInputPacket, player: Player | undefined) => void) {
+    public addInputDelegate(func: (packet: ClientKeyboardInputPacket, player: Player | undefined) => void) {
         this._inputDelegates.push(func);
     }
     /**
@@ -99,7 +99,7 @@ export default class NetEventHandler {
             }
             case ClientEventType.Input: {
                 this.sendToDelegates(
-                    ClientInputPacket.deserialize(event.data),
+                    ClientKeyboardInputPacket.deserialize(event.data),
                     this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
                     this._inputDelegates
                 );

@@ -1,6 +1,6 @@
 import Player from "core/players/player";
 import System from "core/systems/system";
-import ClientInputPacket from "networking/packets/client-input-packet";
+import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
 import ServerMessage from "networking/server-messages/server-message";
 import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
@@ -97,7 +97,7 @@ export default class MessageSystem extends System {
     public onMessageSend(callback: (s: ServerMessage) => void) {
         this._messageSendCallback = callback;
     }
-    public inputDelegate(packet: ClientInputPacket, player: Player | undefined) {
+    public inputDelegate(packet: ClientKeyboardInputPacket, player: Player | undefined) {
         this.parseInput(player!, packet.key);
     }
 }

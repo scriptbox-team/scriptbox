@@ -1,6 +1,6 @@
 /* tslint:disable */
-import "module-alias/register";
-import EntityManager from "core/entities/entity-manager";
+import "./fix-test-paths";
+import EntityManager from "__scripted__/entity-manager";
 /* tslint:enable */
 
 // Test whether we can create an entity

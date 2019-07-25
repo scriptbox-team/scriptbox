@@ -1,4 +1,3 @@
-import Entity from "core/entities/entity";
 import Player from "./player";
 import PlayerManagerInterface from "./player-manager-interface";
 
@@ -9,7 +8,7 @@ import PlayerManagerInterface from "./player-manager-interface";
  */
 interface IPlayerData {
     name: string;
-    controllingEntity: Entity | null;
+    controllingEntity: number | null;
 }
 
 /**
