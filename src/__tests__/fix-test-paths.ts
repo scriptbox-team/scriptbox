@@ -8,13 +8,6 @@ ModuleAlias.addAliases({
   messaging: path.join(__dirname, "messaging"),
   scripting: path.join(__dirname, "scripting"),
   networking: path.join(__dirname, "networking"),
-  "resource-management": path.join(__dirname, "resource-management")
+  __scripted__: path.join(__dirname, "__scripted__")
 });
-
-import "source-map-support/register";
-import Server from "core/server";
 /* tslint:enable */
-
-// Create and start the server
-const serv = new Server({port: 7777});
-serv.start();

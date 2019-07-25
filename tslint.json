@@ -12,6 +12,7 @@
             "ban-keywords"
         ],
         "no-console": [false],
+        "no-namespace": false,
         "trailing-comma": [false],
         "jsdoc-format": true,
         "no-empty": false,

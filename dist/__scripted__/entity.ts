@@ -1,6 +1,8 @@
 import EntityManagerInterface from "./entity-manager-interface";
 import Module from "./module";
 
+const interfaceWeakmap = new WeakMap<Entity, EntityManagerInterface>();
+
 /**
  * Represents an entity, which is essentially an ID linking to a set of components.
  * All of an entity's data is contained within the EntityManager. For safety reasons, this
@@ -10,8 +12,6 @@ import Module from "./module";
  * @class Entity
  */
 export default class Entity {
-    private _id: number;
-    private _entityManagerInterface: EntityManagerInterface;
     /**
      * Creates an instance of Entity.
      * This should only be used by the EntityManager.
@@ -20,8 +20,7 @@ export default class Entity {
      * @memberof Entity
      */
     constructor(id: number, entityManagerInterface: EntityManagerInterface) {
-        this._id = id;
-        this._entityManagerInterface = entityManagerInterface;
+        interfaceWeakmap.set(this, entityManagerInterface);
     }
     /**
      * Get a module belonging to this entity
@@ -30,8 +29,27 @@ export default class Entity {
      * @returns {(Module | null)} A module object if the module exists in the entity, false otherwise
      * @memberof Entity
      */
-    public module(name: string): Module | null {
-        return this._entityManagerInterface.getModule(this._id, name);
+    public get<T extends Module = any>(name: string): T | null {
+        return interfaceWeakmap.get(this).getModule<T>(name);
+    }
+
+    public with<T extends Module = any>(name: string, func: (t: T) => void) {
+        const module = this.get(name);
+        if (module !== null) {
+            func(module as T);
+        }
+    }
+
+    public withMany<T extends Module[] = any[]>(names: string[], func: (t: T) => void) {
+        const modules = [];
+        for (const name of names) {
+            const module = this.get(name);
+            if (module === null) {
+                return;
+            }
+            modules.push(module);
+        }
+        func(modules as T);
     }
     /**
      * Get whether this entity exists or not.
@@ -41,6 +59,10 @@ export default class Entity {
      * @memberof Entity
      */
     get exists(): boolean {
-        return this._entityManagerInterface.entityExists(this._id);
+        return interfaceWeakmap.get(this).entityExists();
+    }
+
+    get id(): number {
+        return interfaceWeakmap.get(this).getID();
     }
 }

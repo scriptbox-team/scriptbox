@@ -1,5 +1,6 @@
 import Entity from "./entity";
 import EntityManagerInterface from "./entity-manager-interface";
+import EntityManagerModuleInterface from "./entity-manager-module-interface";
 import Module from "./module";
 
 /**
@@ -10,8 +11,18 @@ import Module from "./module";
  * @class EntityManager
  */
 export default class EntityManager {
+    /**
+     * Modules indexed by entity ID, then by entity-internal module name
+     *
+     * @private
+     * @type {Map<number, Map<string, Module>>}
+     * @memberof EntityManager
+     */
     private _modules: Map<number, Map<string, Module>> = new Map<number, Map<string, Module>>();
+    private _moduleIDToName: Map<number, string> = new Map<number, string>();
+    private _moduleIDToEntityID: Map<number, number> = new Map<number, number>();
     private _nextEntityID: number = 0;
+    private _nextModuleID: number = 0;
 
     /**
      * Creates an instance of EntityManager.
@@ -30,10 +41,14 @@ export default class EntityManager {
      * @returns {(Module | null)} The module if the entity owns such a module, null otherwise
      * @memberof EntityManager
      */
-    public getModule(id: number, moduleName: string): Module | null {
+    public getModule<T extends Module>(id: number, moduleName: string): T | null {
         const entModules = this.getModules(id);
         const module = entModules.get(moduleName);
-        return module === undefined ? null : module;
+        return module === undefined ? null : module as T;
+    }
+
+    public getAllModules(): Map<number, Map<string, Module>> {
+        return this._modules;
     }
 
     /**
@@ -44,9 +59,23 @@ export default class EntityManager {
      * @param {Module} module The module to add to the entity
      * @memberof EntityManager
      */
-    public addModule(id: number, moduleName: string, module: Module) {
-        const entModules = this.getModules(id);
+    // tslint:disable
+    public createModule<T extends Module>(type: {new(...args: any[]):  T}, moduleName: string, entityID: number, ...params: any) {
+        // tslint:enable
+        const entModules = this.getModules(entityID);
+        const id = this._nextModuleID++;
+        const module = new type(new EntityManagerModuleInterface(
+            () => this.getEntityByModuleID(id),
+            () => this.getModuleNameByID(id),
+            () => this.entityExists(this.getEntityIDByModuleID(id)),
+            () => id
+        ));
+        if (typeof (module as any).create === "function") {
+            (module as any).create(...params);
+        }
         entModules.set(moduleName, module);
+        this._moduleIDToEntityID.set(id, entityID);
+        this._moduleIDToName.set(id, moduleName);
     }
 
     /**
@@ -82,8 +111,12 @@ export default class EntityManager {
      * @returns {Entity} An entity object correlating to the entity of the given ID
      * @memberof EntityManager
      */
-    public idToPlayerObject(id: number): Entity {
-        const entity = new Entity(id, new EntityManagerInterface(this.entityExists, this.getModule));
+    public idToEntityObject(id: number): Entity {
+        const entity = new Entity(id, new EntityManagerInterface(
+            () => this.entityExists(id),
+            (name: string) => this.getModule(id, name),
+            () => id
+        ));
         return entity;
     }
 
@@ -96,6 +129,18 @@ export default class EntityManager {
     public createEntity(): Entity {
         const id = this._nextEntityID++;
         this._modules.set(id, new Map<string, Module>());
-        return this.idToPlayerObject(id);
+        return this.idToEntityObject(id);
+    }
+
+    public getEntityByModuleID(moduleID: number): Entity {
+        return this.idToEntityObject(this.getEntityIDByModuleID(moduleID));
+    }
+
+    public getEntityIDByModuleID(moduleID: number): number {
+        return this._moduleIDToEntityID.get(moduleID);
+    }
+
+    public getModuleNameByID(moduleID: number): string {
+        return this._moduleIDToName.get(moduleID);
     }
 }

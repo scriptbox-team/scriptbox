@@ -6,9 +6,10 @@
   "main": "main.ts",
   "scripts": {
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "test": "jest",
+    "test": "jest --verbose false",
     "watch": "tsc -w",
-    "build": "tsc",
+    "build": "tsc && npm run copy-scripts",
+    "copy-scripts": "cpx \"./src/__scripted__/**/*\" dist/__scripted__",
     "start": "node dist/main.js"
   },
   "repository": {
@@ -19,27 +20,25 @@
   "license": "GPL-3.0",
   "devDependencies": {
     "@types/jest": "^24.0.6",
+    "cpx": "^1.5.0",
     "jest": "^24.8.0",
     "jest-websocket-mock": "^1.1.1",
     "mock-socket": "^8.0.5",
     "ts-jest": "^24.0.0",
-    "tslint": "^5.16.0",
+    "tslint": "^5.18.0",
     "tslint-eslint-rules": "^5.4.0",
     "typedoc": "^0.14.2",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@types/module-alias": "^2.0.0",
     "@types/ws": "^6.0.1",
     "browser-process-hrtime": "^1.0.0",
     "isolated-vm": "^1.7.10",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "module-alias": "^2.2.0",
     "source-map-support": "^0.5.12",
+    "tsc": "^1.20150623.0",
     "ws": "^6.1.4"
-  },
-  "_moduleAliases": {
-    "core": "dist/core",
-    "messaging": "dist/messaging",
-    "networking": "dist/networking"
   }
 }

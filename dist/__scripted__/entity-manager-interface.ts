@@ -13,22 +13,28 @@ export default class EntityManagerInterface {
      *
      * @memberof EntityManagerInterface
      */
-    public entityExists: (id: number) => boolean;
+    public entityExists: () => boolean;
     /**
      * Get a module of a particular name belonging to an entity of a specified ID.
      * Returns the module if it finds it, null otherwise.
      *
      * @memberof EntityManagerInterface
      */
-    public getModule: (id: number, name: string) => Module | null;
+    public getModule: <T extends Module>(name: string) => (T | null);
+    public getID: () => number;
     /**
      * Creates an instance of EntityManagerInterface.
      * @param {(id: number) => boolean} entityExists The function to be called when checking for entity existence
      * @param {((id: number, name: string) => Module | null)} getModule The function to be called for getting a module
      * @memberof EntityManagerInterface
      */
-    constructor(entityExists: (id: number) => boolean, getModule: (id: number, name: string) => Module | null) {
+    constructor(
+        entityExists: () => boolean,
+        getModule: <T extends Module>(name: string) => (T | null),
+        getID: () => number
+    ) {
         this.entityExists = entityExists;
         this.getModule = getModule;
+        this.getID = getID;
     }
 }

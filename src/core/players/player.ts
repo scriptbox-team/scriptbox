@@ -1,4 +1,3 @@
-import Entity from "core/entities/entity";
 import PlayerManagerInterface from "./player-manager-interface";
 
 /**
@@ -12,6 +11,8 @@ import PlayerManagerInterface from "./player-manager-interface";
  */
 export default class Player {
     public id: number;
+    public controllingEntity: number | null;
+    public controlSet: {[input: string]: string};
     private _playerManagerInterface: PlayerManagerInterface;
     /**
      * Creates an instance of Player.
@@ -22,7 +23,17 @@ export default class Player {
      */
     constructor(id: number, playerManagerInterface: PlayerManagerInterface) {
         this.id = id;
+        this.controllingEntity = null;
         this._playerManagerInterface = playerManagerInterface;
+        this.controlSet = {
+            38: "up",
+            40: "down",
+            37: "left",
+            39: "right"
+        };
+    }
+    public convertInput(input: number): string {
+        return this.controlSet["" + input];
     }
     /**
      * The user name of the player.
@@ -33,16 +44,5 @@ export default class Player {
      */
     get name(): string {
         return this._playerManagerInterface.getName(this.id);
-    }
-    /**
-     * The entity the player is currently controlling.
-     * Null if the player isn't controlling any entity currently.
-     *
-     * @readonly
-     * @type {(Entity | null)}
-     * @memberof Player
-     */
-    get controllingEntity(): Entity | null {
-        return this._playerManagerInterface.getControllingEntity(this.id);
     }
 }
