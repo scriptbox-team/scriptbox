@@ -4,5 +4,10 @@ module.exports = {
   roots: [
     "<rootDir>/src"
   ],
-  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.[jt]sx?$"
+  moduleDirectories: [
+    "node_modules",
+    "src"
+  ],
+  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.[jt]sx?$",
+  testPathIgnorePatterns: ["fix-test-paths.ts$"]
 };
