@@ -125,7 +125,7 @@ export default class ScriptExecutor {
         const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, path) => {
             const transpiledCode = this.transpile(code);
             acc[path] = this._isolate.compileModuleSync(transpiledCode);
-        }, {});
+        }, {} as {[s: string]: IVM.Module});
         return _.transform(modules, (acc, module, path) => {
             const context = this.makeContext(addIns![path]);
             if (globalAccess) {
@@ -150,7 +150,7 @@ export default class ScriptExecutor {
             });
             module.evaluateSync();
             acc[path] = new Script(module, context);
-        }, {});
+        }, {} as {[s: string]: Script});
     }
 
     /**

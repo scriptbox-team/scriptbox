@@ -14,7 +14,7 @@ export default class ScriptwiseSystem {
             result[value.substr(0, value.length - 3)] = fs.readFileSync(
                 path.join(baseScriptDir, value),
                 {encoding: "utf8"});
-        }, {});
+        }, {} as {[s: string]: string});
 
         this._prebuiltScripts = this._scriptExecutor.buildManySync(scripts, addIns);
     }
