@@ -2,6 +2,7 @@ import PlayerManager from "core/players/player-manager";
 import * as _ from "lodash";
 import MessageSystem from "messaging/message-system";
 import NetworkSystem from "networking/network-system";
+import ClientChatMessagePacket from "networking/packets/client-chat-message-packet";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
@@ -84,9 +85,11 @@ export default class Server {
         this._playerManager = new PlayerManager();
 
         this._networkSystem.netEventHandler.playerCreate = (packet: ClientConnectionPacket) => {
+            const name = "Epic Gamer " + this._nPlayer++;
             const player = this._playerManager.createPlayer({
                 controllingEntity: null,
-                name: "Epic Gamer " + this._nPlayer++
+                username: name,
+                displayName: name
             });
             return player;
         };
@@ -100,7 +103,8 @@ export default class Server {
         this._networkSystem.netEventHandler.addConnectionDelegate((
                 packet: ClientConnectionPacket,
                 player: Player | undefined) => {
-            console.log(player!.name, "connected.");
+            console.log(player!.username, "connected.");
+            this._messageSystem.broadcastMessage(player!.username + " connected.");
             const entID = this._scriptwiseSystem.execute("./scripted-server-subsystem", "createEntity");
             this._scriptwiseSystem.execute(
                 "./scripted-server-subsystem",
@@ -128,13 +132,14 @@ export default class Server {
                 "control"
             );
             player!.controllingEntity = entID;
-            this._displaySystem.onNewPlayer(this._exportValues.positions, player!);
+            this._displaySystem.sendFullDisplayToPlayer(this._exportValues.positions, player!);
         });
 
         this._networkSystem.netEventHandler.addDisconnectionDelegate((
                 packet: ClientDisconnectPacket,
                 player: Player | undefined) => {
-            console.log(player!.name, "disconnected.");
+            this._messageSystem.broadcastMessage(player!.username + " disconnected.");
+            console.log(player!.username, "disconnected.");
         });
 
         this._networkSystem.netEventHandler.addInputDelegate(
@@ -150,8 +155,18 @@ export default class Server {
             );
         });
 
+        this._networkSystem.netEventHandler.addChatMessageDelegate(
+                (packet: ClientChatMessagePacket, player: Player | undefined) => {
+                    this._messageSystem.chatMessageDelegate(packet, player);
+                }
+        );
+
         this._messageSystem.onMessageSend((s: ServerMessage) => {
             this._networkSystem.queue(s);
+        });
+
+        this._messageSystem.onScriptExecution((code: string) => {
+            return this._scriptwiseSystem.scriptRunner.execute(code, {}, undefined, 500);
         });
 
         this._displaySystem.onObjectDisplay((s: ServerMessage) => {
@@ -210,7 +225,7 @@ export default class Server {
             `
                 new IVM.ExternalCopy(global.exportValues).copyInto();
             `);
-            this._displaySystem.onChanges(this.getExportDifferences());
+            this._displaySystem.broadcastDisplayChanges(this.getExportDifferences());
 
             this._networkSystem.sendMessages();
         }

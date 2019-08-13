@@ -10,11 +10,11 @@ import Script from "./script";
  * @export
  * @class ScriptExecutor
  */
-export default class ScriptExecutor {
+export default class ScriptRunner {
     private _isolate: IVM.Isolate;
     /**
      * Creates an instance of ScriptExecutor.
-     * @memberof ScriptExecutor
+     * @memberof ScriptRunner
      */
     constructor() {
         this._isolate = new IVM.Isolate();
@@ -25,9 +25,9 @@ export default class ScriptExecutor {
      * @param {string} code The code to execute
      * @param {object} [addins={}] The values to add to the context before executing
      * @returns {Promise<any>} A promise which resolves to the last value in the code.
-     * @memberof ScriptExecutor
+     * @memberof ScriptRunner
      */
-    public async execute(code: string, addIns: object = {}, context?: IVM.Context): Promise<any> {
+    public async execute(code: string, addIns: object = {}, context?: IVM.Context, timeout?: number): Promise<any> {
         if (context === undefined) {
             context = this.makeContext(addIns);
         }
@@ -36,11 +36,11 @@ export default class ScriptExecutor {
         }
         const transpiledCode = this.transpile(code);
         const script = await this._isolate.compileScript(transpiledCode);
-        const result = await script.run(context);
+        const result = await script.run(context, {timeout});
         return result;
     }
 
-    public executeSync(code: string, addIns: object = {}, context?: IVM.Context): any {
+    public executeSync(code: string, addIns: object = {}, context?: IVM.Context, timeout?: number): any {
         if (context === undefined) {
             context = this.makeContext(addIns);
         }
@@ -49,7 +49,7 @@ export default class ScriptExecutor {
         }
         const transpiledCode = this.transpile(code);
         const script = this._isolate.compileScriptSync(transpiledCode);
-        const result = script.runSync(context);
+        const result = script.runSync(context, {timeout});
         return result;
     }
 
@@ -66,7 +66,8 @@ export default class ScriptExecutor {
             code: string,
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module | Promise<IVM.Module>,
-            context?: IVM.Context
+            context?: IVM.Context,
+            timeout?: number
     ): Promise<Script> {
         if (context === undefined) {
             context = this.makeContext(addIns);
@@ -84,7 +85,8 @@ export default class ScriptExecutor {
                 throw new Error("No module of name \"" + modulePath + "\" is available.");
             });
         }
-        await module.evaluate();
+        const opts = timeout !== undefined ? {timeout} : undefined;
+        await module.evaluate(opts);
         return new Script(module, context);
     }
 
@@ -92,7 +94,8 @@ export default class ScriptExecutor {
             code: string,
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module,
-            context?: IVM.Context
+            context?: IVM.Context,
+            timeout?: number
     ): Script {
         if (context === undefined) {
             context = this.makeContext(addIns);
@@ -110,7 +113,8 @@ export default class ScriptExecutor {
                 throw new Error("No module of name \"" + modulePath + "\" is available.");
             });
         }
-        module.evaluateSync();
+        const opts = timeout !== undefined ? {timeout} : undefined;
+        module.evaluateSync(opts);
         return new Script(module, context);
     }
 

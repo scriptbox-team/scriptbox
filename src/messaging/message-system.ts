@@ -1,6 +1,6 @@
 import Player from "core/players/player";
 import System from "core/systems/system";
-import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
+import ClientChatMessagePacket from "networking/packets/client-chat-message-packet";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
 import ServerMessage from "networking/server-messages/server-message";
 import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
@@ -15,78 +15,54 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
  * @extends {System}
  */
 export default class MessageSystem extends System {
-    private _messageSendCallback: ((s: ServerMessage) => void) | undefined;
-    private _inputCollection: Map<number, string>;
+    private _messageSendCallback?: ((s: ServerMessage) => void);
+    private _scriptExecutionCallback?: (script: string) => Promise<any>;
 
     constructor() {
         super();
-        this._inputCollection = new Map<number, string>();
-        this.inputDelegate = this.inputDelegate.bind(this);
+        this.chatMessageDelegate = this.chatMessageDelegate.bind(this);
     }
-    public parseInput(client: Player, key: number) {
-        console.log("Received key " + key + " from Player " + client.id);
-        let currMessage = this._inputCollection.get(client.id);
-        if (currMessage === undefined) {
-            currMessage = "";
+    public receiveChatMessage(message: string, owner: Player) {
+        if (message.charAt(0) === "/") {
+            // Chat command
+            const cmd = message.substr(1, message.length - 1).split(/\s+/);
+            switch (cmd[0]) {
+                case "nick": {
+                    if (cmd.length > 1) {
+                        this.broadcastMessage(
+                            "(" + owner.displayName + " changed their name to " + cmd[1] + ")",
+                        );
+                        owner.displayName = cmd[1];
+                    }
+                    break;
+                }
+            }
+
         }
-        switch (key) {
-            case 48: case 96:
-                currMessage += "0";
-                break;
-            case 49: case 97:
-                currMessage += "1";
-                break;
-            case 50: case 98:
-                currMessage += "2";
-                break;
-            case 51: case 99:
-                currMessage += "3";
-                break;
-            case 52: case 100:
-                currMessage += "4";
-                break;
-            case 53: case 101:
-                currMessage += "5";
-                break;
-            case 54: case 102:
-                currMessage += "6";
-                break;
-            case 55: case 103:
-                currMessage += "7";
-                break;
-            case 56: case 104:
-                currMessage += "8";
-                break;
-            case 57: case 105:
-                currMessage += "9";
-                break;
-            case 65:
-                currMessage += "A";
-                break;
-            case 66:
-                currMessage += "B";
-                break;
-            case 67:
-                currMessage += "C";
-                break;
-            case 68:
-                currMessage += "D";
-                break;
-            case 69:
-                currMessage += "E";
-                break;
-            case 70:
-                currMessage += "F";
-                break;
-            case 13:
-                this.sendMessage(currMessage);
-                currMessage = "";
-                break;
+        else if (message.substr(0, 2) === ">>") {
+            // Script execution
+            const cmd = message.match(/^>>\s*(.*)$/);
+            if (cmd !== null) {
+                const script = cmd[1];
+                let scriptShort = script;
+                if (scriptShort.length > 50) {
+                    scriptShort = scriptShort.substr(0, 50) + "...";
+                }
+                this._scriptExecutionCallback!(script)
+                    .then((result: any) => {
+                        this.sendMessageToPlayer("<\'" + scriptShort + "\' result: " + result + ">", owner);
+                    })
+                    .catch((err: Error) => {
+                        this.sendMessageToPlayer("<" + err.name + ": " + err.message + ">", owner);
+                    });
+            }
         }
-        this._inputCollection.set(client.id, currMessage);
+        else {
+            // Regular chat message
+            this.broadcastMessage(owner.displayName + ": " + message);
+        }
     }
-    public sendMessage(message: string) {
-        console.log("Sending message " + message);
+    public broadcastMessage(message: string) {
         this._messageSendCallback!(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket(message)),
@@ -94,10 +70,21 @@ export default class MessageSystem extends System {
             )
         );
     }
+    public sendMessageToPlayer(message: string, recipient: Player) {
+        this._messageSendCallback!(
+            new ServerMessage(
+                new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket(message)),
+                new MessageRecipient(MessageRecipientType.Only, [recipient])
+            )
+        );
+    }
     public onMessageSend(callback: (s: ServerMessage) => void) {
         this._messageSendCallback = callback;
     }
-    public inputDelegate(packet: ClientKeyboardInputPacket, player: Player | undefined) {
-        this.parseInput(player!, packet.key);
+    public onScriptExecution(callback: (code: string) => Promise<any>) {
+        this._scriptExecutionCallback = callback;
+    }
+    public chatMessageDelegate(packet: ClientChatMessagePacket, player: Player | undefined) {
+        this.receiveChatMessage(packet.message, player!);
     }
 }

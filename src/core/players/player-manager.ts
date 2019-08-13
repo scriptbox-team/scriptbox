@@ -7,7 +7,8 @@ import PlayerManagerInterface from "./player-manager-interface";
  * @interface IPlayerData
  */
 interface IPlayerData {
-    name: string;
+    username: string;
+    displayName: string;
     controllingEntity: number | null;
 }
 
@@ -28,6 +29,7 @@ export default class PlayerManager {
      */
     constructor() {
         this.getData = this.getData.bind(this);
+        this.setDisplayName = this.setDisplayName.bind(this);
     }
 
     /**
@@ -78,7 +80,7 @@ export default class PlayerManager {
      * @memberof PlayerManager
      */
     public idToPlayerObject(id: number): Player {
-        const player = new Player(id, new PlayerManagerInterface(this.getData));
+        const player = new Player(id, new PlayerManagerInterface(this.getData, this.setDisplayName));
         return player;
     }
     /**
@@ -96,5 +98,13 @@ export default class PlayerManager {
             throw new Error("Player of ID " + id + " does not exist");
         }
         return data;
+    }
+
+    private setDisplayName(id: number, newDisplayName: string) {
+        const data = this._players.get(id);
+        if (data === undefined) {
+            throw new Error("Player of ID " + id + " does not exist");
+        }
+        data.displayName = newDisplayName;
     }
 }

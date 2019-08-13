@@ -12,14 +12,14 @@ export default class DisplaySystem {
 
     // Since this is a thing I keep doing I'll go ahead and remind myself here
     // TODO: Rename all functions that are "onXXXXXXXX" that aren't for registering a callback
-    public onNewPlayer(fullObjectList: {[id: string]: {x: number, y: number}}, player: Player) {
+    public sendFullDisplayToPlayer(fullObjectList: {[id: string]: {x: number, y: number}}, player: Player) {
         const updatesToSend = this.dataToDisplayObjects(fullObjectList);
-        this.sendObjectDisplays(updatesToSend);
+        this.sendObjectDisplaysToPlayer(updatesToSend, player);
     }
 
-    public onChanges(changes: Difference<{x: number, y: number}>) {
+    public broadcastDisplayChanges(changes: Difference<{x: number, y: number}>) {
         const updatesToSend = this.dataToDisplayObjects(changes.added, changes.updated);
-        this.sendObjectDisplays(updatesToSend);
+        this.broadcastObjectDisplays(updatesToSend);
     }
     public onObjectDisplay(callback: (message: ServerMessage) => void) {
         this._objectDisplayCallback = callback;
@@ -38,11 +38,19 @@ export default class DisplaySystem {
         }
         return arr;
     }
-    private sendObjectDisplays(pack: RenderObject[]) {
+    private broadcastObjectDisplays(pack: RenderObject[]) {
         this._objectDisplayCallback!(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.DisplayPackage, new ServerDisplayPacket(pack)),
                 new MessageRecipient(MessageRecipientType.All, [])
+            )
+        );
+    }
+    private sendObjectDisplaysToPlayer(pack: RenderObject[], player: Player) {
+        this._objectDisplayCallback!(
+            new ServerMessage(
+                new ServerNetEvent(ServerEventType.DisplayPackage, new ServerDisplayPacket(pack)),
+                new MessageRecipient(MessageRecipientType.Only, [player])
             )
         );
     }

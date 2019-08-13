@@ -4,6 +4,7 @@ import ClientDisconnectPacket from "networking/packets/client-disconnect-packet"
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import Packet from "networking/packets/packet";
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
+import ClientChatMessagePacket from "./packets/client-chat-message-packet";
 import PlayerNetworkManager from "./player-network-manager";
 
 /**
@@ -20,6 +21,7 @@ export default class NetEventHandler {
     private _connectionDelegates: Array<(packet: ClientConnectionPacket, player: Player | undefined) => void>;
     private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Player | undefined) => void>;
     private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Player | undefined) => void>;
+    private _chatMessageDelegates: Array<(packet: ClientChatMessagePacket, player: Player | undefined) => void>;
     private _playerNetworkManager: PlayerNetworkManager;
 
     /**
@@ -32,6 +34,7 @@ export default class NetEventHandler {
         this._connectionDelegates = new Array<(packet: ClientConnectionPacket, player: Player | undefined) => void>();
         this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Player | undefined) => void>();
         this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Player | undefined) => void>();
+        this._chatMessageDelegates = new Array<(packet: ClientChatMessagePacket, player: Player | undefined) => void>();
     }
     /**
      * Add a delegate for when a client connects.
@@ -62,6 +65,10 @@ export default class NetEventHandler {
      */
     public addInputDelegate(func: (packet: ClientKeyboardInputPacket, player: Player | undefined) => void) {
         this._inputDelegates.push(func);
+    }
+
+    public addChatMessageDelegate(func: (packet: ClientChatMessagePacket, player: Player | undefined) => void) {
+        this._chatMessageDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -102,6 +109,14 @@ export default class NetEventHandler {
                     ClientKeyboardInputPacket.deserialize(event.data),
                     this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
                     this._inputDelegates
+                );
+                break;
+            }
+            case ClientEventType.ChatMessage: {
+                this.sendToDelegates(
+                    ClientChatMessagePacket.deserialize(event.data),
+                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this._chatMessageDelegates
                 );
                 break;
             }
