@@ -6,12 +6,9 @@ export default class Position extends Module {
     public y: Aspect<number> = new Aspect(0);
 
     public create(x?: number, y?: number) {
-        this.x.base = 0;
         if (typeof x === "number") {
             this.x.base = x;
         }
-
-        this.y.base = 0;
         if (typeof y === "number") {
             this.y.base = y;
         }

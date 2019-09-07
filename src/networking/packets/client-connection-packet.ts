@@ -13,17 +13,20 @@ export default class ClientConnectionPacket extends Packet {
         if (typeof obj === "object" && obj !== null) {
             if (
                 typeof obj.clientID === "number"
+                && typeof obj.ip === "string"
             ) {
-                return new ClientConnectionPacket(obj.clientID);
+                return new ClientConnectionPacket(obj.clientID, obj.ip);
             }
             return undefined;
         }
     }
 
     public clientID: number;
-    constructor(clientID: number) {
+    public ip: string;
+    constructor(clientID: number, ip: string) {
         super();
         this.clientID = clientID;
+        this.ip = ip;
     }
     public serialize() {
         return this;

@@ -24,6 +24,7 @@ interface INetClientConstructorOptions {
      * @memberof INetClientConstructorOptions
      */
     socket: WebSocket;
+    ip: string;
 }
 
 /**
@@ -37,6 +38,7 @@ interface INetClientConstructorOptions {
 export default class NetClient {
     private emitter: EventEmitter;
     private id: number;
+    private ip: string;
     private socket: WebSocket;
     /**
      * Creates an instance of NetClient.
@@ -47,6 +49,7 @@ export default class NetClient {
         this.emitter = new EventEmitter();
         this.id = options.id;
         this.socket = options.socket;
+        this.ip = options.ip;
         this.socket.on("message", (event: WebSocket.Data) => {
             try {
                 const packetData = ClientNetEvent.deserialize(event);

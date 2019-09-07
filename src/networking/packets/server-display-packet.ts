@@ -11,11 +11,13 @@ export default class ServerDisplayPacket extends Packet {
                 const renderObjectArray = [];
                 const allClear = _.every(obj.displayPackage, (elem) => {
                     const renderObject = RenderObject.serialize(
+                        elem.ownerID,
                         elem.id,
                         elem.texture,
-                        elem.subregion,
+                        elem.textureSubregion,
                         elem.position,
-                        elem.depth
+                        elem.depth,
+                        elem.deleted
                     );
                     if (renderObject !== undefined) {
                         renderObjectArray.push(renderObject);

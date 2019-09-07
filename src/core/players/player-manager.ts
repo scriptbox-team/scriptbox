@@ -7,7 +7,8 @@ import PlayerManagerInterface from "./player-manager-interface";
  * @interface IPlayerData
  */
 interface IPlayerData {
-    name: string;
+    username: string;
+    displayName: string;
     controllingEntity: number | null;
 }
 
@@ -20,6 +21,7 @@ interface IPlayerData {
  */
 export default class PlayerManager {
     private _players: Map<number, IPlayerData> = new Map<number, IPlayerData>();
+    private _playerIDByUsername: Map<string, number> = new Map<string, number>();
     private _nextPlayerID: number = 0;
 
     /**
@@ -28,6 +30,7 @@ export default class PlayerManager {
      */
     constructor() {
         this.getData = this.getData.bind(this);
+        this.setDisplayName = this.setDisplayName.bind(this);
     }
 
     /**
@@ -40,6 +43,7 @@ export default class PlayerManager {
     public createPlayer(info: IPlayerData): Player {
         const id = this._nextPlayerID++;
         this._players.set(id, info);
+        this._playerIDByUsername.set(info.username, id);
         return this.idToPlayerObject(id);
     }
     /**
@@ -68,6 +72,7 @@ export default class PlayerManager {
      * @memberof PlayerManager
      */
     public removePlayer(player: Player) {
+        this._playerIDByUsername.delete(player.username);
         this._players.delete(player.id);
     }
     /**
@@ -78,8 +83,16 @@ export default class PlayerManager {
      * @memberof PlayerManager
      */
     public idToPlayerObject(id: number): Player {
-        const player = new Player(id, new PlayerManagerInterface(this.getData));
+        const player = new Player(id, new PlayerManagerInterface(this.getData, this.setDisplayName));
         return player;
+    }
+
+    public getPlayerByUsername(username: string): Player | undefined {
+        const player = this._playerIDByUsername.get(username);
+        if (player !== undefined) {
+            return this.idToPlayerObject(player);
+        }
+        return undefined;
     }
     /**
      * Get all of the data related to a single player.
@@ -96,5 +109,13 @@ export default class PlayerManager {
             throw new Error("Player of ID " + id + " does not exist");
         }
         return data;
+    }
+
+    private setDisplayName(id: number, newDisplayName: string) {
+        const data = this._players.get(id);
+        if (data === undefined) {
+            throw new Error("Player of ID " + id + " does not exist");
+        }
+        data.displayName = newDisplayName;
     }
 }

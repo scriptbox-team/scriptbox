@@ -10,7 +10,11 @@ export enum ServerEventType {
     ConnectionAcknowledgement = 1002,
     Disconnection = 1003,
     ChatMessage = 1004,
-    DisplayPackage = 1005
+    DisplayPackage = 1005,
+    Token = 1006,
+    ResourceListing = 1007,
+    EntityInspectListing = 1008,
+    SoundPlay = 1009
 }
 
 /**

@@ -1,6 +1,6 @@
 import IVM from "isolated-vm";
 import _ from "lodash";
-import * as ts from "typescript";
+import ts from "typescript";
 import Script from "./script";
 
 /**
@@ -10,47 +10,14 @@ import Script from "./script";
  * @export
  * @class ScriptExecutor
  */
-export default class ScriptExecutor {
+export default class ScriptRunner {
     private _isolate: IVM.Isolate;
     /**
      * Creates an instance of ScriptExecutor.
-     * @memberof ScriptExecutor
+     * @memberof ScriptRunner
      */
     constructor() {
         this._isolate = new IVM.Isolate();
-    }
-    /**
-     * Execute some code asynchronously.
-     *
-     * @param {string} code The code to execute
-     * @param {object} [addins={}] The values to add to the context before executing
-     * @returns {Promise<any>} A promise which resolves to the last value in the code.
-     * @memberof ScriptExecutor
-     */
-    public async execute(code: string, addIns: object = {}, context?: IVM.Context): Promise<any> {
-        if (context === undefined) {
-            context = this.makeContext(addIns);
-        }
-        else {
-            this.addToContext(context, addIns);
-        }
-        const transpiledCode = this.transpile(code);
-        const script = await this._isolate.compileScript(transpiledCode);
-        const result = await script.run(context);
-        return result;
-    }
-
-    public executeSync(code: string, addIns: object = {}, context?: IVM.Context): any {
-        if (context === undefined) {
-            context = this.makeContext(addIns);
-        }
-        else {
-            this.addToContext(context, addIns);
-        }
-        const transpiledCode = this.transpile(code);
-        const script = this._isolate.compileScriptSync(transpiledCode);
-        const result = script.runSync(context);
-        return result;
     }
 
     /**
@@ -66,7 +33,8 @@ export default class ScriptExecutor {
             code: string,
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module | Promise<IVM.Module>,
-            context?: IVM.Context
+            context?: IVM.Context,
+            timeout?: number
     ): Promise<Script> {
         if (context === undefined) {
             context = this.makeContext(addIns);
@@ -84,15 +52,17 @@ export default class ScriptExecutor {
                 throw new Error("No module of name \"" + modulePath + "\" is available.");
             });
         }
-        await module.evaluate();
-        return new Script(module, context);
+        const opts = timeout !== undefined ? {timeout} : undefined;
+        const result = await module.evaluate(opts);
+        return new Script(module, context, result);
     }
 
     public buildSync(
             code: string,
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module,
-            context?: IVM.Context
+            context?: IVM.Context,
+            timeout?: number
     ): Script {
         if (context === undefined) {
             context = this.makeContext(addIns);
@@ -110,8 +80,9 @@ export default class ScriptExecutor {
                 throw new Error("No module of name \"" + modulePath + "\" is available.");
             });
         }
-        module.evaluateSync();
-        return new Script(module, context);
+        const opts = timeout !== undefined ? {timeout} : undefined;
+        const result = module.evaluateSync(opts);
+        return new Script(module, context, result);
     }
 
     public buildManySync(
@@ -148,8 +119,8 @@ export default class ScriptExecutor {
                 }
                 return modules[requirePath];
             });
-            module.evaluateSync();
-            acc[path] = new Script(module, context);
+            const result = module.evaluateSync();
+            acc[path] = new Script(module, context, result);
         }, {} as {[s: string]: Script});
     }
 
@@ -169,7 +140,11 @@ export default class ScriptExecutor {
 
     private addToContext(context: IVM.Context, addIns: object = {}) {
         for (const [key, value] of Object.entries(addIns)) {
-            context.global.set(key, value);
+            let valueToCopy = value;
+            if (Array.isArray(value) || typeof value === "object" && value !== null) {
+                valueToCopy = new IVM.ExternalCopy(value).copyInto();
+            }
+            context.global.set(key, valueToCopy);
         }
     }
 

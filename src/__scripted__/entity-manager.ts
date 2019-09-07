@@ -21,6 +21,7 @@ export default class EntityManager {
     private _modules: Map<number, Map<string, Module>> = new Map<number, Map<string, Module>>();
     private _moduleIDToName: Map<number, string> = new Map<number, string>();
     private _moduleIDToEntityID: Map<number, number> = new Map<number, number>();
+    private _deletedEntities: number[] = [];
     private _nextEntityID: number = 0;
     private _nextModuleID: number = 0;
 
@@ -132,6 +133,11 @@ export default class EntityManager {
         return this.idToEntityObject(id);
     }
 
+    public deleteEntityByID(id: number) {
+        this._deletedEntities.push(id);
+        this._modules.delete(id);
+    }
+
     public getEntityByModuleID(moduleID: number): Entity {
         return this.idToEntityObject(this.getEntityIDByModuleID(moduleID));
     }
@@ -142,5 +148,24 @@ export default class EntityManager {
 
     public getModuleNameByID(moduleID: number): string {
         return this._moduleIDToName.get(moduleID);
+    }
+
+    public cleanupDeletedEntities() {
+        for (const id of this._deletedEntities) {
+            const modules = this._modules.get(id);
+            if (modules !== undefined) {
+                const keys = modules.keys();
+                for (const key of keys) {
+                    const module = modules[key];
+                    if (typeof (module as any).delete === "function") {
+                        (module as any).delete();
+                        this._moduleIDToName.delete(module.id);
+                        this._moduleIDToEntityID.delete(module.id);
+                    }
+                }
+                this._modules.delete(id);
+            }
+        }
+        this._deletedEntities = [];
     }
 }

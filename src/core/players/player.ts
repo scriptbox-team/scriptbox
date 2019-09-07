@@ -42,7 +42,16 @@ export default class Player {
      * @type {string}
      * @memberof Player
      */
-    get name(): string {
-        return this._playerManagerInterface.getName(this.id);
+    get username(): string {
+        return this._playerManagerInterface.getUsername(this.id);
+    }
+
+    get displayName(): string {
+        return this._playerManagerInterface.getDisplayName(this.id);
+    }
+
+    set displayName(newName: string) {
+        this._playerManagerInterface.setDisplayName(this.id, newName);
+
     }
 }
