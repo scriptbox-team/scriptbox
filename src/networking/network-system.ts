@@ -1,7 +1,6 @@
 
 import Player from "core/players/player";
 import NetHost from "networking/net-host";
-import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import PlayerNetworkManager from "networking/player-network-manager";
 import NetworkReceivingSubsystem from "./network-receiving-subsystem";
 import NetworkSendingSubsystem from "./network-sending-subsystem";
@@ -92,5 +91,9 @@ export default class NetworkSystem {
      */
     get netEventHandler() {
         return this._networkReceivingSubsystem.netEventHandler;
+    }
+
+    public getPlayerFromIP(ip: string) {
+        return this._playerNetworkManager.getPlayerFromIP(ip);
     }
 }

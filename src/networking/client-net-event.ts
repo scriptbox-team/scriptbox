@@ -10,7 +10,16 @@ export enum ClientEventType {
     DisconnectionRequest = 2,
     Disconnect = 3,
     ChatMessage = 4,
-    Input = 5
+    Input = 5,
+    ObjectCreation = 6,
+    ObjectDeletion = 7,
+    TokenRequest = 8,
+    ModifyMetadata = 9,
+    AddComponent = 10,
+    RemoveComponent = 11,
+    EditComponent = 12,
+    ExecuteScript = 13,
+    Keybinds = 14
 }
 
 /**

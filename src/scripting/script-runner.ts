@@ -1,6 +1,6 @@
 import IVM from "isolated-vm";
 import _ from "lodash";
-import * as ts from "typescript";
+import ts from "typescript";
 import Script from "./script";
 
 /**
@@ -18,39 +18,6 @@ export default class ScriptRunner {
      */
     constructor() {
         this._isolate = new IVM.Isolate();
-    }
-    /**
-     * Execute some code asynchronously.
-     *
-     * @param {string} code The code to execute
-     * @param {object} [addins={}] The values to add to the context before executing
-     * @returns {Promise<any>} A promise which resolves to the last value in the code.
-     * @memberof ScriptRunner
-     */
-    public async execute(code: string, addIns: object = {}, context?: IVM.Context, timeout?: number): Promise<any> {
-        if (context === undefined) {
-            context = this.makeContext(addIns);
-        }
-        else {
-            this.addToContext(context, addIns);
-        }
-        const transpiledCode = this.transpile(code);
-        const script = await this._isolate.compileScript(transpiledCode);
-        const result = await script.run(context, {timeout});
-        return result;
-    }
-
-    public executeSync(code: string, addIns: object = {}, context?: IVM.Context, timeout?: number): any {
-        if (context === undefined) {
-            context = this.makeContext(addIns);
-        }
-        else {
-            this.addToContext(context, addIns);
-        }
-        const transpiledCode = this.transpile(code);
-        const script = this._isolate.compileScriptSync(transpiledCode);
-        const result = script.runSync(context, {timeout});
-        return result;
     }
 
     /**
@@ -86,8 +53,8 @@ export default class ScriptRunner {
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
-        await module.evaluate(opts);
-        return new Script(module, context);
+        const result = await module.evaluate(opts);
+        return new Script(module, context, result);
     }
 
     public buildSync(
@@ -114,8 +81,8 @@ export default class ScriptRunner {
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
-        module.evaluateSync(opts);
-        return new Script(module, context);
+        const result = module.evaluateSync(opts);
+        return new Script(module, context, result);
     }
 
     public buildManySync(
@@ -152,8 +119,8 @@ export default class ScriptRunner {
                 }
                 return modules[requirePath];
             });
-            module.evaluateSync();
-            acc[path] = new Script(module, context);
+            const result = module.evaluateSync();
+            acc[path] = new Script(module, context, result);
         }, {} as {[s: string]: Script});
     }
 
@@ -173,7 +140,11 @@ export default class ScriptRunner {
 
     private addToContext(context: IVM.Context, addIns: object = {}) {
         for (const [key, value] of Object.entries(addIns)) {
-            context.global.set(key, value);
+            let valueToCopy = value;
+            if (Array.isArray(value) || typeof value === "object" && value !== null) {
+                valueToCopy = new IVM.ExternalCopy(value).copyInto();
+            }
+            context.global.set(key, valueToCopy);
         }
     }
 

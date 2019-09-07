@@ -4,6 +4,7 @@ import _ from "lodash";
 import path from "path";
 import Script from "scripting/script";
 import ScriptRunner from "scripting/script-runner";
+import ArgumentParser from "./argument-parser";
 
 export default class ScriptwiseSystem {
     public scriptRunner: ScriptRunner;
@@ -18,6 +19,10 @@ export default class ScriptwiseSystem {
 
         this._prebuiltScripts = this.scriptRunner.buildManySync(scripts, addIns);
     }
+    public async runPlayerScript(code: string, args: string) {
+        const argsArray = ArgumentParser.parse(args);
+        return this.scriptRunner.build(code, {args: argsArray}, undefined, undefined, 500);
+    }
     public execute(modulePath: string, name: string, ...params: any) {
         const module = this.getModule(modulePath);
         return module.execute(name, ...params);
@@ -28,7 +33,7 @@ export default class ScriptwiseSystem {
     }
     public runPostScript(modulePath: string, script: string) {
         const context = this.getModule(modulePath).context;
-        return this.scriptRunner.executeSync(script, {IVM}, context);
+        return this.scriptRunner.buildSync(script, {IVM}, undefined, context);
     }
     private getModule(modulePath: string) {
         const module = this._prebuiltScripts[modulePath];

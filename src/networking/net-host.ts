@@ -1,4 +1,5 @@
 import {EventEmitter} from "events";
+import * as http from "http";
 import * as WebSocket from "ws";
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetClient from "./net-client";
@@ -84,8 +85,8 @@ export default class NetHost {
      */
     public start() {
         this.webSocketServer = new WebSocket.Server({port: this.port});
-        this.webSocketServer.on("connection", (socket: WebSocket) => {
-            this.hookHandshakeCallback(socket);
+        this.webSocketServer.on("connection", (socket: WebSocket, request: http.IncomingMessage) => {
+            this.hookHandshakeCallback(socket, request);
             const packet = new ServerConnectionInfoRequestPacket();
             socket.send(new ServerNetEvent(ServerEventType.ConnectionInfoRequest, packet.serialize()).serialize());
             this.timeoutMap.set(socket.url, setTimeout(() => {
@@ -117,14 +118,14 @@ export default class NetHost {
      * @param {WebSocket} socket The socket to hook up the handshake callback for
      * @memberof NetHost
      */
-    private hookHandshakeCallback(socket: WebSocket) {
+    private hookHandshakeCallback(socket: WebSocket, request: http.IncomingMessage) {
         const cb = (data: WebSocket.Data) => {
             try {
                 const packetData = ClientNetEvent.deserialize(data);
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
                         clearTimeout(this.timeoutMap.get(socket.url)!);
-                        this.addClient(socket, packetData);
+                        this.addClient(socket, request.connection.remoteAddress, packetData);
                         socket.removeListener("message", cb);
                     }
                 }
@@ -145,9 +146,12 @@ export default class NetHost {
      * @param {ClientNetEvent} dataEvent the NetEvent containing client connection information
      * @memberof NetHost
      */
-    private addClient(socket: WebSocket, dataEvent: ClientNetEvent) {
+    private addClient(socket: WebSocket, ip: string | undefined, dataEvent: ClientNetEvent) {
         const id = this.nextID;
-        const client = new NetClient({id, socket});
+        if (ip === undefined) {
+            ip = "undefined";
+        }
+        const client = new NetClient({id, ip, socket});
         this.nextID++;
         this.clients.set(id, client);
 
@@ -174,6 +178,7 @@ export default class NetHost {
         });
         // Necessary for now
         dataEvent.data.clientID = id;
+        dataEvent.data.ip = ip;
         this.emitter.emit("connection", id, new ClientNetEvent(ClientEventType.Connection, dataEvent.data));
     }
 }

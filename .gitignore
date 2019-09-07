@@ -82,3 +82,4 @@ typings/
 # Typescript compiled files
 *.js.map
 dist/
+data/

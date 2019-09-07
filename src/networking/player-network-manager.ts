@@ -2,6 +2,11 @@ import Player from "core/players/player";
 import ClientConnectionPacket from "./packets/client-connection-packet";
 import ClientDisconnectPacket from "./packets/client-disconnect-packet";
 
+interface IPlayerNetData {
+    clientID: number;
+    ip: string;
+}
+
 /**
  * A manager which handles all of the information for players related to networking.
  * This includes things like which clients are connected to which players among other things.
@@ -12,14 +17,16 @@ import ClientDisconnectPacket from "./packets/client-disconnect-packet";
  */
 export default class PlayerNetworkManager {
     private _clientToPlayer: Map<number, Player>;
-    private _playerToClient: Map<number, number>;
+    private _playerToNetData: Map<number, IPlayerNetData>;
+    private _ipToPlayer: Map<string, Player>;
     /**
      * Creates an instance of PlayerNetworkManager.
      * @memberof PlayerNetworkManager
      */
     constructor() {
         this._clientToPlayer = new Map<number, Player>();
-        this._playerToClient = new Map<number, number>();
+        this._playerToNetData = new Map<number, IPlayerNetData>();
+        this._ipToPlayer = new Map<string, Player>();
 
         this.connectionDelegate = this.connectionDelegate.bind(this);
         this.disconnectionDelegate = this.disconnectionDelegate.bind(this);
@@ -31,9 +38,10 @@ export default class PlayerNetworkManager {
      * @param {Player} player The player to associate the ID with
      * @memberof PlayerNetworkManager
      */
-    public setClientPlayer(client: number, player: Player) {
-        this._clientToPlayer.set(client, player);
-        this._playerToClient.set(player.id, client);
+    public setClientPlayer(client: {id: number, ip: string}, player: Player) {
+        this._clientToPlayer.set(client.id, player);
+        this._playerToNetData.set(player.id, {clientID: client.id, ip: client.ip});
+        this._ipToPlayer.set(client.ip, player);
     }
     /**
      * Remove an association by client
@@ -46,8 +54,11 @@ export default class PlayerNetworkManager {
             return;
         }
         const player = this._clientToPlayer.get(client);
+        const ip = this._playerToNetData.get(player!.id)!.ip;
         this._clientToPlayer.delete(client);
-        this._playerToClient.delete(player!.id);
+        this._ipToPlayer.delete(ip);
+        this._playerToNetData.delete(player!.id);
+
     }
     /**
      * Remove an association by player
@@ -56,12 +67,14 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public removePlayer(player: Player): void {
-        if (!this._playerToClient.has(player.id)) {
+        if (!this._playerToNetData.has(player.id)) {
             return;
         }
-        const client = this._playerToClient.get(player.id);
-        this._playerToClient.delete(player.id);
-        this._clientToPlayer.delete(client!);
+        const data = this._playerToNetData.get(player.id);
+        const ip = this._playerToNetData.get(player.id)!.ip;
+        this._playerToNetData.delete(player.id);
+        this._ipToPlayer.delete(ip);
+        this._clientToPlayer.delete(data!.clientID!);
     }
     /**
      * Get a map associating client IDs with players
@@ -79,8 +92,8 @@ export default class PlayerNetworkManager {
      * @returns the map associating players to clients
      * @memberof PlayerNetworkManager
      */
-    public getPlayerToClient() {
-        return this._playerToClient;
+    public getPlayerToNetData() {
+        return this._playerToNetData;
     }
 
     /**
@@ -90,7 +103,7 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public getConnectedPlayers() {
-        return Array.from(this._playerToClient.keys());
+        return Array.from(this._playerToNetData.keys());
     }
 
     /**
@@ -123,7 +136,11 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public getclientIDFromPlayerID(id: number): number | undefined {
-        return this._playerToClient.get(id);
+        const netData = this._playerToNetData.get(id);
+        if (netData !== undefined) {
+            return netData.clientID;
+        }
+        return undefined;
     }
 
     /**
@@ -134,7 +151,7 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public connectionDelegate(packet: ClientConnectionPacket, player: Player | undefined) {
-        this.setClientPlayer(packet.clientID, player!);
+        this.setClientPlayer({id: packet.clientID, ip: packet.ip}, player!);
     }
     /**
      * The delegate to be called when a client connects
@@ -145,5 +162,9 @@ export default class PlayerNetworkManager {
      */
     public disconnectionDelegate(packet: ClientDisconnectPacket, player: Player | undefined) {
         this.removePlayer(player!);
+    }
+
+    public getPlayerFromIP(ip: string) {
+        return this._ipToPlayer.get(ip);
     }
 }

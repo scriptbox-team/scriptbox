@@ -1,3 +1,4 @@
+import CollisionBox from "./collision-box";
 import Control from "./control";
 import DefaultControl from "./default-control";
 import Entity from "./entity";
@@ -11,12 +12,16 @@ type IClassInterface = {new (...args: any[]): any};
 // tslint:enable
 
 interface IExports {
-    positions: {[id: string]: {x: number, y: number}};
+    entities: {[id: string]: {
+        position: {x: number, y: number},
+        collisionBox: {x1: number, y1: number, x2: number, y2: number}
+    }};
 }
 
 const exportValues: IExports = {
-    positions: {}
-}
+    entities: {}
+};
+
 global.exportValues = exportValues;
 
 const classList = new Map<string, IClassInterface>();
@@ -26,8 +31,9 @@ export function update() {
     // For each component, call update function if exists
     // This code should really be handled its own iterator inside of the EntityManager class
     const allModules = entityManager.getAllModules();
-    let entityModuleIterator = allModules.values();
-    for (const entityModuleMap of entityModuleIterator) {
+    let entityIDIterator = allModules.keys();
+    for (const id of entityIDIterator) {
+        const entityModuleMap = entityManager.getModules(id);
         const moduleIterator = entityModuleMap.keys();
         for (const moduleName of moduleIterator) {
             const module = entityModuleMap.get(moduleName);
@@ -46,8 +52,9 @@ export function update() {
         }
     }
     // We need a new iterator since we reached the end of the last one
-    entityModuleIterator = allModules.values();
-    for (const entityModuleMap of entityModuleIterator) {
+    entityIDIterator = allModules.keys();
+    for (const id of entityIDIterator) {
+        const entityModuleMap = entityManager.getModules(id);
         const moduleIterator = entityModuleMap.keys();
         for (const moduleName of moduleIterator) {
             const module = entityModuleMap.get(moduleName);
@@ -66,10 +73,15 @@ export function update() {
         }
     }
     // We need a new iterator since we reached the end of the last one
-    entityModuleIterator = allModules.values();
+    entityIDIterator = allModules.keys();
     // After the update and postupdate are called we should let the exports know about important changes
-    exportValues.positions = {};
-    for (const entityModuleMap of entityModuleIterator) {
+    exportValues.entities = {};
+    for (const id of entityIDIterator) {
+        exportValues.entities["" + id] = {
+            position: {x: 0, y: 0},
+            collisionBox: {x1: 0, y1: 0, x2: 0, y2: 0}
+        };
+        const entityModuleMap = entityManager.getModules(id);
         try {
             const positionModule = entityModuleMap.get("position") as Position;
             if (positionModule !== null) {
@@ -79,11 +91,10 @@ export function update() {
                 && typeof positionModule.y.getValue === "function"
                 && positionModule.entity instanceof Entity
                 ) {
-                    const id = positionModule.entity.id;
                     const x = positionModule.x.getValue();
                     const y = positionModule.y.getValue();
                     if (typeof x === "number" && typeof y === "number" && typeof id === "number") {
-                        exportValues.positions["" + id] = {x, y};
+                        exportValues.entities["" + id].position = {x, y};
                     }
                 }
             }
@@ -91,7 +102,47 @@ export function update() {
         catch (err) {
             global.log("Retrieval Error: " + err);
         }
+        try {
+            const collisionModule = entityModuleMap.get("collision-box") as CollisionBox;
+            if (collisionModule !== undefined) {
+                if (typeof collisionModule.x1 === "object"
+                && typeof collisionModule.y1 === "object"
+                && typeof collisionModule.x1.getValue === "function"
+                && typeof collisionModule.y1.getValue === "function"
+                && typeof collisionModule.x2 === "object"
+                && typeof collisionModule.y2 === "object"
+                && typeof collisionModule.x2.getValue === "function"
+                && typeof collisionModule.y2.getValue === "function"
+                && collisionModule.entity instanceof Entity
+                ) {
+                    const x1 = collisionModule.x1.getValue();
+                    const y1 = collisionModule.y1.getValue();
+                    const x2 = collisionModule.x2.getValue();
+                    const y2 = collisionModule.y2.getValue();
+                    if (typeof x1 === "number" && typeof y1 === "number"
+                    && typeof x2 === "number" && typeof y2 === "number"
+                    && typeof id === "number") {
+                        exportValues.entities["" + id].collisionBox = {
+                            x1: Math.min(x1, x2),
+                            x2: Math.min(y1, y2),
+                            y1: Math.max(x1, x2),
+                            y2: Math.max(y1, y2)
+                        };
+                    }
+                }
+            }
+        }
+        catch (err) {
+            global.log("Retrieval Error: " + err);
+        }
+        // A sanity check to prevent a collision box of width or height less than 1
+        const box = exportValues.entities["" + id].collisionBox;
+        if (box.x2 - box.x1 < 1 || box.y2 - box.y1 < 1) {
+            box.x2 = box.x1 + 1;
+            box.y2 = box.x1 + 1;
+        }
     }
+    entityManager.cleanupDeletedEntities();
 }
 
 export function call(entID: number, compName: string, funcName: string, ...args: any[]) {
@@ -115,6 +166,11 @@ export function createEntity(): number {
     const ent = entityManager.createEntity();
     global.log("Entity created (ID: " + ent.id + ")");
     return ent.id;
+}
+
+export function deleteEntity(id: number) {
+    entityManager.deleteEntityByID(id);
+    global.log("Entity deleted (ID: " + id + ")");
 }
 
 export function createModule(entID: number, className: string, uniqueName: string, ...params: any) {
@@ -144,6 +200,9 @@ export function create(classParam: string | IClassInterface, ...args: any[]) {
 }
 
 export function handleInput(entityID: number, input: string, state: InputType) {
+    if (!entityManager.entityExists(entityID)) {
+        return;
+    }
     const module = entityManager.getModule(entityID, "control");
     if (module instanceof Control) {
         switch (state) {
@@ -160,6 +219,13 @@ export function handleInput(entityID: number, input: string, state: InputType) {
                 break;
             }
         }
+    }
+}
+
+export function setModuleClass(classObj: IClassInterface, id: string) {
+    if (classObj.prototype instanceof Module) {
+        // TODO: If a module class already exists, re-instantiate instances of it with the new version
+        classList.set(id, classObj);
     }
 }
 
@@ -190,4 +256,5 @@ enum DeviceType {
 
 classList.set("position", Position);
 classList.set("velocity", Velocity);
+classList.set("collision-box", CollisionBox);
 classList.set("default-control", DefaultControl);
