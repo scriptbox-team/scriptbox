@@ -24,6 +24,7 @@ import IExports from "./export-values";
 import GameLoop from "./game-loop";
 import Player from "./players/player";
 import ScriptwiseSystem from "./scriptwise-system";
+import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 
 /**
  * The options for the server constructor.
@@ -298,6 +299,21 @@ export default class Server {
                     new MessageRecipient(MessageRecipientType.Only, [player!])
                 )
             );
+        });
+
+        this._networkSystem.netEventHandler.addModifyMetadataDelegate(
+                (packet: ClientModifyMetadataPacket, player: Player) => {
+            try {
+                this._resourceManager.updateResourceData(
+                    player.username,
+                    packet.resourceID,
+                    packet.property,
+                    packet.value
+                );
+            }
+            catch (err) {
+                console.log(err);
+            }
         });
 
         this._networkSystem.netEventHandler.addExecuteScriptDelegate(
