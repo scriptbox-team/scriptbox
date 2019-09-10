@@ -7,6 +7,7 @@ import ClientConnectionPacket from "networking/packets/client-connection-packet"
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
+import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
@@ -24,7 +25,6 @@ import IExports from "./export-values";
 import GameLoop from "./game-loop";
 import Player from "./players/player";
 import ScriptwiseSystem from "./scriptwise-system";
-import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 
 /**
  * The options for the server constructor.
