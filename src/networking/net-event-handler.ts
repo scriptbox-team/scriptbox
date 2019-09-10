@@ -14,6 +14,7 @@ import ClientObjectCreationPacket from "./packets/client-object-creation-packet"
 import ClientObjectDeletionPacket from "./packets/client-object-deletion-packet";
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "./packets/client-token-request-packet";
+import ClientWatchEntityPacket from "./packets/client-watch-entity-packet";
 import PlayerNetworkManager from "./player-network-manager";
 
 /**
@@ -40,6 +41,7 @@ export default class NetEventHandler {
     private _editComponentDelegates: Array<(packet: ClientEditComponentPacket, player: Player) => void>;
     private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Player) => void>;
     private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Player) => void>;
+    private _watchEntityDelegates: Array<(packet: ClientWatchEntityPacket, player: Player) => void>;
     private _playerNetworkManager: PlayerNetworkManager;
 
     /**
@@ -62,6 +64,7 @@ export default class NetEventHandler {
         this._editComponentDelegates = new Array<(packet: ClientEditComponentPacket, player: Player) => void>();
         this._executeScriptDelegates = new Array<(packet: ClientExecuteScriptPacket, player: Player) => void>();
         this._keybindingDelegates = new Array<(packet: ClientKeybindsPacket, player: Player) => void>();
+        this._watchEntityDelegates = new Array<(packet: ClientWatchEntityPacket, player: Player) => void>();
 
     }
     /**
@@ -133,6 +136,10 @@ export default class NetEventHandler {
 
     public addKeybindingDelegate(func: (packet: ClientKeybindsPacket, player: Player) => void) {
         this._keybindingDelegates.push(func);
+    }
+
+    public addWatchEntityDelegate(func: (packet: ClientWatchEntityPacket, player: Player) => void) {
+        this._watchEntityDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -255,6 +262,14 @@ export default class NetEventHandler {
                     ClientKeybindsPacket.deserialize(event.data),
                     this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
                     this._keybindingDelegates
+                );
+                break;
+            }
+            case ClientEventType.WatchEntity: {
+                this.sendToDelegates(
+                    ClientWatchEntityPacket.deserialize(event.data),
+                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this._watchEntityDelegates
                 );
                 break;
             }
