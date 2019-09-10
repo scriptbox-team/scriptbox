@@ -7,6 +7,7 @@ import ClientConnectionPacket from "networking/packets/client-connection-packet"
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
+import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
@@ -298,6 +299,21 @@ export default class Server {
                     new MessageRecipient(MessageRecipientType.Only, [player!])
                 )
             );
+        });
+
+        this._networkSystem.netEventHandler.addModifyMetadataDelegate(
+                (packet: ClientModifyMetadataPacket, player: Player) => {
+            try {
+                this._resourceManager.updateResourceData(
+                    player.username,
+                    packet.resourceID,
+                    packet.property,
+                    packet.value
+                );
+            }
+            catch (err) {
+                console.log(err);
+            }
         });
 
         this._networkSystem.netEventHandler.addExecuteScriptDelegate(
