@@ -43,7 +43,7 @@ export default class NetHost {
     private webSocketServer: WebSocket.Server | null;
     private nextID: number;
     private clients: Map<number, NetClient>;
-    private validEvents: Set<number>;
+    private validEvents: Set<string | ClientEventType>;
     private timeoutMap: Map<string, ReturnType<typeof setTimeout>>;
 
     /**
@@ -56,6 +56,8 @@ export default class NetHost {
         this.port = options.port;
         this.webSocketServer = null;
         this.nextID = 0;
+
+        const a = Object.values(ClientEventType);
 
         this.validEvents = new Set(
             Object.values(ClientEventType).filter((val) => val !== ClientEventType.ConnectionInfo)
