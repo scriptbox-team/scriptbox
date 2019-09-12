@@ -6,10 +6,10 @@ export default class ServerEntityInspectionListingPacket extends Packet {
     public static deserialize(obj: any): ServerEntityInspectionListingPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
-                Array.isArray(obj.displayPackage)
-                && typeof(obj.entityID) === "string"
+                Array.isArray(obj.resources)
+                && typeof(obj.entityID) === "number"
             ) {
-                const renderObjectArray = [];
+                const resourceArray: Resource[] = [];
                 const allClear = _.every(obj.resources, (elem) => {
                     const res = Resource.serialize(
                         elem.id,
@@ -18,17 +18,17 @@ export default class ServerEntityInspectionListingPacket extends Packet {
                         elem.creator,
                         elem.description,
                         elem.time,
-                        elem.settings,
-                        elem.icon
+                        elem.icon,
+                        elem.options
                     );
                     if (res !== undefined) {
-                        renderObjectArray.push(res);
+                        resourceArray.push(res);
                         return true;
                     }
                     return false;
                 });
                 if (allClear) {
-                    return new ServerEntityInspectionListingPacket(obj.resources, obj.entityID);
+                    return new ServerEntityInspectionListingPacket(resourceArray, obj.entityID);
                 }
             }
             return undefined;
@@ -36,8 +36,8 @@ export default class ServerEntityInspectionListingPacket extends Packet {
     }
 
     public resources: Resource[];
-    public entityID: string;
-    constructor(resources: Resource[], entityID: string) {
+    public entityID: number;
+    constructor(resources: Resource[], entityID: number) {
         super();
         this.resources = resources;
         this.entityID = entityID;

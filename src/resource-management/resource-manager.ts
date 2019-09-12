@@ -135,6 +135,30 @@ export default class ResourceManager {
             }
         }
     }
+    public updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
+        const resource = this.getResourceByID(resourceID);
+        if (resource === undefined) {
+            throw new Error(`Resource to modify was not found`);
+        }
+        const owner = resourceID.split(".")[0];
+        if (owner !== username) {
+            throw new Error(`User ${username} does not have priveleges to modify other players' resource data`);
+        }
+        switch (attribute) {
+            case "name": {
+                resource.name = value;
+                break;
+            }
+            case "description": {
+                resource.description = value;
+                break;
+            }
+            default: {
+                throw new Error(`Resource attribute ${attribute} is not recognized as a valid modifiable attribute`);
+            }
+        }
+        this.updateResourceListing(owner, this.collectPlayerResources(owner));
+    }
     public handleFileDelete = (token: number, resourceID: string) => {
         const player = this.getPlayerFromToken(token);
         if (player === undefined) {

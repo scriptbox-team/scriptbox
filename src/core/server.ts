@@ -7,9 +7,12 @@ import ClientConnectionPacket from "networking/packets/client-connection-packet"
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
+import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
+import ClientWatchEntityPacket from "networking/packets/client-watch-entity-packet";
+import ServerEntityInspectionListingPacket from "networking/packets/server-entity-inspection-listing-packet";
 import ServerResourceListingPacket from "networking/packets/server-resource-listing-packet";
 import ServerTokenPacket from "networking/packets/server-token-packet";
 import ServerMessage from "networking/server-messages/server-message";
@@ -18,12 +21,17 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 import TokenGenerator from "networking/token-generator";
 import path from "path";
 import DisplaySystem from "resource-management/display-system";
-import Resource from "resource-management/resource";
+import Resource, { ResourceType } from "resource-management/resource";
 import ResourceManager from "resource-management/resource-manager";
+import ResourceOption, { ResourceOptionType } from "resource-management/resource-option";
 import IExports from "./export-values";
 import GameLoop from "./game-loop";
 import Player from "./players/player";
 import ScriptwiseSystem from "./scriptwise-system";
+
+// TODO: Refactor stuff out of Server and Game (Client-side)
+// TODO: Make private functions begin with an underscore
+// TODO: Convert variable/function names to be more consistent with terminology
 
 /**
  * The options for the server constructor.
@@ -145,7 +153,8 @@ export default class Server {
         };
 
         this._exportValues = {
-            entities: {}
+            entities: {},
+            watchedEntityInfo: {}
         };
         this._lastExportValues = this._exportValues;
 
@@ -180,11 +189,49 @@ export default class Server {
                 new IVM.ExternalCopy(global.exportValues).copyInto();
             `).result;
             this._displaySystem.broadcastDisplayChanges(this._lastExportValues, this._exportValues);
+            this.sendWatchedObjects(this._exportValues);
 
             this._networkSystem.sendMessages();
         }
         catch (error) {
             console.log(error);
+        }
+    }
+
+    private sendWatchedObjects(exportValues: IExports) {
+        const players = Object.keys(exportValues.watchedEntityInfo);
+        for (const playerIDString of players) {
+            const entityInfo = exportValues.watchedEntityInfo[playerIDString];
+            const playerID = Number.parseInt(playerIDString, 10);
+            const resources = Object.values(entityInfo.componentInfo).map((component) => {
+                const attributes = component.attributes.map((attribute) => {
+                    let optionType = ResourceOptionType.Object;
+                    switch (attribute.kind) {
+                        case "number": {
+                            optionType = ResourceOptionType.Number;
+                            break;
+                        }
+                        case "string": {
+                            optionType = ResourceOptionType.String;
+                            break;
+                        }
+                        case "boolean": {
+                            optionType = ResourceOptionType.Boolean;
+                            break;
+                        }
+                    }
+                    return new ResourceOption(attribute.name, attribute.name, optionType, attribute.value, true);
+                });
+                return new Resource(component.name, ResourceType.Component, component.name,
+                    "n/a", "blah blah", 0, "", attributes);
+            });
+            const packet = new ServerEntityInspectionListingPacket(resources, entityInfo.id);
+            this._networkSystem.queue(
+                new ServerMessage(
+                    new ServerNetEvent(ServerEventType.EntityInspectListing, packet),
+                    new MessageRecipient(MessageRecipientType.Only, [this._playerManager.idToPlayerObject(playerID)])
+                )
+            );
         }
     }
 
@@ -298,6 +345,27 @@ export default class Server {
                     new MessageRecipient(MessageRecipientType.Only, [player!])
                 )
             );
+        });
+
+        this._networkSystem.netEventHandler.addModifyMetadataDelegate(
+                (packet: ClientModifyMetadataPacket, player: Player) => {
+            try {
+                this._resourceManager.updateResourceData(
+                    player.username,
+                    packet.resourceID,
+                    packet.property,
+                    packet.value
+                );
+            }
+            catch (err) {
+                console.log(err);
+            }
+        });
+
+        this._networkSystem.netEventHandler.addWatchEntityDelegate(
+                (packet: ClientWatchEntityPacket, player: Player) => {
+            console.log(`${player.id} watching ${packet.entityID}`);
+            this._scriptwiseSystem.execute("./scripted-server-subsystem", "watchEntity", player.id, packet.entityID);
         });
 
         this._networkSystem.netEventHandler.addExecuteScriptDelegate(
