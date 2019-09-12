@@ -4,15 +4,15 @@ export default class ClientWatchEntityPacket extends Packet {
     public static deserialize(obj: any) {
         if (typeof obj === "object" && obj !== null) {
             if (
-                typeof obj.entityID === "string" || typeof obj.entityID === undefined
+                typeof obj.entityID === "number" || obj.entityID === undefined
             ) {
                 return new ClientWatchEntityPacket(obj.entityID);
             }
             return undefined;
         }
     }
-    public entityID?: string;
-    constructor(entityID?: string) {
+    public entityID?: number;
+    constructor(entityID?: number) {
         super();
         this.entityID = entityID;
     }
