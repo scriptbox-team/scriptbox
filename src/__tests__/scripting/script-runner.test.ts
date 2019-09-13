@@ -1,22 +1,22 @@
 /* tslint:disable */
-import "./fix-test-paths";
-import ScriptExecutor from "scripting/script-executor";
+import "../fix-test-paths";
+import ScriptRunner from "scripting/script-runner";
 import IVM from "isolated-vm";
 /* tslint:enable */
 
 // Test whether we can execute code
 test("ScriptExecutor::run\tBase Case", async () => {
-    const se = new ScriptExecutor();
+    const se = new ScriptRunner();
     const script = `
         20 * 52;
     `;
-    const result = await se.execute(script);
+    const result = (await se.build(script)).result;
     expect(result).toBe(1040);
 });
 
 // Test whether we can build a module and instantiate it
 test("ScriptExecutor::build\tBase Case", async () => {
-    const se = new ScriptExecutor();
+    const se = new ScriptRunner();
     const module = `
         let y = 0;
         export default class Test {
@@ -42,8 +42,8 @@ test("ScriptExecutor::build\tBase Case", async () => {
         test.getY();
     `;
     const ref = await se.build(module);
-    const def = await ref.namespace.get("default");
+    const def = await ref.getReference("default")!;
 
-    const result = await se.execute(instantiationTest, {Test: def.derefInto()});
+    const result = (await se.build(instantiationTest, {Test: def.derefInto()})).result;
     expect(result).toEqual(5);
 });

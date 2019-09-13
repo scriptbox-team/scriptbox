@@ -1,5 +1,5 @@
 /* tslint:disable */
-import "./fix-test-paths";
+import "../fix-test-paths";
 import EntityManager from "__scripted__/entity-manager";
 /* tslint:enable */
 
