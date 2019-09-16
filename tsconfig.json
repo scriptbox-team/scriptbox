@@ -46,7 +46,7 @@
     "baseUrl": ".",                       /* Base directory to resolve non-absolute module names. */
     "paths": {
       "*": [
-          "../node_modules/*"
+        "../node_modules/*"
       ],
       "core/*": [
           "./src/core/*"
@@ -63,8 +63,8 @@
       "resource-management/*": [
           "./src/resource-management/*"
       ],
-      "__scripted__/*": [
-          "./src/__scripted__/*"
+      "scripts/*": [
+          "./scripts/*"
       ]
     },                                          /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
@@ -85,11 +85,10 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "src/__scripted__/**/*",
-    "src/__tests__/**/*"
   ]
 }

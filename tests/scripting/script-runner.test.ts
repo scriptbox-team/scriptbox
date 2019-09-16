@@ -1,8 +1,4 @@
-/* tslint:disable */
-import "../fix-test-paths";
 import ScriptRunner from "scripting/script-runner";
-import IVM from "isolated-vm";
-/* tslint:enable */
 
 // Test whether we can execute code
 test("ScriptExecutor::run\tBase Case", async () => {
