@@ -16,14 +16,20 @@ import ServerEntityInspectionListingPacket from "networking/packets/server-entit
 import ServerResourceListingPacket from "networking/packets/server-resource-listing-packet";
 import ServerTokenPacket from "networking/packets/server-token-packet";
 import ServerMessage from "networking/server-messages/server-message";
-import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
+import {
+    MessageRecipient, MessageRecipientType
+} from "networking/server-messages/server-message-recipient";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 import TokenGenerator from "networking/token-generator";
 import path from "path";
+import ComponentInfo from "resource-management/component-info";
+import ComponentOption, {
+    ResourceOptionType as ComponentOptionType
+} from "resource-management/component-option";
 import DisplaySystem from "resource-management/display-system";
 import Resource, { ResourceType } from "resource-management/resource";
 import ResourceManager from "resource-management/resource-manager";
-import ResourceOption, { ResourceOptionType } from "resource-management/resource-option";
+
 import IExports from "./export-values";
 import GameLoop from "./game-loop";
 import Player from "./players/player";
@@ -205,24 +211,24 @@ export default class Server {
             const playerID = Number.parseInt(playerIDString, 10);
             const resources = Object.values(entityInfo.componentInfo).map((component) => {
                 const attributes = component.attributes.map((attribute) => {
-                    let optionType = ResourceOptionType.Object;
+                    let optionType = ComponentOptionType.Object;
                     switch (attribute.kind) {
                         case "number": {
-                            optionType = ResourceOptionType.Number;
+                            optionType = ComponentOptionType.Number;
                             break;
                         }
                         case "string": {
-                            optionType = ResourceOptionType.String;
+                            optionType = ComponentOptionType.String;
                             break;
                         }
                         case "boolean": {
-                            optionType = ResourceOptionType.Boolean;
+                            optionType = ComponentOptionType.Boolean;
                             break;
                         }
                     }
-                    return new ResourceOption(attribute.name, attribute.name, optionType, attribute.value, true);
+                    return new ComponentOption(attribute.name, attribute.name, optionType, attribute.value, true);
                 });
-                return new Resource(component.name, ResourceType.Component, component.name,
+                return new ComponentInfo(component.name, component.name,
                     "n/a", "blah blah", 0, "", attributes);
             });
             const packet = new ServerEntityInspectionListingPacket(resources, entityInfo.id);

@@ -35,8 +35,8 @@ export default class ServerEntityInspectionListingPacket extends Packet {
     }
 
     public components: ComponentInfo[];
-    public entityID: string;
-    constructor(components: ComponentInfo[], entityID: string) {
+    public entityID: number;
+    constructor(components: ComponentInfo[], entityID: number) {
         super();
         this.components = components;
         this.entityID = entityID;
