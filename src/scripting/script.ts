@@ -25,12 +25,9 @@ export default class Script {
         }
         return funcRef.copySync();
     }
-    public getReference(name: string): IVM.Reference<any> | undefined {
+    public getReference(name: string): IVM.Reference<any> {
         const module = this._module;
         const funcRef = module.namespace.getSync(name);
-        if (funcRef.typeof === "undefined") {
-            return undefined;
-        }
         return funcRef;
     }
     public release() {

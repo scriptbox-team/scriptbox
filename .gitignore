@@ -83,3 +83,6 @@ typings/
 *.js.map
 dist/
 data/
+
+# Jest test coverage
+coverage/

@@ -125,7 +125,7 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public getClientIDFromPlayer(player: Player): number | undefined {
-        return this.getclientIDFromPlayerID(player.id);
+        return this.getClientIDFromPlayerID(player.id);
     }
 
     /**
@@ -135,7 +135,7 @@ export default class PlayerNetworkManager {
      * @returns {(number | undefined)} The ID if the client exists, undefined otherwise
      * @memberof PlayerNetworkManager
      */
-    public getclientIDFromPlayerID(id: number): number | undefined {
+    public getClientIDFromPlayerID(id: number): number | undefined {
         const netData = this._playerToNetData.get(id);
         if (netData !== undefined) {
             return netData.clientID;

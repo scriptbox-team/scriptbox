@@ -43,7 +43,7 @@ export default class NetHost {
     private webSocketServer: WebSocket.Server | null;
     private nextID: number;
     private clients: Map<number, NetClient>;
-    private validEvents: Set<number>;
+    private validEvents: Set<string | ClientEventType>;
     private timeoutMap: Map<string, ReturnType<typeof setTimeout>>;
 
     /**

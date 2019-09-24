@@ -30,7 +30,7 @@ export default class Entity {
      * @memberof Entity
      */
     public get<T extends Module = any>(name: string): T | null {
-        return interfaceWeakmap.get(this).getModule<T>(name);
+        return interfaceWeakmap.get(this)!.getModule<T>(name);
     }
 
     public with<T extends Module = any>(name: string, func: (t: T) => void) {
@@ -59,10 +59,10 @@ export default class Entity {
      * @memberof Entity
      */
     get exists(): boolean {
-        return interfaceWeakmap.get(this).entityExists();
+        return interfaceWeakmap.get(this)!.entityExists();
     }
 
     get id(): number {
-        return interfaceWeakmap.get(this).getID();
+        return interfaceWeakmap.get(this)!.getID();
     }
 }

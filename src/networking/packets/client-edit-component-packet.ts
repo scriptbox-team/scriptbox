@@ -7,9 +7,9 @@ export default class ClientEditComponentPacket extends Packet {
                     typeof obj.componentID === "string"
                     && typeof obj.property === "string"
                     && typeof obj.value === "string"
-                    && typeof obj.valueType === "string"
+                    && typeof obj.type === "string"
             ) {
-                return new ClientEditComponentPacket(obj.componentID, obj.property, obj.value, obj.valueType);
+                return new ClientEditComponentPacket(obj.componentID, obj.property, obj.value, obj.type);
             }
             return undefined;
         }
