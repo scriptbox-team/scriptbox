@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  coverageReporters: ["html"],
   roots: [
     "<rootDir>/src",
     "<rootDir>/tests"

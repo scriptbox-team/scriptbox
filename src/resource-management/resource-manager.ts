@@ -9,7 +9,7 @@ interface IResourceManagerOptions {
 }
 
 interface IPlayerResourceData {
-    lastResourceID: number;
+    nextResourceID: number;
     resources: string[];
 }
 
@@ -28,11 +28,11 @@ export default class ResourceManager {
     public addResource(user: string, type: ResourceType, file: UploadedFile): Promise<Resource> {
         let playerResourceData = this._playerResourceData.get(user);
         if (playerResourceData === undefined) {
-            playerResourceData = {lastResourceID: 0, resources: []};
+            playerResourceData = {nextResourceID: 0, resources: []};
             this._playerResourceData.set(user, playerResourceData);
         }
         const resource = new Resource(
-            user + "." + playerResourceData.lastResourceID++,
+            user + "." + playerResourceData.nextResourceID++,
             type,
             file.name,
             user,
