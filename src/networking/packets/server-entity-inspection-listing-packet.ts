@@ -1,5 +1,5 @@
 import _ from "lodash";
-import Resource from "resource-management/resource";
+import ComponentInfo from "resource-management/component-info";
 import Packet from "./packet";
 
 export default class ServerEntityInspectionListingPacket extends Packet {
@@ -11,15 +11,14 @@ export default class ServerEntityInspectionListingPacket extends Packet {
             ) {
                 const renderObjectArray = [];
                 const allClear = _.every(obj.resources, (elem) => {
-                    const res = Resource.serialize(
+                    const res = ComponentInfo.serialize(
                         elem.id,
-                        elem.type,
                         elem.name,
                         elem.creator,
                         elem.description,
                         elem.time,
-                        elem.settings,
-                        elem.icon
+                        elem.icon,
+                        elem.settings
                     );
                     if (res !== undefined) {
                         renderObjectArray.push(res);
@@ -28,18 +27,18 @@ export default class ServerEntityInspectionListingPacket extends Packet {
                     return false;
                 });
                 if (allClear) {
-                    return new ServerEntityInspectionListingPacket(obj.resources, obj.entityID);
+                    return new ServerEntityInspectionListingPacket(obj.components, obj.entityID);
                 }
             }
             return undefined;
         }
     }
 
-    public resources: Resource[];
+    public components: ComponentInfo[];
     public entityID: string;
-    constructor(resources: Resource[], entityID: string) {
+    constructor(components: ComponentInfo[], entityID: string) {
         super();
-        this.resources = resources;
+        this.components = components;
         this.entityID = entityID;
     }
     public serialize() {

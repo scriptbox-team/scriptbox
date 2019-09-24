@@ -15,28 +15,38 @@ export default class ResourceOption {
             id: string,
             name: string,
             type: ResourceOptionType,
-            displayValue: string,
-            readOnly: boolean) {
+            baseValue: string,
+            readOnly: boolean,
+            currentValue: string) {
         if (
             typeof id === "string"
             && typeof name === "string"
             && typeof type === "string"
-            && typeof displayValue === "string"
+            && typeof baseValue === "string"
             && typeof readOnly === "boolean"
+            && typeof currentValue === "string" || typeof currentValue === "undefined"
         ) {
-            return new ResourceOption(id, name, type, displayValue, readOnly);
+            return new ResourceOption(id, name, type, baseValue, readOnly);
         }
     }
     public id: string;
     public name: string;
     public type: ResourceOptionType;
     public displayValue: string;
+    public currentValue?: string;
     public readOnly: boolean;
-    constructor(id: string, name: string, type: ResourceOptionType, displayValue: string, readOnly: boolean) {
+    constructor(
+            id: string,
+            name: string,
+            type: ResourceOptionType,
+            displayValue: string,
+            readOnly: boolean,
+            currentValue?: string) {
         this.id = id;
         this.name = name;
         this.type = type;
         this.displayValue = displayValue;
         this.readOnly = readOnly;
+        this.currentValue = currentValue;
     }
 }

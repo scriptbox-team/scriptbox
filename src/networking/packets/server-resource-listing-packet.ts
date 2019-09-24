@@ -17,8 +17,7 @@ export default class ServerResourceListingPacket extends Packet {
                         elem.creator,
                         elem.description,
                         elem.time,
-                        elem.icon,
-                        elem.options
+                        elem.icon
                     );
                     if (res !== undefined) {
                         resourceArray.push(res);

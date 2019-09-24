@@ -38,8 +38,7 @@ export default class ResourceManager {
             user,
             "",
             Date.now(),
-            "",
-            []
+            ""
         );
         this._resources.set(resource.id, resource);
         playerResourceData.resources.push(resource.id);
