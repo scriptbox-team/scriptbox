@@ -7,11 +7,13 @@
   "scripts": {
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "jest --verbose false",
-    "watch-build": "tsc -w",
-    "watch-copy": "cpx -w \"./src/__scripted__/**/*\" dist/__scripted__",
+    "test-coverage": "jest --verbose false --coverage ",
+    "watch-build": "tsc --p \"./src\" -w",
+    "watch-copy": "cpx -w \"./scripts/**/*\" dist/__scripted__",
+    "watch-test": "jest --watch",
     "watch": "npm-run-all --parallel watch-build watch-copy",
-    "build": "tsc && npm run copy-scripts",
-    "copy-scripts": "cpx \"./src/__scripted__/**/*\" dist/__scripted__",
+    "build": "tsc --p \"./src\" && npm run copy-scripts",
+    "copy-scripts": "cpx \"./scripts/**/*\" dist/__scripted__",
     "start": "node dist/main.js"
   },
   "repository": {
@@ -22,8 +24,10 @@
   "license": "GPL-3.0",
   "devDependencies": {
     "@types/jest": "^24.0.15",
+    "@types/supertest": "^2.0.8",
     "cpx": "^1.5.0",
     "jest": "^24.8.0",
+    "mockdate": "^2.0.5",
     "npm-run-all": "^4.1.5",
     "ts-jest": "^24.0.2",
     "tslint": "^5.18.0",
@@ -46,6 +50,7 @@
     "lodash": "^4.17.15",
     "module-alias": "^2.2.0",
     "source-map-support": "^0.5.12",
+    "supertest": "^4.0.2",
     "tsc": "^1.20150623.0",
     "typescript": "^3.5.3",
     "ws": "^6.2.1"

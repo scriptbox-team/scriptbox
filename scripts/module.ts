@@ -14,15 +14,15 @@ export default class Module {
 
     }
     public get id() {
-        return interfaceWeakmap.get(this).getID();
+        return interfaceWeakmap.get(this)!.getID();
     }
     public get name() {
-        return interfaceWeakmap.get(this).getName();
+        return interfaceWeakmap.get(this)!.getName();
     }
     public get entity() {
-        return interfaceWeakmap.get(this).getEntity();
+        return interfaceWeakmap.get(this)!.getEntity();
     }
     public get exists() {
-        return interfaceWeakmap.get(this).exists();
+        return interfaceWeakmap.get(this)!.exists();
     }
 }

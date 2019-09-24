@@ -68,7 +68,13 @@ export default class EntityManager {
         const module = new type(new EntityManagerModuleInterface(
             () => this.getEntityByModuleID(id),
             () => this.getModuleNameByID(id),
-            () => this.entityExists(this.getEntityIDByModuleID(id)),
+            () => {
+                const entID = this.getEntityIDByModuleID(id);
+                if (entID === null) {
+                    return false;
+                }
+                return this.entityExists(entID);
+            },
             () => id
         ));
         if (typeof (module as any).create === "function") {
@@ -138,16 +144,24 @@ export default class EntityManager {
         this._modules.delete(id);
     }
 
-    public getEntityByModuleID(moduleID: number): Entity {
-        return this.idToEntityObject(this.getEntityIDByModuleID(moduleID));
+// TODO: Reconsider usage of "null" in certain cases (maybe better to be undefined?)
+
+    public getEntityByModuleID(moduleID: number): Entity | null {
+        const id = this.getEntityIDByModuleID(moduleID);
+        if (id === null) {
+            return null;
+        }
+        return this.idToEntityObject(id);
     }
 
-    public getEntityIDByModuleID(moduleID: number): number {
-        return this._moduleIDToEntityID.get(moduleID);
+    public getEntityIDByModuleID(moduleID: number): number | null {
+        const id = this._moduleIDToEntityID.get(moduleID);
+        return id !== undefined ? id : null;
     }
 
     public getModuleNameByID(moduleID: number): string {
-        return this._moduleIDToName.get(moduleID);
+        const name = this._moduleIDToName.get(moduleID);
+        return name !== undefined ? name : "";
     }
 
     public cleanupDeletedEntities() {
@@ -156,7 +170,7 @@ export default class EntityManager {
             if (modules !== undefined) {
                 const keys = modules.keys();
                 for (const key of keys) {
-                    const module = modules[key];
+                    const module = modules.get(key)!;
                     if (typeof (module as any).delete === "function") {
                         (module as any).delete();
                         this._moduleIDToName.delete(module.id);

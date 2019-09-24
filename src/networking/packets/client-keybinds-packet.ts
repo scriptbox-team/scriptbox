@@ -4,12 +4,12 @@ import Packet from "./packet";
 export default class ClientKeybindsPacket extends Packet {
     public static deserialize(obj: any): ClientKeybindsPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
-            if (typeof obj.keybinds === "object" && obj.keybinds !== null && typeof obj.entityID === "string") {
-                const allClear = _.every(Object.keys(obj.keybinds), (key) => {
-                    return typeof obj.keybinds[key] === "string";
+            if (typeof obj.keys === "object" && obj.keys !== null && typeof obj.entityID === "string") {
+                const allClear = _.every(Object.keys(obj.keys), (key) => {
+                    return typeof obj.keys[key] === "string";
                 });
                 if (allClear) {
-                    return new ClientKeybindsPacket(obj.keybinds, obj.entityID);
+                    return new ClientKeybindsPacket(obj.keys, obj.entityID);
                 }
             }
             return undefined;

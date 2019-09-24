@@ -33,7 +33,7 @@ export default class ServerMessageBroadcaster {
                 case MessageRecipientType.All: {
                     const players = this._playerNetworkManager.getConnectedPlayers();
                     for (const c of players) {
-                        const connection = this._playerNetworkManager.getclientIDFromPlayerID(c);
+                        const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
                         if (connection != null) {
                             this.sendPacket(connection, m.message);
                         }
@@ -46,7 +46,7 @@ export default class ServerMessageBroadcaster {
                         playerSet.delete(c.id);
                     }
                     for (const c of playerSet) {
-                        const connection = this._playerNetworkManager.getclientIDFromPlayerID(c);
+                        const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
                         if (connection != null) {
                             this.sendPacket(connection, m.message);
                         }
@@ -72,7 +72,7 @@ export default class ServerMessageBroadcaster {
      * @param {(c: number, message: ServerNetEvent) => void} callback The callback to execute when a packet is sent.
      * @memberof ServerMessageBroadcaster
      */
-    public setPacketCallback(callback: (c: number, message: ServerNetEvent) => void) {
+    public setPacketCallback(callback: (clientID: number, message: ServerNetEvent) => void) {
         this._packetCallback = callback;
     }
     /**
@@ -92,7 +92,7 @@ export default class ServerMessageBroadcaster {
      * @param {ServerNetEvent} message The net event to send.
      * @memberof ServerMessageBroadcaster
      */
-    private sendPacket(c: number, message: ServerNetEvent) {
-        this._packetCallback!(c, message);
+    private sendPacket(clientID: number, message: ServerNetEvent) {
+        this._packetCallback!(clientID, message);
     }
 }

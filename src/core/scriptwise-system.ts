@@ -6,6 +6,8 @@ import Script from "scripting/script";
 import ScriptRunner from "scripting/script-runner";
 import ArgumentParser from "./argument-parser";
 
+// TODO: Change Scriptwise System to pass in the scripts directly instead of a list of directories
+
 export default class ScriptwiseSystem {
     public scriptRunner: ScriptRunner;
     private _prebuiltScripts: {[s: string]: Script};

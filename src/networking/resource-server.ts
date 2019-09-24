@@ -137,5 +137,6 @@ export default class ResourceServer {
     public async loadTextResource(resourceID: string) {
         return fs.readFile(this._resourcePath + resourceID, "utf8");
     }
-    // TODO: Change all functions with promises to async functions
+    // TODO: Change all functions with promises to async functions'
+    // TODO: Refactor ResourceServer into multiple classes; one to handle file system management and the other for API
 }
