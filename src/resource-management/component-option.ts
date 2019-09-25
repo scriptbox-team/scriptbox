@@ -1,4 +1,4 @@
-export enum ResourceOptionType {
+export enum ComponentOptionType {
     Image = "image",
     Sound = "sound",
     Number = "number",
@@ -14,7 +14,7 @@ export default class ResourceOption {
     public static serialize(
             id: string,
             name: string,
-            type: ResourceOptionType,
+            type: ComponentOptionType,
             baseValue: string,
             readOnly: boolean,
             currentValue: string) {
@@ -31,14 +31,14 @@ export default class ResourceOption {
     }
     public id: string;
     public name: string;
-    public type: ResourceOptionType;
+    public type: ComponentOptionType;
     public displayValue: string;
     public currentValue?: string;
     public readOnly: boolean;
     constructor(
             id: string,
             name: string,
-            type: ResourceOptionType,
+            type: ComponentOptionType,
             displayValue: string,
             readOnly: boolean,
             currentValue?: string) {

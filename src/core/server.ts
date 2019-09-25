@@ -23,9 +23,7 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 import TokenGenerator from "networking/token-generator";
 import path from "path";
 import ComponentInfo from "resource-management/component-info";
-import ComponentOption, {
-    ResourceOptionType as ComponentOptionType
-} from "resource-management/component-option";
+import ComponentOption, { ComponentOptionType } from "resource-management/component-option";
 import DisplaySystem from "resource-management/display-system";
 import Resource, { ResourceType } from "resource-management/resource";
 import ResourceManager from "resource-management/resource-manager";
