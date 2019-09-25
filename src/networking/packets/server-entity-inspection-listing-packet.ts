@@ -6,7 +6,7 @@ export default class ServerEntityInspectionListingPacket extends Packet {
     public static deserialize(obj: any): ServerEntityInspectionListingPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
-                Array.isArray(obj.resources)
+                Array.isArray(obj.components)
                 && typeof(obj.entityID) === "number"
             ) {
                 const componentArray: ComponentInfo[] = [];

@@ -207,7 +207,7 @@ export default class Server {
         for (const playerIDString of players) {
             const entityInfo = exportValues.watchedEntityInfo[playerIDString];
             const playerID = Number.parseInt(playerIDString, 10);
-            const resources = Object.values(entityInfo.componentInfo).map((component) => {
+            const components = Object.values(entityInfo.componentInfo).map((component) => {
                 const attributes = component.attributes.map((attribute) => {
                     let optionType = ComponentOptionType.Object;
                     switch (attribute.kind) {
@@ -229,7 +229,7 @@ export default class Server {
                 return new ComponentInfo(component.name, component.name,
                     "n/a", "blah blah", 0, "", attributes);
             });
-            const packet = new ServerEntityInspectionListingPacket(resources, entityInfo.id);
+            const packet = new ServerEntityInspectionListingPacket(components, entityInfo.id);
             this._networkSystem.queue(
                 new ServerMessage(
                     new ServerNetEvent(ServerEventType.EntityInspectListing, packet),

@@ -10,7 +10,7 @@ export enum ComponentOptionType {
     Array = "array"
 }
 
-export default class ResourceOption {
+export default class ComponentOption {
     public static serialize(
             id: string,
             name: string,
@@ -26,26 +26,26 @@ export default class ResourceOption {
             && typeof readOnly === "boolean"
             && typeof currentValue === "string" || typeof currentValue === "undefined"
         ) {
-            return new ResourceOption(id, name, type, baseValue, readOnly);
+            return new ComponentOption(id, name, type, baseValue, readOnly);
         }
     }
     public id: string;
     public name: string;
     public type: ComponentOptionType;
-    public displayValue: string;
+    public baseValue: string;
     public currentValue?: string;
     public readOnly: boolean;
     constructor(
             id: string,
             name: string,
             type: ComponentOptionType,
-            displayValue: string,
+            baseValue: string,
             readOnly: boolean,
             currentValue?: string) {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.displayValue = displayValue;
+        this.baseValue = baseValue;
         this.readOnly = readOnly;
         this.currentValue = currentValue;
     }
