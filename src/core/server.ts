@@ -1,4 +1,5 @@
 import PlayerManager from "core/players/player-manager";
+import IVM from "isolated-vm";
 import _ from "lodash";
 import MessageSystem from "messaging/message-system";
 import NetworkSystem from "networking/network-system";
@@ -10,21 +11,33 @@ import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-
 import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
+import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
+import ClientWatchEntityPacket from "networking/packets/client-watch-entity-packet";
+import ServerEntityInspectionListingPacket from "networking/packets/server-entity-inspection-listing-packet";
 import ServerResourceListingPacket from "networking/packets/server-resource-listing-packet";
 import ServerTokenPacket from "networking/packets/server-token-packet";
 import ServerMessage from "networking/server-messages/server-message";
-import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
+import {
+    MessageRecipient, MessageRecipientType
+} from "networking/server-messages/server-message-recipient";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 import TokenGenerator from "networking/token-generator";
 import path from "path";
+import ComponentInfo from "resource-management/component-info";
+import ComponentOption, { ComponentOptionType } from "resource-management/component-option";
 import DisplaySystem from "resource-management/display-system";
-import Resource from "resource-management/resource";
+import Resource, { ResourceType } from "resource-management/resource";
 import ResourceManager from "resource-management/resource-manager";
+
 import IExports from "./export-values";
 import GameLoop from "./game-loop";
 import Player from "./players/player";
 import ScriptwiseSystem from "./scriptwise-system";
+
+// TODO: Refactor stuff out of Server and Game (Client-side)
+// TODO: Make private functions begin with an underscore
+// TODO: Convert variable/function names to be more consistent with terminology
 
 /**
  * The options for the server constructor.
@@ -146,7 +159,8 @@ export default class Server {
         };
 
         this._exportValues = {
-            entities: {}
+            entities: {},
+            watchedEntityInfo: {}
         };
         this._lastExportValues = this._exportValues;
 
@@ -181,11 +195,49 @@ export default class Server {
                 new IVM.ExternalCopy(global.exportValues).copyInto();
             `).result;
             this._displaySystem.broadcastDisplayChanges(this._lastExportValues, this._exportValues);
+            this.sendWatchedObjects(this._exportValues);
 
             this._networkSystem.sendMessages();
         }
         catch (error) {
             console.log(error);
+        }
+    }
+
+    private sendWatchedObjects(exportValues: IExports) {
+        const players = Object.keys(exportValues.watchedEntityInfo);
+        for (const playerIDString of players) {
+            const entityInfo = exportValues.watchedEntityInfo[playerIDString];
+            const playerID = Number.parseInt(playerIDString, 10);
+            const components = Object.values(entityInfo.componentInfo).map((component) => {
+                const attributes = component.attributes.map((attribute) => {
+                    let optionType = ComponentOptionType.Object;
+                    switch (attribute.kind) {
+                        case "number": {
+                            optionType = ComponentOptionType.Number;
+                            break;
+                        }
+                        case "string": {
+                            optionType = ComponentOptionType.String;
+                            break;
+                        }
+                        case "boolean": {
+                            optionType = ComponentOptionType.Boolean;
+                            break;
+                        }
+                    }
+                    return new ComponentOption(attribute.name, attribute.name, optionType, attribute.value, true);
+                });
+                return new ComponentInfo(component.id, component.name,
+                    "n/a", "blah blah", 0, "", attributes);
+            });
+            const packet = new ServerEntityInspectionListingPacket(components, entityInfo.id);
+            this._networkSystem.queue(
+                new ServerMessage(
+                    new ServerNetEvent(ServerEventType.EntityInspectListing, packet),
+                    new MessageRecipient(MessageRecipientType.Only, [this._playerManager.idToPlayerObject(playerID)])
+                )
+            );
         }
     }
 
@@ -316,6 +368,12 @@ export default class Server {
             }
         });
 
+        this._networkSystem.netEventHandler.addWatchEntityDelegate(
+                (packet: ClientWatchEntityPacket, player: Player) => {
+            console.log(`${player.id} watching ${packet.entityID}`);
+            this._scriptwiseSystem.execute("./scripted-server-subsystem", "watchEntity", player.id, packet.entityID);
+        });
+
         this._networkSystem.netEventHandler.addExecuteScriptDelegate(
                 (packet: ClientExecuteScriptPacket, player: Player) => {
             const resource = this._resourceManager.getResourceByID(packet.script);
@@ -324,23 +382,51 @@ export default class Server {
             }
             this._resourceManager.loadTextResource(packet.script)
                 .then(async (code) => {
-                    const script = await this._scriptwiseSystem.runPlayerScript(code, packet.args);
+                    let thisValue: IVM.Reference<any> | undefined;
+                    if (packet.entityID !== undefined) {
+                        thisValue = this._scriptwiseSystem.executeReturnRef(
+                            "./scripted-server-subsystem",
+                            "getEntity",
+                            packet.entityID
+                        );
+                    }
+
+                    const script = await this._scriptwiseSystem.runPlayerScript(code, packet.args, thisValue);
                     const defaultExport = script.getReference("default");
-                    if (defaultExport !== undefined) {
+                    if (defaultExport.typeof !== "undefined") {
                         this._scriptwiseSystem.execute(
                             "./scripted-server-subsystem",
                             "setModuleClass",
                             defaultExport.derefInto(),
                             packet.script
                         );
+                        if (packet.entityID !== undefined) {
+                            this._scriptwiseSystem.execute(
+                                "./scripted-server-subsystem",
+                                "createModule",
+                                packet.entityID,
+                                packet.script,
+                                packet.script
+                            );
+                        }
                     }
                     if (script.result !== undefined) {
                         this._messageSystem.sendMessageToPlayer(`Result: ${script.result}`, player);
                     }
                 })
                 .catch((err) => {
-                    this._messageSystem.sendMessageToPlayer(`Error: ${err}`, player);
+                    this._messageSystem.outputErrorToPlayer(err, player);
+                    console.log(Date.now());
                 });
+        });
+
+        this._networkSystem.netEventHandler.addRemoveComponentDelegate(
+                (packet: ClientRemoveComponentPacket, player: Player) => {
+            this._scriptwiseSystem.execute(
+                "./scripted-server-subsystem",
+                "deleteModule",
+                packet.componentID
+            );
         });
     }
 }

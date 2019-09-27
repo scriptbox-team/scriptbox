@@ -19,7 +19,8 @@ export enum ClientEventType {
     RemoveComponent = 11,
     EditComponent = 12,
     ExecuteScript = 13,
-    Keybinds = 14
+    Keybinds = 14,
+    WatchEntity = 15
 }
 
 /**

@@ -21,13 +21,36 @@ export default class ScriptwiseSystem {
 
         this._prebuiltScripts = this.scriptRunner.buildManySync(scripts, addIns);
     }
-    public async runPlayerScript(code: string, args: string) {
+    public async runPlayerScript(code: string, args: string, thisValue?: IVM.Reference<any>) {
         const argsArray = ArgumentParser.parse(args);
-        return this.scriptRunner.build(code, {args: argsArray}, undefined, undefined, 500);
+        if (thisValue === undefined) {
+            return this.scriptRunner.build(code, {args: argsArray, IVM}, undefined, undefined, 500);
+        }
+        return this.scriptRunner.build(
+            code,
+            {args: argsArray, thisEntity: thisValue.derefInto()},
+            undefined,
+            undefined,
+            500,
+            this._prebuiltScripts
+        );
     }
     public execute(modulePath: string, name: string, ...params: any) {
         const module = this.getModule(modulePath);
         return module.execute(name, ...params);
+    }
+    public executeReturnRef(modulePath: string, name: string, ...params: any) {
+        const funcRef = this.getModule(modulePath).getReference(name);
+        const context = this.getModule(modulePath).context;
+        const script = `
+            export function run(func, ...args) {return new IVM.Reference(func(args))};
+        `;
+        const tmpModule = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
+        const res = tmpModule.execute("run", ...[funcRef.derefInto(), ...params]);
+        if (res.typeof === "undefined") {
+            return undefined;
+        }
+        return res;
     }
     public get(modulePath: string, name: string): any {
         const module = this.getModule(modulePath);

@@ -112,7 +112,7 @@ describe("NetEventHandler", () => {
         expect(fn.mock.calls[0][1]).toEqual(new Player(3, new PlayerManagerInterface()));
     });
     test("handles component removal packets", () => {
-        const packet = new ClientRemoveComponentPacket("testComponent");
+        const packet = new ClientRemoveComponentPacket(123);
         const fn = jest.fn();
         netEventHandler.addRemoveComponentDelegate(fn);
         netEventHandler.handle(0, new ClientNetEvent(ClientEventType.RemoveComponent, packet.serialize()));

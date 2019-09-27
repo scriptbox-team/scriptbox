@@ -1,3 +1,4 @@
+import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import Control from "./control";
 import DefaultControl from "./default-control";
@@ -11,21 +12,36 @@ import Velocity from "./velocity";
 type IClassInterface = {new (...args: any[]): any};
 // tslint:enable
 
+interface IComponentInfo {
+    id: number;
+    name: string;
+    attributes: Array<{name: string, kind: string, value: string}>;
+}
+
+interface IEntityInfo {
+    id: number;
+    name: string;
+    componentInfo: {[localID: string]: IComponentInfo};
+}
+
 interface IExports {
     entities: {[id: string]: {
         position: {x: number, y: number},
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
+    watchedEntityInfo: {[watcherID: string]: IEntityInfo};
 }
 
 const exportValues: IExports = {
-    entities: {}
+    entities: {},
+    watchedEntityInfo: {}
 };
 
 global.exportValues = exportValues;
 
 const classList = new Map<string, IClassInterface>();
 const entityManager = new EntityManager();
+const watchedEntities: {[playerID: string]: number} = {};
 
 export function update() {
     // For each component, call update function if exists
@@ -74,6 +90,7 @@ export function update() {
     }
     // We need a new iterator since we reached the end of the last one
     entityIDIterator = allModules.keys();
+    entityManager.cleanupDeletedEntities();
     // After the update and postupdate are called we should let the exports know about important changes
     exportValues.entities = {};
     for (const id of entityIDIterator) {
@@ -82,9 +99,10 @@ export function update() {
             collisionBox: {x1: 0, y1: 0, x2: 0, y2: 0}
         };
         const entityModuleMap = entityManager.getModules(id);
+        // Retrieve position info
         try {
             const positionModule = entityModuleMap.get("position") as Position;
-            if (positionModule !== null) {
+            if (positionModule !== undefined) {
                 if (typeof positionModule.x === "object"
                 && typeof positionModule.y === "object"
                 && typeof positionModule.x.getValue === "function"
@@ -102,6 +120,7 @@ export function update() {
         catch (err) {
             global.log("Retrieval Error: " + err);
         }
+        // Retrieve collision box info
         try {
             const collisionModule = entityModuleMap.get("collision-box") as CollisionBox;
             if (collisionModule !== undefined) {
@@ -142,7 +161,53 @@ export function update() {
             box.y2 = box.x1 + 1;
         }
     }
-    entityManager.cleanupDeletedEntities();
+    // Retrieve watched object information
+    const playersWatching = Object.keys(watchedEntities);
+    for (const player of playersWatching) {
+        const entityID = watchedEntities[player];
+        if (!entityManager.entityExists(entityID)) {
+            continue;
+        }
+        const components = entityManager.getModules(entityID);
+        const componentInfo = Array.from(components.values()).reduce((acc, component) => {
+            acc[component.name] = getComponentInfo(component);
+            return acc;
+        }, {});
+        const entityInfo: IEntityInfo = {
+            id: entityID,
+            name: "Entity " + entityID, // temporary
+            componentInfo
+        };
+        exportValues.watchedEntityInfo[player] = entityInfo;
+    }
+}
+
+// TODO: Convert all instances of "module" to "component"
+
+function getComponentInfo(component: Module): IComponentInfo {
+    const keys = Object.keys(component);
+    const attributes = keys.map((key) => {
+        let value = component[key];
+        // If it's an aspect, we should use the base value
+        // TODO: Also export the result value of the aspect
+        if (value instanceof Aspect) {
+            value = value.base;
+        }
+        let kind: string = typeof value;
+        if (value instanceof Module) {
+            kind = "module";
+        }
+        return {
+            name: key,
+            kind,
+            value: JSON.stringify(value)
+        };
+    });
+    return {
+        id: component.id,
+        name: component.name,
+        attributes
+    };
 }
 
 export function call(entID: number, compName: string, funcName: string, ...args: any[]) {
@@ -168,6 +233,10 @@ export function createEntity(): number {
     return ent.id;
 }
 
+export function getEntity(id: number): Entity {
+    return entityManager.idToEntityObject(id);
+}
+
 export function deleteEntity(id: number) {
     entityManager.deleteEntityByID(id);
     global.log("Entity deleted (ID: " + id + ")");
@@ -184,6 +253,10 @@ export function createModule(entID: number, className: string, uniqueName: strin
         + ", Params: "
         + JSON.stringify(params)
         +  ")");
+}
+
+export function deleteModule(moduleID: number) {
+    entityManager.deleteModule(moduleID);
 }
 
 export function create(classParam: string | IClassInterface, ...args: any[]) {
@@ -224,9 +297,15 @@ export function handleInput(entityID: number, input: string, state: InputType) {
 
 export function setModuleClass(classObj: IClassInterface, id: string) {
     if (classObj.prototype instanceof Module) {
-        // TODO: If a module class already exists, re-instantiate instances of it with the new version
+        // TODO: If a module class already exists on upload, re-instantiate instances of it with the new version
         classList.set(id, classObj);
     }
+}
+
+export function watchEntity(playerID: number, entityID?: number) {
+    watchedEntities["" + playerID] = entityID;
+    // TODO: Replace all number IDs with strings
+    // TODO: Fix the compiler freaking out about things in __scripted__
 }
 
 /**

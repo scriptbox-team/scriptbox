@@ -57,6 +57,8 @@ export default class NetHost {
         this.webSocketServer = null;
         this.nextID = 0;
 
+        const a = Object.values(ClientEventType);
+
         this.validEvents = new Set(
             Object.values(ClientEventType).filter((val) => val !== ClientEventType.ConnectionInfo)
         );

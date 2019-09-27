@@ -10,6 +10,7 @@ import Module from "./module";
  * @export
  * @class EntityManager
  */
+
 export default class EntityManager {
     /**
      * Modules indexed by entity ID, then by entity-internal module name
@@ -32,6 +33,7 @@ export default class EntityManager {
     constructor() {
         this.getModule = this.getModule.bind(this);
         this.entityExists = this.entityExists.bind(this);
+        (this as any).timestamp = Date.now();
     }
 
     /**
@@ -95,9 +97,29 @@ export default class EntityManager {
     public getModules(id: number): Map<string, Module> {
         const entModules = this._modules.get(id);
         if (entModules === undefined) {
+            // throw new Error((this as any).timestamp);
             throw new Error("Entity of ID " + id + " does not exist");
         }
         return entModules;
+    }
+
+    public deleteModule(moduleID: number) {
+        const moduleName = this._moduleIDToName.get(moduleID);
+        const entID = this._moduleIDToEntityID.get(moduleID);
+        if (moduleName !== undefined) {
+            if (entID !== undefined && moduleName !== undefined) {
+                const entModules = this.getModules(entID);
+                const module = entModules.get(moduleName);
+                if (typeof (module as any).delete === "function") {
+                    (module as any).delete();
+                }
+                if (entModules.has(moduleName)) {
+                    entModules.delete(moduleName);
+                }
+                this._moduleIDToEntityID.delete(moduleID);
+            }
+            this._moduleIDToName.delete(moduleID);
+        }
     }
 
     /**
