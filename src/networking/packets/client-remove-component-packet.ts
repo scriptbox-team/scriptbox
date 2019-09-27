@@ -4,7 +4,7 @@ export default class ClientRemoveComponentPacket extends Packet {
     public static deserialize(obj: any): ClientRemoveComponentPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
-                typeof obj.componentID === "string"
+                typeof obj.componentID === "number"
             ) {
                 return new ClientRemoveComponentPacket(obj.componentID);
             }
@@ -12,8 +12,8 @@ export default class ClientRemoveComponentPacket extends Packet {
         }
     }
 
-    public componentID: string;
-    constructor(componentID: string) {
+    public componentID: number;
+    constructor(componentID: number) {
         super();
         this.componentID = componentID;
     }

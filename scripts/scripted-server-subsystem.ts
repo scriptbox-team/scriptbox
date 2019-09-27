@@ -1,4 +1,4 @@
-import Aspect from "./aspect"
+import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import Control from "./control";
 import DefaultControl from "./default-control";
@@ -13,6 +13,7 @@ type IClassInterface = {new (...args: any[]): any};
 // tslint:enable
 
 interface IComponentInfo {
+    id: number;
     name: string;
     attributes: Array<{name: string, kind: string, value: string}>;
 }
@@ -101,7 +102,7 @@ export function update() {
         // Retrieve position info
         try {
             const positionModule = entityModuleMap.get("position") as Position;
-            if (positionModule !== null) {
+            if (positionModule !== undefined) {
                 if (typeof positionModule.x === "object"
                 && typeof positionModule.y === "object"
                 && typeof positionModule.x.getValue === "function"
@@ -203,6 +204,7 @@ function getComponentInfo(component: Module): IComponentInfo {
         };
     });
     return {
+        id: component.id,
         name: component.name,
         attributes
     };
@@ -231,6 +233,10 @@ export function createEntity(): number {
     return ent.id;
 }
 
+export function getEntity(id: number): Entity {
+    return entityManager.idToEntityObject(id);
+}
+
 export function deleteEntity(id: number) {
     entityManager.deleteEntityByID(id);
     global.log("Entity deleted (ID: " + id + ")");
@@ -247,6 +253,10 @@ export function createModule(entID: number, className: string, uniqueName: strin
         + ", Params: "
         + JSON.stringify(params)
         +  ")");
+}
+
+export function deleteModule(moduleID: number) {
+    entityManager.deleteModule(moduleID);
 }
 
 export function create(classParam: string | IClassInterface, ...args: any[]) {

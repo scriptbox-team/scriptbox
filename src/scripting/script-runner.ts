@@ -34,7 +34,8 @@ export default class ScriptRunner {
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module | Promise<IVM.Module>,
             context?: IVM.Context,
-            timeout?: number
+            timeout?: number,
+            modulePaths: {[path: string]: Script} = {}
     ): Promise<Script> {
         if (context === undefined) {
             context = this.makeContext(addIns);
@@ -49,7 +50,10 @@ export default class ScriptRunner {
         }
         else {
             await module.instantiate(context, (modulePath) => {
-                throw new Error("No module of name \"" + modulePath + "\" is available.");
+                if (modulePaths[modulePath] === undefined) {
+                    throw new Error("No module of name \"" + modulePath + "\" is available.");
+                }
+                return modulePaths[modulePath].module;
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
@@ -144,7 +148,7 @@ export default class ScriptRunner {
             if (Array.isArray(value) || typeof value === "object" && value !== null) {
                 valueToCopy = new IVM.ExternalCopy(value).copyInto();
             }
-            context.global.set(key, valueToCopy);
+            context.global.setSync(key, valueToCopy);
         }
     }
 

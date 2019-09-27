@@ -78,6 +78,12 @@ export default class MessageSystem extends System {
             )
         );
     }
+    public outputErrorToPlayer(error: any, recipient: Player) {
+        this.sendMessageToPlayer(`Error: ${error}`, recipient);
+        if (error.stack !== undefined) {
+            this.sendMessageToPlayer(`Stack Trace: ${error.stack}`, recipient);
+        }
+    }
     public onMessageSend(callback: (s: ServerMessage) => void) {
         this._messageSendCallback = callback;
     }

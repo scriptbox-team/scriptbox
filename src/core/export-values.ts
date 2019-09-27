@@ -1,4 +1,5 @@
 interface IComponentInfo {
+    id: number;
     name: string;
     attributes: Array<{name: string, kind: string, value: string}>;
 }

@@ -20,6 +20,7 @@ export default class Entity {
      * @memberof Entity
      */
     constructor(id: number, entityManagerInterface: EntityManagerInterface) {
+        (this as any).test = 0;
         interfaceWeakmap.set(this, entityManagerInterface);
     }
     /**

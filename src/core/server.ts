@@ -1,4 +1,5 @@
 import PlayerManager from "core/players/player-manager";
+import IVM from "isolated-vm";
 import _ from "lodash";
 import MessageSystem from "messaging/message-system";
 import NetworkSystem from "networking/network-system";
@@ -10,6 +11,7 @@ import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-
 import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
 import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
+import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
 import ClientWatchEntityPacket from "networking/packets/client-watch-entity-packet";
 import ServerEntityInspectionListingPacket from "networking/packets/server-entity-inspection-listing-packet";
@@ -226,7 +228,7 @@ export default class Server {
                     }
                     return new ComponentOption(attribute.name, attribute.name, optionType, attribute.value, true);
                 });
-                return new ComponentInfo(component.name, component.name,
+                return new ComponentInfo(component.id, component.name,
                     "n/a", "blah blah", 0, "", attributes);
             });
             const packet = new ServerEntityInspectionListingPacket(components, entityInfo.id);
@@ -380,23 +382,51 @@ export default class Server {
             }
             this._resourceManager.loadTextResource(packet.script)
                 .then(async (code) => {
-                    const script = await this._scriptwiseSystem.runPlayerScript(code, packet.args);
+                    let thisValue: IVM.Reference<any> | undefined;
+                    if (packet.entityID !== undefined) {
+                        thisValue = this._scriptwiseSystem.executeReturnRef(
+                            "./scripted-server-subsystem",
+                            "getEntity",
+                            packet.entityID
+                        );
+                    }
+
+                    const script = await this._scriptwiseSystem.runPlayerScript(code, packet.args, thisValue);
                     const defaultExport = script.getReference("default");
-                    if (defaultExport !== undefined) {
+                    if (defaultExport.typeof !== "undefined") {
                         this._scriptwiseSystem.execute(
                             "./scripted-server-subsystem",
                             "setModuleClass",
                             defaultExport.derefInto(),
                             packet.script
                         );
+                        if (packet.entityID !== undefined) {
+                            this._scriptwiseSystem.execute(
+                                "./scripted-server-subsystem",
+                                "createModule",
+                                packet.entityID,
+                                packet.script,
+                                packet.script
+                            );
+                        }
                     }
                     if (script.result !== undefined) {
                         this._messageSystem.sendMessageToPlayer(`Result: ${script.result}`, player);
                     }
                 })
                 .catch((err) => {
-                    this._messageSystem.sendMessageToPlayer(`Error: ${err}`, player);
+                    this._messageSystem.outputErrorToPlayer(err, player);
+                    console.log(Date.now());
                 });
+        });
+
+        this._networkSystem.netEventHandler.addRemoveComponentDelegate(
+                (packet: ClientRemoveComponentPacket, player: Player) => {
+            this._scriptwiseSystem.execute(
+                "./scripted-server-subsystem",
+                "deleteModule",
+                packet.componentID
+            );
         });
     }
 }
