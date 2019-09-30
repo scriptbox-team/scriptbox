@@ -2,8 +2,8 @@ import ServerResourceListingPacket from "networking/packets/server-resource-list
 import Resource, { ResourceType } from "resource-management/resource";
 
 const resources = [
-    new Resource("123", ResourceType.Image, "test resource", "aaron", "a test resource", 10525892184, "iconID", []),
-    new Resource("456", ResourceType.Sound, "test resource 2", "aaron", "a test sound", 10525235184, "iconID2", []),
+    new Resource("123", ResourceType.Image, "test resource", "aaron", "a test resource", 10525892184, "iconID"),
+    new Resource("456", ResourceType.Sound, "test resource 2", "aaron", "a test sound", 10525235184, "iconID2"),
     new Resource(
         "789",
         ResourceType.Script,
@@ -11,8 +11,7 @@ const resources = [
         "not aaron",
         "blows up the world",
         10525892184,
-        "iconID",
-        []
+        "iconID"
     ),
 ];
 
