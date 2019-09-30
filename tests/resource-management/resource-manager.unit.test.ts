@@ -48,8 +48,7 @@ beforeEach(() => {
         "testPlayerUsername",
         "",
         1000000,
-        "",
-        []
+        ""
     ));
     (resourceManager as any)._playerResourceData.set("testPlayerUsername", {
         nextResourceID: 13,
@@ -73,8 +72,7 @@ describe("Resource Manager", () => {
             "testPlayerUsername",
             "",
             1000000,
-            "",
-            []
+            ""
         ));
         expect(add.mock.calls[0][1]).toEqual(file);
     });
@@ -90,8 +88,7 @@ describe("Resource Manager", () => {
             "testPlayerUsername",
             "",
             1000000,
-            "",
-            []
+            ""
         ));
         expect(update.mock.calls[0][1]).toEqual(file);
     });
@@ -107,8 +104,7 @@ describe("Resource Manager", () => {
             "testPlayerUsername",
             "",
             1000000,
-            "",
-            []
+            ""
         ));
     });
 });
