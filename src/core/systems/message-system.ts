@@ -1,9 +1,9 @@
-import Player from "core/players/player";
+import Player from "core/player";
+import PlayerGroup, { PlayerGroupType } from "core/player-group";
 import System from "core/systems/system";
 import ClientChatMessagePacket from "networking/packets/client-chat-message-packet";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
 import ServerMessage from "networking/server-messages/server-message";
-import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 
 /**
@@ -15,8 +15,8 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
  * @extends {System}
  */
 export default class MessageSystem extends System {
-    private _messageSendCallback?: ((s: ServerMessage) => void);
-    private _scriptExecutionCallback?: (script: string) => Promise<any>;
+    private _messageSendCallback?: (message: string, group: PlayerGroup) => void;
+    private _scriptExecutionCallback?: (script: string, player: Player) => void;
 
     constructor() {
         super();
@@ -44,17 +44,7 @@ export default class MessageSystem extends System {
             const cmd = message.match(/^>>\s*(.*)$/);
             if (cmd !== null) {
                 const script = cmd[1];
-                let scriptShort = script;
-                if (scriptShort.length > 50) {
-                    scriptShort = scriptShort.substr(0, 50) + "...";
-                }
-                this._scriptExecutionCallback!(script)
-                    .then((result: any) => {
-                        this.sendMessageToPlayer("<\'" + scriptShort + "\' result: " + result + ">", owner);
-                    })
-                    .catch((err: Error) => {
-                        this.sendMessageToPlayer("<" + err.name + ": " + err.message + ">", owner);
-                    });
+                this._scriptExecutionCallback!(script, owner);
             }
         }
         else {
@@ -63,20 +53,10 @@ export default class MessageSystem extends System {
         }
     }
     public broadcastMessage(message: string) {
-        this._messageSendCallback!(
-            new ServerMessage(
-                new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket(message)),
-                new MessageRecipient(MessageRecipientType.All, [])
-            )
-        );
+        this._messageSendCallback!(message, new PlayerGroup(PlayerGroupType.All, []));
     }
     public sendMessageToPlayer(message: string, recipient: Player) {
-        this._messageSendCallback!(
-            new ServerMessage(
-                new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket(message)),
-                new MessageRecipient(MessageRecipientType.Only, [recipient])
-            )
-        );
+        this._messageSendCallback!(message, new PlayerGroup(PlayerGroupType.Only, [recipient]));
     }
     public outputErrorToPlayer(error: any, recipient: Player) {
         this.sendMessageToPlayer(`Error: ${error}`, recipient);
@@ -84,13 +64,21 @@ export default class MessageSystem extends System {
             this.sendMessageToPlayer(`Stack Trace: ${error.stack}`, recipient);
         }
     }
-    public onMessageSend(callback: (s: ServerMessage) => void) {
+    public onMessageSend(callback: (message: string, group: PlayerGroup) => void) {
         this._messageSendCallback = callback;
     }
-    public onScriptExecution(callback: (code: string) => Promise<any>) {
+    public onScriptExecution(callback: (code: string, player: Player) => Promise<any>) {
         this._scriptExecutionCallback = callback;
     }
     public chatMessageDelegate(packet: ClientChatMessagePacket, player: Player | undefined) {
         this.receiveChatMessage(packet.message, player!);
+    }
+    public outputConsoleMessage(message: any) {
+        console.log(message);
+    }
+    public sendChatMessages(messages: Array<{recipient: PlayerGroup, message: string}>) {
+        for (const message of messages) {
+            this._messageSendCallback!(message.message, message.recipient);
+        }
     }
 }

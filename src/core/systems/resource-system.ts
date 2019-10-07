@@ -1,9 +1,12 @@
-import Player from "core/players/player";
+import Player from "core/player";
 import { UploadedFile } from "express-fileupload";
 import ResourceServer from "networking/resource-server";
-import Resource, { ResourceType } from "./resource";
+import TokenGenerator from "networking/token-generator";
+import Resource, { ResourceType } from "resource-management/resource";
 
-interface IResourceManagerOptions {
+import System from "./system";
+
+interface IResourceSystemOptions {
     serverPort: string;
     resourcePath: string;
 }
@@ -13,13 +16,15 @@ interface IPlayerResourceData {
     resources: string[];
 }
 
-export default class ResourceManager {
-    public onPlayerListingUpdate?: (user: string, resources: Resource[]) => void;
+export default class ResourceSystem extends System {
+    public onPlayerListingUpdate?: (user: Player, resources: Resource[]) => void;
+    public playerByUsername?: (username: string) => Player | undefined;
     private _playerResourceData: Map<string, IPlayerResourceData> = new Map<string, IPlayerResourceData>();
     private _resources: Map<string, Resource> = new Map<string, Resource>();
     private _resourceServer: ResourceServer;
     private _playerTokens: Map<number, Player>;
-    constructor(options: IResourceManagerOptions) {
+    constructor(options: IResourceSystemOptions) {
+        super();
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
         this._playerTokens = new Map<number, Player>();
         this._resourceServer.onFileUpload = this.handleFileUpload;
@@ -168,8 +173,10 @@ export default class ResourceManager {
     public host() {
         this._resourceServer.host();
     }
-    public setPlayerToken(player: Player, token: number) {
+    public makePlayerToken(player: Player) {
+        const token = TokenGenerator.makeToken();
         this._playerTokens.set(token, player);
+        return token;
     }
     public getPlayerFromToken(token: number) {
         return this._playerTokens.get(token);
@@ -181,8 +188,11 @@ export default class ResourceManager {
         return this._resources.get(resourceID);
     }
     private updateResourceListing(owner: string, resources: Resource[]) {
-        if (this.onPlayerListingUpdate !== undefined) {
-            this.onPlayerListingUpdate(owner, resources);
+        if (this.playerByUsername !== undefined) {
+            const player = this.playerByUsername(owner);
+            if (player !== undefined && this.onPlayerListingUpdate !== undefined) {
+                this.onPlayerListingUpdate(player, resources);
+            }
         }
     }
     private collectPlayerResources(owner: string): Resource[] {

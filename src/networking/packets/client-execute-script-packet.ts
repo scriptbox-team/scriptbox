@@ -8,8 +8,11 @@ export default class ClientExecuteScriptPacket extends Packet {
                 && typeof obj.args === "string"
                 && typeof obj.entityID === "number" || typeof obj.entityID === "undefined"
             ) {
+                console.log(`serialized`);
                 return new ClientExecuteScriptPacket(obj.script, obj.args, obj.entityID);
             }
+            console.log(`not serialized`);
+            console.log(obj);
             return undefined;
         }
     }

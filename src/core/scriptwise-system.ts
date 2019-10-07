@@ -7,6 +7,7 @@ import ScriptRunner from "scripting/script-runner";
 import ArgumentParser from "./argument-parser";
 
 // TODO: Change Scriptwise System to pass in the scripts directly instead of a list of directories
+// TODO: Rename scriptwise system to something... other than a system
 
 export default class ScriptwiseSystem {
     public scriptRunner: ScriptRunner;

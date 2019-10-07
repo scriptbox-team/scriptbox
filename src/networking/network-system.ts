@@ -1,9 +1,12 @@
 
-import Player from "core/players/player";
+import Player from "core/player";
 import NetHost from "networking/net-host";
+import Networker from "networking/networker";
 import PlayerNetworkManager from "networking/player-network-manager";
+
 import NetworkReceivingSubsystem from "./network-receiving-subsystem";
 import NetworkSendingSubsystem from "./network-sending-subsystem";
+import PlayerNetworkManagerNetworker from "./player-network-manager-networker";
 import ServerMessage from "./server-messages/server-message";
 
 interface INetworkSystemConstructorOptions {
@@ -21,6 +24,7 @@ interface INetworkSystemConstructorOptions {
 export default class NetworkSystem {
     private _netHost: NetHost;
     private _playerNetworkManager: PlayerNetworkManager;
+    private _playerNetworkManagerNetworker: PlayerNetworkManagerNetworker;
     private _networkReceivingSubsystem: NetworkReceivingSubsystem;
     private _networkSendingSubsystem: NetworkSendingSubsystem;
     private _maxPlayers: number;
@@ -42,18 +46,13 @@ export default class NetworkSystem {
             this._port = options.port;
         }
         this._playerNetworkManager = new PlayerNetworkManager();
+        this._playerNetworkManagerNetworker = new PlayerNetworkManagerNetworker(this._playerNetworkManager);
+
         this._netHost = new NetHost({port: this._port, maxClients: this._maxPlayers});
 
         this._networkReceivingSubsystem = new NetworkReceivingSubsystem(this._netHost, this._playerNetworkManager);
         this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, this._playerNetworkManager);
-
-        this._networkReceivingSubsystem.netEventHandler.addConnectionDelegate(
-            this._playerNetworkManager.connectionDelegate
-        );
-
-        this._networkReceivingSubsystem.netEventHandler.addDisconnectionDelegate(
-            this._playerNetworkManager.disconnectionDelegate
-        );
+        this.hookup([this._playerNetworkManagerNetworker]);
     }
     /**
      * Open the system to new connections
@@ -83,17 +82,12 @@ export default class NetworkSystem {
         this._networkSendingSubsystem.sendMessages();
     }
 
-    /**
-     * Get the NetEventHandler, which is used to route packets to delegates
-     *
-     * @readonly
-     * @memberof NetworkSystem
-     */
-    get netEventHandler() {
-        return this._networkReceivingSubsystem.netEventHandler;
-    }
-
     public getPlayerFromIP(ip: string) {
         return this._playerNetworkManager.getPlayerFromIP(ip);
+    }
+
+    public hookup(networkers: Networker[]) {
+        this._networkReceivingSubsystem.hookupNetworkers(networkers);
+        this._networkSendingSubsystem.setNetworkerSenders(networkers);
     }
 }

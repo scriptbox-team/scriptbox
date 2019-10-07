@@ -1,6 +1,8 @@
 import ServerMessage from "networking/server-messages/server-message";
 import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
+
 import NetHost from "./net-host";
+import Networker from "./networker";
 import PlayerNetworkManager from "./player-network-manager";
 import ServerNetEvent from "./server-net-event";
 
@@ -41,5 +43,11 @@ export default class NetworkSendingSubsystem {
      */
     public sendMessages() {
         this._serverMessageBroadcaster.sendMessages();
+    }
+
+    public setNetworkerSenders(networkers: Networker[]) {
+        networkers.forEach((networker) =>
+            networker.onServerMessageSend = (msg) => this._serverMessageBroadcaster.addToQueue(msg)
+        );
     }
 }

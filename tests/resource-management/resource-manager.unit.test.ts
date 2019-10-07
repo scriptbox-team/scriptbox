@@ -1,9 +1,9 @@
-import _Player from "core/players/player";
+import _Player from "core/player";
+import ResourceManager from "core/systems/resource-system";
 import _ResourceServer from "networking/resource-server";
 import Resource, { ResourceType } from "resource-management/resource";
-import ResourceManager from "resource-management/resource-manager";
 
-jest.mock("core/players/player");
+jest.mock("core/player");
 jest.mock("networking/resource-server");
 // tslint:disable-next-line: variable-name
 const ResourceServer = _ResourceServer as jest.Mock<_ResourceServer>;
@@ -37,10 +37,12 @@ Player.mockImplementation((...args: any) => {
     } as any;
 });
 
+let token!: number;
+
 beforeEach(() => {
     ResourceServer.mockReset();
     resourceManager = new ResourceManager({serverPort: "7778", resourcePath: "."});
-    resourceManager.setPlayerToken(new Player(), 123);
+    token = resourceManager.makePlayerToken(new Player());
     (resourceManager as any)._resources.set("testPlayerUsername.12", new Resource(
         "testPlayerUsername.12",
         ResourceType.Script,
@@ -63,7 +65,7 @@ describe("Resource Manager", () => {
     test("Can handle resource addition", () => {
         const add = jest.fn();
         ResourceServer.mock.instances[0].add = add;
-        resourceManager.handleFileUpload(123, file);
+        resourceManager.handleFileUpload(token, file);
         expect(add).toBeCalledTimes(1);
         expect(add.mock.calls[0][0]).toEqual(new Resource(
             "testPlayerUsername.13",
@@ -79,7 +81,7 @@ describe("Resource Manager", () => {
     test("Can handle resource updating", () => {
         const update = jest.fn();
         ResourceServer.mock.instances[0].update = update;
-        resourceManager.handleFileUpload(123, file, "testPlayerUsername.12");
+        resourceManager.handleFileUpload(token, file, "testPlayerUsername.12");
         expect(update).toBeCalledTimes(1);
         expect(update.mock.calls[0][0]).toEqual(new Resource(
             "testPlayerUsername.12",
@@ -95,7 +97,7 @@ describe("Resource Manager", () => {
     test("Can handle resource removal", () => {
         const remove = jest.fn();
         ResourceServer.mock.instances[0].delete = remove;
-        resourceManager.handleFileDelete(123, "testPlayerUsername.12");
+        resourceManager.handleFileDelete(token, "testPlayerUsername.12");
         expect(remove).toBeCalledTimes(1);
         expect(remove.mock.calls[0][0]).toEqual(new Resource(
             "testPlayerUsername.12",

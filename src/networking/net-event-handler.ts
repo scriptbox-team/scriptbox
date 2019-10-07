@@ -1,4 +1,4 @@
-import Player from "core/players/player";
+import Player from "core/player";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";

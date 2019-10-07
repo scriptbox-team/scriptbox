@@ -41,7 +41,9 @@ global.exportValues = exportValues;
 
 const classList = new Map<string, IClassInterface>();
 const entityManager = new EntityManager();
-const watchedEntities: {[playerID: string]: number} = {};
+const watchedEntities: Map<string, number> = new Map<string, number>();
+
+// TODO: Reconsider all places that use Object.keys (can have undefined values)
 
 export function update() {
     // For each component, call update function if exists
@@ -92,7 +94,7 @@ export function update() {
     entityIDIterator = allModules.keys();
     entityManager.cleanupDeletedEntities();
     // After the update and postupdate are called we should let the exports know about important changes
-    exportValues.entities = {};
+    resetExports();
     for (const id of entityIDIterator) {
         exportValues.entities["" + id] = {
             position: {x: 0, y: 0},
@@ -162,9 +164,9 @@ export function update() {
         }
     }
     // Retrieve watched object information
-    const playersWatching = Object.keys(watchedEntities);
+    const playersWatching = watchedEntities.keys();
     for (const player of playersWatching) {
-        const entityID = watchedEntities[player];
+        const entityID = watchedEntities.get(player);
         if (!entityManager.entityExists(entityID)) {
             continue;
         }
@@ -303,10 +305,20 @@ export function setModuleClass(classObj: IClassInterface, id: string) {
 }
 
 export function watchEntity(playerID: number, entityID?: number) {
-    watchedEntities["" + playerID] = entityID;
+    if (entityID === undefined) {
+        watchedEntities.delete("" + playerID);
+    }
+    else {
+        watchedEntities.set("" + playerID, entityID);
+    }
     // TODO: Replace all number IDs with strings
     // TODO: Fix the compiler freaking out about things in __scripted__
 }
+
+const resetExports = () => {
+    exportValues.entities = {};
+    exportValues.watchedEntityInfo = {};
+};
 
 /**
  * The type of an input.

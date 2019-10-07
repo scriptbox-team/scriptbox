@@ -1,18 +1,17 @@
-import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
-
-import Player from "core/players/player";
+import Player from "core/player";
+import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import _PlayerManagerInterface from "core/player-manager-interface";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
 import _PlayerNetworkManager from "networking/player-network-manager";
 import ServerMessage from "networking/server-messages/server-message";
-import { MessageRecipient, MessageRecipientType } from "networking/server-messages/server-message-recipient";
+import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 
 jest.mock("networking/player-network-manager");
 // tslint:disable-next-line: variable-name
 const PlayerNetworkManager = _PlayerNetworkManager as jest.Mock<_PlayerNetworkManager>;
 
-import _PlayerManagerInterface from "core/players/player-manager-interface";
-jest.mock("core/players/player-manager-interface");
+jest.mock("core/player-manager-interface");
 // tslint:disable-next-line: variable-name
 const PlayerManagerInterface = _PlayerManagerInterface as jest.Mock<_PlayerManagerInterface>;
 
@@ -43,7 +42,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new MessageRecipient(MessageRecipientType.All, [])
+            new PlayerGroup(PlayerGroupType.All, [])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
@@ -62,7 +61,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new MessageRecipient(MessageRecipientType.Only, [new Player(2, new PlayerManagerInterface())])
+            new PlayerGroup(PlayerGroupType.Only, [new Player(2, new PlayerManagerInterface())])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
@@ -78,7 +77,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new MessageRecipient(MessageRecipientType.Only, [
+            new PlayerGroup(PlayerGroupType.Only, [
                 new Player(2, new PlayerManagerInterface()),
                 new Player(1, new PlayerManagerInterface())
             ])
@@ -98,7 +97,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new MessageRecipient(MessageRecipientType.Except, [new Player(2, new PlayerManagerInterface())])
+            new PlayerGroup(PlayerGroupType.Except, [new Player(2, new PlayerManagerInterface())])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);

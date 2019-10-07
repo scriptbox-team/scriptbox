@@ -1,4 +1,4 @@
-import Player from "core/players/player";
+import Player from "core/player";
 import ClientConnectionPacket from "./packets/client-connection-packet";
 import ClientDisconnectPacket from "./packets/client-disconnect-packet";
 
@@ -27,9 +27,6 @@ export default class PlayerNetworkManager {
         this._clientToPlayer = new Map<number, Player>();
         this._playerToNetData = new Map<number, IPlayerNetData>();
         this._ipToPlayer = new Map<string, Player>();
-
-        this.connectionDelegate = this.connectionDelegate.bind(this);
-        this.disconnectionDelegate = this.disconnectionDelegate.bind(this);
     }
     /**
      * Associate a client with a player
@@ -125,7 +122,10 @@ export default class PlayerNetworkManager {
      * @memberof PlayerNetworkManager
      */
     public getClientIDFromPlayer(player: Player): number | undefined {
-        return this.getClientIDFromPlayerID(player.id);
+        if (player.id !== undefined) {
+            return this.getClientIDFromPlayerID(player.id);
+        }
+        return undefined;
     }
 
     /**
@@ -141,27 +141,6 @@ export default class PlayerNetworkManager {
             return netData.clientID;
         }
         return undefined;
-    }
-
-    /**
-     * The delegate to be called when a client connects
-     *
-     * @param {ClientConnectionPacket} packet The packet the client connected with
-     * @param {(Player | undefined)} player The player which connected. Should always be a Player
-     * @memberof PlayerNetworkManager
-     */
-    public connectionDelegate(packet: ClientConnectionPacket, player: Player | undefined) {
-        this.setClientPlayer({id: packet.clientID, ip: packet.ip}, player!);
-    }
-    /**
-     * The delegate to be called when a client connects
-     *
-     * @param {ClientDisconnectPacket} packet The packet the client disconnected with
-     * @param {(Player | undefined)} player The player which connected. Should always be a Player
-     * @memberof PlayerNetworkManager
-     */
-    public disconnectionDelegate(packet: ClientDisconnectPacket, player: Player | undefined) {
-        this.removePlayer(player!);
     }
 
     public getPlayerFromIP(ip: string) {

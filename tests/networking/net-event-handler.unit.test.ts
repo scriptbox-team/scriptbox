@@ -1,5 +1,5 @@
-import Player from "core/players/player";
-import _PlayerManagerInterface from "core/players/player-manager-interface";
+import Player from "core/player";
+import _PlayerManagerInterface from "core/player-manager-interface";
 import ClientNetEvent, { ClientEventType } from "networking/client-net-event";
 import NetEventHandler from "networking/net-event-handler";
 import ClientAddComponentPacket from "networking/packets/client-add-component-packet";

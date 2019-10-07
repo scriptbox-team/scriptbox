@@ -1,12 +1,12 @@
-import PlayerManager from "core/players/player-manager";
+import PlayerManager from "core/player-manager";
 
-import _Player from "core/players/player";
-jest.mock("core/players/player");
+import _Player from "core/player";
+jest.mock("core/player");
 // tslint:disable-next-line: variable-name
 const Player = _Player as jest.Mock<_Player>;
 
-import _PlayerManagerInterface from "core/players/player-manager-interface";
-jest.mock("core/players/player-manager-interface");
+import _PlayerManagerInterface from "core/player-manager-interface";
+jest.mock("core/player-manager-interface");
 // tslint:disable-next-line: variable-name
 const PlayerManagerInterface = _PlayerManagerInterface as jest.Mock<_PlayerManagerInterface>;
 

@@ -1,7 +1,8 @@
+import { PlayerGroupType } from "core/player-group";
 import PlayerNetworkManager from "networking/player-network-manager";
 import ServerNetEvent from "networking/server-net-event";
+
 import ServerMessage from "./server-message";
-import { MessageRecipientType } from "./server-message-recipient";
 
 /**
  * A class responsible for converting outgoing server messages into packets to be sent to multiple clients.
@@ -29,34 +30,34 @@ export default class ServerMessageBroadcaster {
      */
     public sendMessages() {
         for (const m of this._messageQueue) {
-            switch (m.recipient.recipientType) {
-                case MessageRecipientType.All: {
+            switch (m.recipient.groupType) {
+                case PlayerGroupType.All: {
                     const players = this._playerNetworkManager.getConnectedPlayers();
                     for (const c of players) {
                         const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
-                        if (connection != null) {
+                        if (connection !== undefined) {
                             this.sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case MessageRecipientType.Except: {
+                case PlayerGroupType.Except: {
                     const playerSet = new Set(this._playerNetworkManager.getConnectedPlayers());
                     for (const c of m.recipient.players) {
                         playerSet.delete(c.id);
                     }
                     for (const c of playerSet) {
                         const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
-                        if (connection != null) {
+                        if (connection !== undefined) {
                             this.sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case MessageRecipientType.Only: {
+                case PlayerGroupType.Only: {
                     for (const c of m.recipient.players) {
                         const connection = this._playerNetworkManager.getClientIDFromPlayer(c);
-                        if (connection != null) {
+                        if (connection !== undefined) {
                             this.sendPacket(connection, m.message);
                         }
                     }

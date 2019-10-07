@@ -1,3 +1,6 @@
+import Player from "./player";
+import PlayerGroup from "./player-group";
+
 interface IComponentInfo {
     id: number;
     name: string;
@@ -16,4 +19,6 @@ export default interface IExports {
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
     watchedEntityInfo: {[watcherID: string]: IEntityInfo};
+    players?: {[playerID: string]: Player};
+    messages?: Array<{recipient: PlayerGroup, message: string}>;
 }
