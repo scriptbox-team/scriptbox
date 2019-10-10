@@ -24,48 +24,45 @@ export default class ScriptwiseSystem {
     }
     public async runPlayerScript(code: string, args: string, thisValue?: IVM.Reference<any>) {
         const argsArray = ArgumentParser.parse(args);
-        if (thisValue === undefined) {
-            return this.scriptRunner.build(code, {args: argsArray, IVM}, undefined, undefined, 500);
-        }
         return this.scriptRunner.build(
             code,
-            {args: argsArray, thisEntity: thisValue.derefInto()},
+            {args: argsArray, thisEntity: thisValue === undefined ? undefined : thisValue.derefInto()},
             undefined,
             undefined,
             500,
             this._prebuiltScripts
         );
     }
-    public execute(modulePath: string, name: string, ...params: any) {
-        const module = this.getModule(modulePath);
-        return module.execute(name, ...params);
+    public execute(componentPath: string, name: string, ...params: any) {
+        const component = this.getComponent(componentPath);
+        return component.execute(name, ...params);
     }
-    public executeReturnRef(modulePath: string, name: string, ...params: any) {
-        const funcRef = this.getModule(modulePath).getReference(name);
-        const context = this.getModule(modulePath).context;
+    public executeReturnRef(componentPath: string, name: string, ...params: any) {
+        const funcRef = this.getComponent(componentPath).getReference(name);
+        const context = this.getComponent(componentPath).context;
         const script = `
             export function run(func, ...args) {return new IVM.Reference(func(args))};
         `;
-        const tmpModule = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
-        const res = tmpModule.execute("run", ...[funcRef.derefInto(), ...params]);
+        const tmpComponent = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
+        const res = tmpComponent.execute("run", ...[funcRef.derefInto(), ...params]);
         if (res.typeof === "undefined") {
             return undefined;
         }
         return res;
     }
-    public get(modulePath: string, name: string): any {
-        const module = this.getModule(modulePath);
-        return module.get(name);
+    public get(componentPath: string, name: string): any {
+        const component = this.getComponent(componentPath);
+        return component.get(name);
     }
-    public runPostScript(modulePath: string, script: string) {
-        const context = this.getModule(modulePath).context;
+    public runPostScript(componentPath: string, script: string) {
+        const context = this.getComponent(componentPath).context;
         return this.scriptRunner.buildSync(script, {IVM}, undefined, context);
     }
-    private getModule(modulePath: string) {
-        const module = this._prebuiltScripts[modulePath];
-        if (module === undefined) {
-            throw new Error("Module at path " + modulePath + " could not be found.");
+    private getComponent(componentPath: string) {
+        const component = this._prebuiltScripts[componentPath];
+        if (component === undefined) {
+            throw new Error("Component at path " + componentPath + " could not be found.");
         }
-        return module;
+        return component;
     }
 }

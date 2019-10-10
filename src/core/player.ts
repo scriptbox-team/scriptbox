@@ -1,30 +1,26 @@
-import PlayerManagerInterface from "./player-manager-interface";
-
-/**
- * A player that is connected to the server.
- * This is not the entity the player is controlling but rather the things about the player itself.
- * The data for the player is contained within the PlayerManager. However, this class uses
- * a PlayerManagerInterface to call the methods of the PlayerManager for security reasons.
- *
- * @export
- * @class Player
- */
 export default class Player {
-    public id: number;
+    public get id() {
+        return this._id;
+    }
+    public get username() {
+        return this._username;
+    }
+    public get clientID() {
+        return this._clientID;
+    }
+    public displayName: string;
     public controllingEntity: number | null;
     public controlSet: {[input: string]: string};
-    private _playerManagerInterface: PlayerManagerInterface;
-    /**
-     * Creates an instance of Player.
-     * This should only be called by the PlayerManager.
-     * @param {number} id The ID of the player to create
-     * @param {PlayerManagerInterface} playerManagerInterface An interface to the methods to get player information.
-     * @memberof Player
-     */
-    constructor(id: number, playerManagerInterface: PlayerManagerInterface) {
-        this.id = id;
+    private _id: string;
+    private _username: string;
+    private _clientID: number;
+
+    constructor(id: string, clientID: number, username: string, displayName: string) {
+        this._id = id;
+        this._clientID = clientID;
+        this._username = username;
+        this.displayName = displayName;
         this.controllingEntity = null;
-        this._playerManagerInterface = playerManagerInterface;
         this.controlSet = {
             38: "up",
             40: "down",
@@ -34,24 +30,5 @@ export default class Player {
     }
     public convertInput(input: number): string {
         return this.controlSet["" + input];
-    }
-    /**
-     * The user name of the player.
-     *
-     * @readonly
-     * @type {string}
-     * @memberof Player
-     */
-    get username(): string {
-        return this._playerManagerInterface.getUsername(this.id);
-    }
-
-    get displayName(): string {
-        return this._playerManagerInterface.getDisplayName(this.id);
-    }
-
-    set displayName(newName: string) {
-        this._playerManagerInterface.setDisplayName(this.id, newName);
-
     }
 }

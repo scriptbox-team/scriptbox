@@ -1,7 +1,7 @@
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 
-const serializedPacket = {script: "testScriptID", args: "banana 2", entityID: 123};
-const packet = new ClientExecuteScriptPacket("testScriptID", "banana 2", 123);
+const serializedPacket = {script: "testScriptID", args: "banana 2", entityID: "123"};
+const packet = new ClientExecuteScriptPacket("testScriptID", "banana 2", "123");
 
 describe("ClientExecuteScriptPacket", () => {
     test("serializes", () => {

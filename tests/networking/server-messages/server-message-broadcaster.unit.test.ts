@@ -1,39 +1,32 @@
+import _Manager from "core/manager";
 import Player from "core/player";
 import PlayerGroup, { PlayerGroupType } from "core/player-group";
-import _PlayerManagerInterface from "core/player-manager-interface";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
-import _PlayerNetworkManager from "networking/player-network-manager";
 import ServerMessage from "networking/server-messages/server-message";
 import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 
-jest.mock("networking/player-network-manager");
+jest.mock("core/manager");
 // tslint:disable-next-line: variable-name
-const PlayerNetworkManager = _PlayerNetworkManager as jest.Mock<_PlayerNetworkManager>;
+const PlayerManager = _Manager as jest.Mock<_Manager<Player>>;
 
-jest.mock("core/player-manager-interface");
-// tslint:disable-next-line: variable-name
-const PlayerManagerInterface = _PlayerManagerInterface as jest.Mock<_PlayerManagerInterface>;
-
+let playerMap!: Map<string, Player>;
+let mockManager!: _Manager<Player>;
 let serverMessageBroadcaster!: ServerMessageBroadcaster;
-const mockManager = new PlayerNetworkManager();
 
 beforeEach(() => {
+    mockManager = new PlayerManager();
     serverMessageBroadcaster = new ServerMessageBroadcaster(mockManager);
-    PlayerNetworkManager.mock.instances[0].getConnectedPlayers = () => {
-        return [
-           0,
-           1,
-           2,
-           4
-        ];
-    };
-    PlayerNetworkManager.mock.instances[0].getClientIDFromPlayerID = (id) => {
-        return [2, 4, 5, 6, 7][id];
-    };
-    PlayerNetworkManager.mock.instances[0].getClientIDFromPlayer = (player: Player) => {
-        return [2, 4, 5, 6, 7][player.id];
-    };
+    playerMap = new Map<string, Player>([
+        ["player2id", new Player("player2id", 2, "player2", "Player 2")],
+        ["player4id", new Player("player4id", 4, "player4", "Player 4")],
+        ["player5id", new Player("player5id", 5, "player5", "Player 5")],
+        ["player6id", new Player("player6id", 6, "player6", "Player 6")],
+        ["player7id", new Player("player7id", 7, "player7", "Player 7")]
+    ]);
+    mockManager.entries = jest.fn(() => {
+        return playerMap.entries();
+    });
 });
 
 describe("ServerMessageBroadcaster", () => {
@@ -47,11 +40,12 @@ describe("ServerMessageBroadcaster", () => {
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
         serverMessageBroadcaster.sendMessages();
-        expect(callback.mock.calls.length).toEqual(4);
+        expect(callback.mock.calls.length).toEqual(5);
         expect(callback.mock.calls.sort()).toEqual([
             [2, event],
             [4, event],
             [5, event],
+            [6, event],
             [7, event]
         ].sort());
     });
@@ -61,7 +55,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.Only, [new Player(2, new PlayerManagerInterface())])
+            new PlayerGroup(PlayerGroupType.Only, [new Player("player5id", 5, "player5", "Player 5")])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
@@ -78,8 +72,8 @@ describe("ServerMessageBroadcaster", () => {
         const message = new ServerMessage(
             event,
             new PlayerGroup(PlayerGroupType.Only, [
-                new Player(2, new PlayerManagerInterface()),
-                new Player(1, new PlayerManagerInterface())
+                new Player("player5id", 5, "player5", "Player 5"),
+                new Player("player4id", 4, "player4", "Player 4")
             ])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
@@ -97,15 +91,16 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.Except, [new Player(2, new PlayerManagerInterface())])
+            new PlayerGroup(PlayerGroupType.Except, [new Player("player5id", 5, "player5", "Player 5")])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
         serverMessageBroadcaster.sendMessages();
-        expect(callback.mock.calls.length).toEqual(3);
+        expect(callback.mock.calls.length).toEqual(4);
         expect(callback.mock.calls.sort()).toEqual([
             [2, event],
             [4, event],
+            [6, event],
             [7, event]
         ].sort());
     });

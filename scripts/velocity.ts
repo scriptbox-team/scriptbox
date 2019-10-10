@@ -1,8 +1,8 @@
 import Aspect from "./aspect";
-import Module from "./module";
+import Component from "./component";
 import Position from "./position";
 
-export default class Velocity extends Module {
+export default class Velocity extends Component {
     public x: Aspect<number> = new Aspect(0);
     public y: Aspect<number> = new Aspect(0);
 

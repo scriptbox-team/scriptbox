@@ -2,8 +2,9 @@ import _ from "lodash";
 import NetworkSystem from "networking/network-system";
 
 import GameLoop from "./game-loop";
+import IDGenerator from "./id-generator";
+import Manager from "./manager";
 import Player from "./player";
-import PlayerManager from "./player-manager";
 import PlayerManagerNetworker from "./player-manager-networker";
 import DisplaySystem from "./systems/display-system";
 import DisplaySystemNetworker from "./systems/display-system-networker";
@@ -56,8 +57,10 @@ interface IServerConstructorOptions {
  */
 export default class Server {
     private _tickRate: number;
-    private _playerManager: PlayerManager;
+    private _playerManager: Manager<Player>;
     private _playerManagerNetworker: PlayerManagerNetworker;
+
+    private _usernameToPlayer: Map<string, Player>;
 
     private _networkSystem: NetworkSystem;
     private _messageSystem: MessageSystem;
@@ -68,6 +71,7 @@ export default class Server {
     private _resourceSystemNetworker: ResourceSystemNetworker;
     private _gameSystem: GameSystem;
     private _gameSystemNetworker: GameSystemNetworker;
+    private _idGenerator: IDGenerator;
 
     private _loop: GameLoop;
     /**
@@ -78,26 +82,34 @@ export default class Server {
      */
     constructor(options: IServerConstructorOptions) {
         this.tick = this.tick.bind(this);
+        this.createPlayer = this.createPlayer.bind(this);
+        this.deletePlayer = this.deletePlayer.bind(this);
+        this._idGenerator = new IDGenerator(Math.random());
 
         this._tickRate = 60;
         if (options.tickRate !== undefined) {
             this._tickRate = options.tickRate;
         }
-        this._playerManager = new PlayerManager();
-        this._playerManagerNetworker = new PlayerManagerNetworker(this._playerManager);
+        this._playerManager = new Manager<Player>(this.createPlayer, this.deletePlayer);
+        this._playerManagerNetworker = new PlayerManagerNetworker(this._playerManager, this._idGenerator);
+        this._usernameToPlayer = new Map<string, Player>();
 
-        this._networkSystem = new NetworkSystem({maxPlayers: options.maxPlayers, port: options.port});
+        this._networkSystem = new NetworkSystem(
+            {maxPlayers: options.maxPlayers, port: options.port},
+            this._playerManager
+        );
         this._messageSystem = new MessageSystem();
         this._messageSystemNetworker = new MessageSystemNetworker(this._messageSystem);
         this._displaySystem = new DisplaySystem();
         this._displaySystemNetworker = new DisplaySystemNetworker(this._displaySystem);
         this._resourceSystem = new ResourceSystem(
+            this._idGenerator,
             {
                 serverPort: "7778",
                 resourcePath: "./data/res/"
             }
         );
-        this._resourceSystem.playerByUsername = (username) => this._playerManager.getPlayerByUsername(username);
+        this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
         this._gameSystem = new GameSystem();
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
@@ -140,10 +152,11 @@ export default class Server {
     private tick() {
         try {
             const exportValues = this._gameSystem.update();
-            exportValues.players = this._playerManager.getPlayerIDs().reduce((acc, playerID) => {
-                acc["" + playerID] = this._playerManager.idToPlayerObject(playerID);
-                return acc;
-            }, {} as {[id: string]: Player});
+            exportValues.players = {};
+            const playerEntries = this._playerManager.entries();
+            for (const [id, player] of playerEntries) {
+                exportValues.players[id] = player;
+            }
             this._displaySystem.broadcastDisplay(exportValues);
             this._displaySystem.sendWatchedObjects(exportValues);
 
@@ -152,9 +165,19 @@ export default class Server {
             }
 
             this._networkSystem.sendMessages();
+            this._resourceSystem.deleteQueued();
+            this._playerManager.deleteQueued();
         }
         catch (error) {
             console.log(error);
         }
+    }
+    private createPlayer(id: string, clientID: number, username: string, displayName: string) {
+        const player = new Player(id, clientID, username, displayName);
+        this._usernameToPlayer.set(username, player);
+        return player;
+    }
+    private deletePlayer(player: Player) {
+        this._usernameToPlayer.delete(player.username);
     }
 }

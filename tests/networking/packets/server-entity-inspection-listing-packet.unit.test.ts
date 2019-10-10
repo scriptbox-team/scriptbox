@@ -4,7 +4,7 @@ import ComponentOption, { ComponentOptionType } from "resource-management/compon
 
 const serializedPacket = {components: [
     {
-        id: 123,
+        id: "123",
         name: "Test Component",
         creator: "nobody",
         description: "a good component",
@@ -35,7 +35,7 @@ const serializedPacket = {components: [
         }]
     },
     {
-        id: 124,
+        id: "124",
         name: "Test Component 2",
         creator: "nobody else",
         description: "a gooder component",
@@ -65,21 +65,21 @@ const serializedPacket = {components: [
             currentValue: "false"
         }]
     }
-], entityID: 123};
+], entityID: "123"};
 const packet = new ServerEntityInspectionListingPacket(
     [
-        new ComponentInfo(123, "Test Component", "nobody", "a good component", 10000, "noIcon", [
+        new ComponentInfo("123", "Test Component", "nobody", "a good component", 10000, "noIcon", [
             new ComponentOption("testVar", "testVar", ComponentOptionType.Number, "12", true),
             new ComponentOption("testVar2", "Test Var 2", ComponentOptionType.String, "pineapple", false, "apple"),
             new ComponentOption("testVar3", "Test Var 3", ComponentOptionType.Boolean, "true", false, "false")
         ]),
-        new ComponentInfo(124, "Test Component 2", "nobody else", "a gooder component", 10001, "noIcon", [
+        new ComponentInfo("124", "Test Component 2", "nobody else", "a gooder component", 10001, "noIcon", [
             new ComponentOption("testVar4", "testVar4", ComponentOptionType.Number, "12", true),
             new ComponentOption("testVar5", "Test Var 5", ComponentOptionType.String, "pineapple", false, "apple"),
             new ComponentOption("testVar6", "Test Var 6", ComponentOptionType.Boolean, "true", false, "false")
         ])
     ]
-    , 123);
+    , "123");
 
 test("ServerEntityInspectionListingPacket::Serialization", () => {
     const serializedTest = packet.serialize();

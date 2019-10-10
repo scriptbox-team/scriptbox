@@ -1,7 +1,7 @@
 import Aspect from "./aspect";
-import Module from "./module";
+import Component from "./component";
 
-export default class CollisionBox extends Module {
+export default class CollisionBox extends Component {
     public x1: Aspect<number> = new Aspect(0);
     public y1: Aspect<number> = new Aspect(0);
     public x2: Aspect<number> = new Aspect(0);

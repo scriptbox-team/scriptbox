@@ -3,8 +3,8 @@ import RenderObject from "resource-management/render-object";
 
 const displayPackage = [
     new RenderObject(
-        123,
-        456,
+        "123",
+        "456",
         "testTex",
         {
             x: 4,
@@ -20,8 +20,8 @@ const displayPackage = [
         false
     ),
     new RenderObject(
-        124,
-        222,
+        "124",
+        "222",
         "testTex2",
         {
             x: 20,

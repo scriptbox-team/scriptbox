@@ -2,13 +2,13 @@ import Player from "./player";
 import PlayerGroup from "./player-group";
 
 interface IComponentInfo {
-    id: number;
+    id: string;
     name: string;
     attributes: Array<{name: string, kind: string, value: string}>;
 }
 
 interface IEntityInfo {
-    id: number;
+    id: string;
     name: string;
     componentInfo: {[localID: string]: IComponentInfo};
 }

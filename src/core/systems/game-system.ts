@@ -16,11 +16,9 @@ export default class GameSystem extends System {
         this._scriptwiseSystem = new ScriptwiseSystem(
             path.join(__dirname, "../../__scripted__/"), [
                 "./aspect.ts",
-                "./entity-manager-interface.ts",
-                "./entity-manager-module-interface.ts",
-                "./entity-manager.ts",
+                "./manager.ts",
                 "./entity.ts",
-                "./module.ts",
+                "./component.ts",
                 "./position.ts",
                 "./scripted-server-subsystem.ts",
                 "./aspect.ts",
@@ -28,7 +26,10 @@ export default class GameSystem extends System {
                 "./default-control.ts",
                 "./aspect-array.ts",
                 "./velocity.ts",
-                "./collision-box.ts"
+                "./collision-box.ts",
+                "./meta-info.ts",
+                "./manager.ts",
+                "./id-generator.ts"
             ]
         );
     }
@@ -51,7 +52,7 @@ export default class GameSystem extends System {
         const entID = this._scriptwiseSystem.execute("./scripted-server-subsystem", "createEntity");
         this._scriptwiseSystem.execute(
             "./scripted-server-subsystem",
-            "createModule",
+            "createComponent",
             entID,
             "position",
             "position",
@@ -60,7 +61,7 @@ export default class GameSystem extends System {
         );
         this._scriptwiseSystem.execute(
             "./scripted-server-subsystem",
-            "createModule",
+            "createComponent",
             entID,
             "velocity",
             "velocity",
@@ -69,7 +70,7 @@ export default class GameSystem extends System {
         );
         this._scriptwiseSystem.execute(
             "./scripted-server-subsystem",
-            "createModule",
+            "createComponent",
             entID,
             "default-control",
             "control"
@@ -90,7 +91,7 @@ export default class GameSystem extends System {
         const entID = this._scriptwiseSystem.execute("./scripted-server-subsystem", "createEntity");
         this._scriptwiseSystem.execute(
             "./scripted-server-subsystem",
-            "createModule",
+            "createComponent",
             entID,
             "position",
             "position",
@@ -98,20 +99,20 @@ export default class GameSystem extends System {
             y
         );
     }
-    public deleteEntity(id: number) {
+    public deleteEntity(id: string) {
         this._scriptwiseSystem.execute("./scripted-server-subsystem", "deleteEntity", id);
     }
-    public setPlayerEntityWatch(player: Player, entityID?: number) {
+    public setPlayerEntityWatch(player: Player, entityID?: string) {
         this._scriptwiseSystem.execute("./scripted-server-subsystem", "watchEntity", player.id, entityID);
     }
-    public removeComponent(componentID: number) {
+    public removeComponent(componentID: string) {
         this._scriptwiseSystem.execute(
             "./scripted-server-subsystem",
-            "deleteModule",
+            "deleteComponent",
             componentID
         );
     }
-    public async runResourcePlayerScript(resourceID: string, args: string, player: Player, entityID?: number) {
+    public async runResourcePlayerScript(resourceID: string, args: string, player: Player, entityID?: string) {
         try {
             if (this.loadScriptResource !== undefined) {
                 const script = await this.loadScriptResource(resourceID);
@@ -144,7 +145,7 @@ export default class GameSystem extends System {
             console.log(err);
         }
     }
-    public async runPlayerScript(code: string, args: string, player: Player, entityID?: number, className?: string) {
+    public async runPlayerScript(code: string, args: string, player: Player, entityID?: string, className?: string) {
         let thisValue: IVM.Reference<any> | undefined;
         if (entityID !== undefined) {
             thisValue = this._scriptwiseSystem.executeReturnRef(
@@ -158,14 +159,14 @@ export default class GameSystem extends System {
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptwiseSystem.execute(
                 "./scripted-server-subsystem",
-                "setModuleClass",
+                "setComponentClass",
                 defaultExport.derefInto(),
                 className
             );
             if (entityID !== undefined) {
                 this._scriptwiseSystem.execute(
                     "./scripted-server-subsystem",
-                    "createModule",
+                    "createComponent",
                     entityID,
                     className,
                     className

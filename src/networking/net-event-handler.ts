@@ -15,7 +15,6 @@ import ClientObjectDeletionPacket from "./packets/client-object-deletion-packet"
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "./packets/client-token-request-packet";
 import ClientWatchEntityPacket from "./packets/client-watch-entity-packet";
-import PlayerNetworkManager from "./player-network-manager";
 
 /**
  * A class that takes in ClientNetEvents and accordingly serializes and routes them based on type.
@@ -26,8 +25,8 @@ import PlayerNetworkManager from "./player-network-manager";
  * @class NetEventHandler
  */
 export default class NetEventHandler {
-    public playerCreate?: (packet: ClientConnectionPacket) => Player;
-    public playerRemove?: (packet: ClientDisconnectPacket, player: Player | undefined) => void;
+    public playerCreate?: (connectionID: number, packet: ClientConnectionPacket) => Player;
+    public playerRemove?: (packet: ClientDisconnectPacket, player: Player) => void;
     private _connectionDelegates: Array<(packet: ClientConnectionPacket, player: Player) => void>;
     private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Player) => void>;
     private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Player) => void>;
@@ -42,15 +41,13 @@ export default class NetEventHandler {
     private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Player) => void>;
     private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Player) => void>;
     private _watchEntityDelegates: Array<(packet: ClientWatchEntityPacket, player: Player) => void>;
-    private _playerNetworkManager: PlayerNetworkManager;
-
+    private _connectionIDToPlayer: Map<number, Player> = new Map<number, Player>();
     /**
      * Creates an instance of NetEventHandler.
      * @param {PlayerNetworkManager} playerNetworkManager The PlayerNetworkManager to take in
      * @memberof NetEventHandler
      */
-    constructor(playerNetworkManager: PlayerNetworkManager) {
-        this._playerNetworkManager = playerNetworkManager;
+    constructor() {
         this._connectionDelegates = new Array<(packet: ClientConnectionPacket, player: Player) => void>();
         this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Player) => void>();
         this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Player) => void>();
@@ -153,7 +150,8 @@ export default class NetEventHandler {
             case ClientEventType.Connection: {
                 const data = ClientConnectionPacket.deserialize(event.data);
                 if (data !== undefined) {
-                    const player = this.playerCreate!(data);
+                    const player = this.playerCreate!(connectionID, data);
+                    this._connectionIDToPlayer.set(connectionID, player);
                     this.sendToDelegates(
                         data,
                         player,
@@ -165,22 +163,23 @@ export default class NetEventHandler {
             case ClientEventType.Disconnect: {
                 const data = ClientDisconnectPacket.deserialize(event.data);
                 if (data !== undefined) {
-                    const player = this._playerNetworkManager.getPlayerFromConnectionID(connectionID);
+                    const player = this.getPlayerFromConnectionID(connectionID);
                     if (player !== undefined) {
                         this.sendToDelegates(
                             data,
                             player,
                             this._disconnectionDelgates
                         );
+                        this.playerRemove!(data, player);
+                        this._connectionIDToPlayer.delete(connectionID);
                     }
-                    this.playerRemove!(data, player);
                 }
                 break;
             }
             case ClientEventType.Input: {
                 this.sendToDelegates(
                     ClientKeyboardInputPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._inputDelegates
                 );
                 break;
@@ -188,7 +187,7 @@ export default class NetEventHandler {
             case ClientEventType.ChatMessage: {
                 this.sendToDelegates(
                     ClientChatMessagePacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._chatMessageDelegates
                 );
                 break;
@@ -196,7 +195,7 @@ export default class NetEventHandler {
             case ClientEventType.ObjectCreation: {
                 this.sendToDelegates(
                     ClientObjectCreationPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._objectCreationDelegates
                 );
                 break;
@@ -204,7 +203,7 @@ export default class NetEventHandler {
             case ClientEventType.ObjectDeletion: {
                 this.sendToDelegates(
                     ClientObjectDeletionPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._objectDeletionDelegates
                 );
                 break;
@@ -212,7 +211,7 @@ export default class NetEventHandler {
             case ClientEventType.TokenRequest: {
                 this.sendToDelegates(
                     ClientTokenRequestPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._tokenRequestDelegates
                 );
                 break;
@@ -220,7 +219,7 @@ export default class NetEventHandler {
             case ClientEventType.ModifyMetadata: {
                 this.sendToDelegates(
                     ClientModifyMetadataPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._modifyMetadataDelegates
                 );
                 break;
@@ -228,7 +227,7 @@ export default class NetEventHandler {
             case ClientEventType.AddComponent: {
                 this.sendToDelegates(
                     ClientAddComponentPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._addComponentDelegates
                 );
                 break;
@@ -236,7 +235,7 @@ export default class NetEventHandler {
             case ClientEventType.RemoveComponent: {
                 this.sendToDelegates(
                     ClientRemoveComponentPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._removeComponentDelegates
                 );
                 break;
@@ -244,7 +243,7 @@ export default class NetEventHandler {
             case ClientEventType.EditComponent: {
                 this.sendToDelegates(
                     ClientEditComponentPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._editComponentDelegates
                 );
                 break;
@@ -252,7 +251,7 @@ export default class NetEventHandler {
             case ClientEventType.ExecuteScript: {
                 this.sendToDelegates(
                     ClientExecuteScriptPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._executeScriptDelegates
                 );
                 break;
@@ -260,7 +259,7 @@ export default class NetEventHandler {
             case ClientEventType.Keybinds: {
                 this.sendToDelegates(
                     ClientKeybindsPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._keybindingDelegates
                 );
                 break;
@@ -268,7 +267,7 @@ export default class NetEventHandler {
             case ClientEventType.WatchEntity: {
                 this.sendToDelegates(
                     ClientWatchEntityPacket.deserialize(event.data),
-                    this._playerNetworkManager.getPlayerFromConnectionID(connectionID),
+                    this.getPlayerFromConnectionID(connectionID),
                     this._watchEntityDelegates
                 );
                 break;
@@ -295,5 +294,8 @@ export default class NetEventHandler {
                 f(packet, player);
             }
         }
+    }
+    private getPlayerFromConnectionID(connectionID: number) {
+        return this._connectionIDToPlayer.get(connectionID);
     }
 }

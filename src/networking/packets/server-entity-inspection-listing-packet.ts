@@ -7,7 +7,7 @@ export default class ServerEntityInspectionListingPacket extends Packet {
         if (typeof obj === "object" && obj !== null) {
             if (
                 Array.isArray(obj.components)
-                && typeof(obj.entityID) === "number"
+                && typeof(obj.entityID) === "string"
             ) {
                 const componentArray: ComponentInfo[] = [];
                 const allClear = _.every(obj.resources, (elem) => {
@@ -35,8 +35,8 @@ export default class ServerEntityInspectionListingPacket extends Packet {
     }
 
     public components: ComponentInfo[];
-    public entityID: number;
-    constructor(components: ComponentInfo[], entityID: number) {
+    public entityID: string;
+    constructor(components: ComponentInfo[], entityID: string) {
         super();
         this.components = components;
         this.entityID = entityID;

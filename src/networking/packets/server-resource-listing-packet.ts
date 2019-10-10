@@ -15,6 +15,7 @@ export default class ServerResourceListingPacket extends Packet {
                         elem.type,
                         elem.name,
                         elem.creator,
+                        elem.owner,
                         elem.description,
                         elem.time,
                         elem.icon

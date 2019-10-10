@@ -4,7 +4,7 @@ export default class ClientObjectDeletionPacket extends Packet {
     public static deserialize(obj: any): ClientObjectDeletionPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
-                typeof obj.id === "number"
+                typeof obj.id === "string"
             ) {
                 return new ClientObjectDeletionPacket(obj.id);
             }
@@ -12,8 +12,8 @@ export default class ClientObjectDeletionPacket extends Packet {
         }
     }
 
-    public id: number;
-    constructor(id: number) {
+    public id: string;
+    constructor(id: string) {
         super();
         this.id = id;
     }

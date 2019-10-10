@@ -93,7 +93,9 @@ export default class NetClient {
      */
     public send(e: ServerNetEvent) {
         try {
-            this.socket.send(e.serialize());
+            if (this.socket.readyState === 1) {
+                this.socket.send(e.serialize());
+            }
         }
         catch (e) {
             throw e;

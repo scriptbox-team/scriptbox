@@ -3,36 +3,35 @@ import Networker from "networking/networker";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 
+import IDGenerator from "./id-generator";
+import Manager from "./manager";
 import Player from "./player";
-import PlayerManager from "./player-manager";
 
 export default class PlayerManagerNetworker extends Networker {
-    private _playerManager: PlayerManager;
-    private _nPlayer = 0; // Temporary, should definitely absolutely not be here if it were permanent
-    constructor(playerManager: PlayerManager) {
+    private _playerManager: Manager<Player>;
+    private _idGenerator: IDGenerator;
+    constructor(playerManager: Manager<Player>, idGenerator: IDGenerator) {
         super();
         this.playerCreate = this.playerCreate.bind(this);
         this.playerDelete = this.playerDelete.bind(this);
         this._playerManager = playerManager;
+        this._idGenerator = idGenerator;
     }
     public hookupInput(netEventHandler: NetEventHandler) {
         netEventHandler.playerCreate = this.playerCreate;
         netEventHandler.playerRemove = this.playerDelete;
     }
-    public playerCreate(packet: ClientConnectionPacket) {
-        const playerNum = this._nPlayer++;
-        const name = "EpicGamer" + playerNum;
+    public playerCreate(connectionID: number, packet: ClientConnectionPacket) {
+        const playerNum = connectionID;
+        const playerID = this._idGenerator.makeFrom("P", Date.now(), Math.random());
+        const username = "EpicGamer" + playerNum;
         const displayName = "Epic Gamer " + playerNum;
-        const player = this._playerManager.createPlayer({
-            controllingEntity: null,
-            username: name,
-            displayName
-        });
+        const player = this._playerManager.create(playerID, connectionID, username, displayName);
         return player;
     }
     public playerDelete(
             packet: ClientDisconnectPacket,
-            player: Player | undefined) {
-        this._playerManager.removePlayer(player!);
+            player: Player) {
+        this._playerManager.queueForDeletion(player.id);
     }
 }

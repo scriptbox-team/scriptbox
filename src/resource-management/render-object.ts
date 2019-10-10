@@ -1,7 +1,7 @@
 export default class RenderObject {
     public static serialize(
-        ownerID: number,
-        id: number,
+        ownerID: string,
+        id: string,
         texture: string,
         textureSubregion: {x: number, y: number, width: number, height: number},
         position: {x: number, y: number},
@@ -9,8 +9,8 @@ export default class RenderObject {
         deleted: boolean
     ) {
         if (
-                typeof ownerID === "number"
-                && typeof id === "number"
+                typeof ownerID === "string"
+                && typeof id === "string"
                 && typeof texture === "string"
                 && typeof textureSubregion === "object"
                 && typeof textureSubregion.x === "number"
@@ -26,16 +26,16 @@ export default class RenderObject {
             return new RenderObject(ownerID, id, texture, textureSubregion, position, depth, deleted);
         }
     }
-    public ownerID: number;
-    public id: number;
+    public ownerID: string;
+    public id: string;
     public texture: string;
     public textureSubregion: {x: number, y: number, width: number, height: number};
     public position: {x: number, y: number};
     public depth: number;
     public deleted: boolean;
     constructor(
-        ownerID: number,
-        id: number,
+        ownerID: string,
+        id: string,
         texture: string,
         subregion: {x: number, y: number, width: number, height: number},
         position: {x: number, y: number},

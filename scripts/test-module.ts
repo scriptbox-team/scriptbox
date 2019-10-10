@@ -1,5 +1,5 @@
-import Module from "./module";
+import Component from "./component";
 
-export default class TestModule extends Module {
+export default class TestComponent extends Component {
 
 }

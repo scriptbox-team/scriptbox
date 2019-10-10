@@ -59,7 +59,6 @@ export default class GameSystemNetworker extends Networker {
     }
     public executeScriptDelegate(
             packet: ClientExecuteScriptPacket, player: Player) {
-        console.log(`execute script: ${packet} [player] ${player}`)
         this._gameSystem.runResourcePlayerScript(packet.script, packet.args, player, packet.entityID);
     }
 }

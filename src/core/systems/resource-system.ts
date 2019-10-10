@@ -1,3 +1,5 @@
+import IDGenerator from "core/id-generator";
+import Manager from "core/manager";
 import Player from "core/player";
 import { UploadedFile } from "express-fileupload";
 import ResourceServer from "networking/resource-server";
@@ -12,7 +14,6 @@ interface IResourceSystemOptions {
 }
 
 interface IPlayerResourceData {
-    nextResourceID: number;
     resources: string[];
 }
 
@@ -20,78 +21,79 @@ export default class ResourceSystem extends System {
     public onPlayerListingUpdate?: (user: Player, resources: Resource[]) => void;
     public playerByUsername?: (username: string) => Player | undefined;
     private _playerResourceData: Map<string, IPlayerResourceData> = new Map<string, IPlayerResourceData>();
-    private _resources: Map<string, Resource> = new Map<string, Resource>();
+    private _resourceManager: Manager<Resource>;
     private _resourceServer: ResourceServer;
     private _playerTokens: Map<number, Player>;
-    constructor(options: IResourceSystemOptions) {
+    private _idGenerator: IDGenerator;
+    constructor(idGenerator: IDGenerator, options: IResourceSystemOptions) {
         super();
+        this.resourceCreate = this.resourceCreate.bind(this);
+        this.onResourceDelete = this.onResourceDelete.bind(this);
+        this._resourceManager = new Manager<Resource>(this.resourceCreate, this.onResourceDelete);
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
         this._playerTokens = new Map<number, Player>();
         this._resourceServer.onFileUpload = this.handleFileUpload;
         this._resourceServer.onFileDelete = this.handleFileDelete;
+        this._idGenerator = idGenerator;
     }
     public addResource(user: string, type: ResourceType, file: UploadedFile): Promise<Resource> {
         let playerResourceData = this._playerResourceData.get(user);
         if (playerResourceData === undefined) {
-            playerResourceData = {nextResourceID: 0, resources: []};
+            playerResourceData = {resources: []};
             this._playerResourceData.set(user, playerResourceData);
         }
-        const resource = new Resource(
-            user + "." + playerResourceData.nextResourceID++,
+        const resource = this._resourceManager.create(
+            this._idGenerator.makeFrom("R", Date.now(), Math.random()),
             type,
             file.name,
+            user,
             user,
             "",
             Date.now(),
             ""
         );
-        this._resources.set(resource.id, resource);
         playerResourceData.resources.push(resource.id);
         this.updateResourceListing(user, this.collectPlayerResources(user));
         return this._resourceServer.add(resource, file);
     }
-    public updateResource(
+    public async updateResource(
             user: string,
             type: ResourceType,
             resourceID: string,
             file: UploadedFile): Promise<Resource> {
-        const resource = this._resources.get(resourceID);
-        const owner = resourceID.split(".")[0];
+        const resource = this._resourceManager.get(resourceID);
         if (resource === undefined) {
             return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
         }
-        else if (owner !== user) {
+        const owner = resource.owner;
+        if (owner !== user) {
             // TODO: Allow admins to edit resources they don't own
             return Promise.reject(`User ${user} does not have priveleges to edit other players' resources`);
-        }
-        const ownerData = this._playerResourceData.get(owner);
-        if (ownerData === undefined) {
-            return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
         }
         // Update the type just in case they uploaded something different
         resource.type = type;
         resource.time = Date.now();
+        // TODO: Allow resources to have multiple contributors (owners)
         this.updateResourceListing(owner, this.collectPlayerResources(owner));
         return this._resourceServer.update(resource, file);
     }
-    public deleteResource(user: string, resourceID: string): Promise<void> {
-        const resource = this._resources.get(resourceID);
-        const owner = resourceID.split(".")[0];
+    public deleteResource(user: string, resourceID: string): void {
+        const resource = this._resourceManager.get(resourceID);
         if (resource === undefined) {
-            return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
+            throw new Error(`Resource of ID \'${resourceID}\' does not exist`);
         }
-        else if (owner !== user) {
+        const owner = resource.owner;
+        if (owner !== user) {
             // TODO: Allow admins to edit resources they don't own
-            return Promise.reject(`User ${user} does not have priveleges to delete other players' resources`);
+            throw new Error(`User ${user} does not have priveleges to delete other players' resources`);
         }
         // Update the type just in case they uploaded something different
         const ownerData = this._playerResourceData.get(owner);
         if (ownerData !== undefined) {
             ownerData.resources.splice(ownerData.resources.findIndex((id) => id === resourceID), 1);
         }
-        this._resources.delete(resourceID);
+        this._resourceManager.queueForDeletion(resourceID);
         this.updateResourceListing(owner, this.collectPlayerResources(owner));
-        return this._resourceServer.delete(resource);
     }
     public handleFileUpload = (token: number, file: UploadedFile, resourceID?: string) => {
         const player = this.getPlayerFromToken(token);
@@ -144,7 +146,7 @@ export default class ResourceSystem extends System {
         if (resource === undefined) {
             throw new Error(`Resource to modify was not found`);
         }
-        const owner = resourceID.split(".")[0];
+        const owner = resource.owner;
         if (owner !== username) {
             throw new Error(`User ${username} does not have priveleges to modify other players' resource data`);
         }
@@ -185,7 +187,10 @@ export default class ResourceSystem extends System {
         return this._resourceServer.loadTextResource(resourceID);
     }
     public getResourceByID(resourceID: string) {
-        return this._resources.get(resourceID);
+        return this._resourceManager.get(resourceID);
+    }
+    public deleteQueued() {
+        this._resourceManager.deleteQueued();
     }
     private updateResourceListing(owner: string, resources: Resource[]) {
         if (this.playerByUsername !== undefined) {
@@ -200,6 +205,20 @@ export default class ResourceSystem extends System {
         if (resourceData === undefined) {
             return [];
         }
-        return resourceData.resources.map((resID) => this._resources.get(resID)!);
+        return resourceData.resources.map((resID) => this._resourceManager.get(resID)!);
+    }
+    private resourceCreate(
+            id: string,
+            type: ResourceType,
+            name: string,
+            creator: string,
+            owner: string,
+            description: string,
+            time: number,
+            icon: string) {
+        return new Resource(id, type, name, creator, owner, description, time, icon);
+    }
+    private onResourceDelete(resource: Resource) {
+        this._resourceServer.delete(resource);
     }
 }

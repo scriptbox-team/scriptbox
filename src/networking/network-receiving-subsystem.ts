@@ -3,7 +3,6 @@ import Networker from "networking/networker";
 
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetHost from "./net-host";
-import PlayerNetworkManager from "./player-network-manager";
 
 /**
  * A subsystem for the Network system concerned with receiving packets from clients.
@@ -14,11 +13,9 @@ import PlayerNetworkManager from "./player-network-manager";
 export default class NetworkReceivingSubsystem {
     private _netEventHandler: NetEventHandler;
     private _netHost: NetHost;
-    private _playerNetworkManager: PlayerNetworkManager;
-    constructor(netHost: NetHost, playerNetworkManager: PlayerNetworkManager) {
+    constructor(netHost: NetHost) {
         this._netHost = netHost;
-        this._playerNetworkManager = playerNetworkManager;
-        this._netEventHandler = new NetEventHandler(this._playerNetworkManager);
+        this._netEventHandler = new NetEventHandler();
 
         this._netHost.on("connection", (connectionID: number, event: ClientNetEvent) => {
             this._netEventHandler.handle(connectionID, event);

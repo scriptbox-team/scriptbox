@@ -39,7 +39,7 @@ export default class DisplaySystemNetworker extends Networker {
             )
         );
     }
-    public onEntityInspectionListing(entityID: number, components: ComponentInfo[], playerGroup: PlayerGroup) {
+    public onEntityInspectionListing(entityID: string, components: ComponentInfo[], playerGroup: PlayerGroup) {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.EntityInspectListing, new ServerEntityInspectionListingPacket(

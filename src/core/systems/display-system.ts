@@ -12,7 +12,7 @@ export default class DisplaySystem extends System {
     private _lastExportValues: IExports;
     private _objectDisplayCallback?: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void;
     private _entityInspectionCallback?: (
-        entityID: number,
+        entityID: string,
         components: ComponentInfo[],
         playerGroup: PlayerGroup) => void;
     constructor() {
@@ -41,16 +41,15 @@ export default class DisplaySystem extends System {
         this._objectDisplayCallback = callback;
     }
     public onEntityInspection(callback: (
-            entityID: number,
+            entityID: string,
             components: ComponentInfo[],
             playerGroup: PlayerGroup) => void) {
         this._entityInspectionCallback = callback;
     }
     public sendWatchedObjects(exportValues: IExports) {
         const players = Object.keys(exportValues.watchedEntityInfo);
-        for (const playerIDString of players) {
-            const entityInfo = exportValues.watchedEntityInfo[playerIDString];
-            const playerID = Number.parseInt(playerIDString, 10);
+        for (const playerID of players) {
+            const entityInfo = exportValues.watchedEntityInfo[playerID];
             const components = Object.values(entityInfo.componentInfo).map((component) => {
                 const attributes = component.attributes.map((attribute) => {
                     let optionType = ComponentOptionType.Object;
@@ -87,10 +86,9 @@ export default class DisplaySystem extends System {
         let arr: RenderObject[] = [];
         for (const datum of [data.added, data.updated, data.removed]) {
             arr = _.transform(datum, (acc, position, id) => {
-                const idNum = Number.parseInt(id, 10);
                 acc.push(new RenderObject(
-                    idNum, // For now these will be the same
-                    idNum,
+                    id, // For now these will be the same
+                    id,
                     "testCombined.png",
                     {x: 0, y: 0, width: 32, height: 32},
                     position,

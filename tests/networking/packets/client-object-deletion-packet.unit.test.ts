@@ -1,7 +1,7 @@
 import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
 
-const serializedPacket = {id: 123};
-const packet = new ClientObjectDeletionPacket(123);
+const serializedPacket = {id: "123"};
+const packet = new ClientObjectDeletionPacket("123");
 
 describe("ClientObjectDeletionPacket", () => {
     test("serializes", () => {

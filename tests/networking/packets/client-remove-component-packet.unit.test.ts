@@ -1,7 +1,7 @@
 import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
 
-const serializedPacket = {componentID: 123};
-const packet = new ClientRemoveComponentPacket(123);
+const serializedPacket = {componentID: "123"};
+const packet = new ClientRemoveComponentPacket("123");
 
 describe("ClientRemoveComponentPacket", () => {
     test("serializes", () => {

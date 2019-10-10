@@ -1,27 +1,31 @@
 import Player from "core/player";
 
-import _PlayerManagerInterface from "core/player-manager-interface";
-jest.mock("core/player-manager-interface");
-// tslint:disable-next-line: variable-name
-const PlayerManagerInterface = _PlayerManagerInterface as jest.Mock<_PlayerManagerInterface>;
-
 let player!: Player;
 
 beforeEach(() => {
-    PlayerManagerInterface.mockReset();
-    player = new Player(0, new PlayerManagerInterface());
+    player = new Player("testPlayerID", 1, "testPlayer", "Test Player");
 });
 
-test("Player::Get Username::Standard Case", () => {
-    const a = player.username;
-    const instance = PlayerManagerInterface.mock.instances[0];
-    expect((instance.getUsername as any).mock.calls.length).toEqual(1);
-});
+describe("Player", () => {
+    test("can convert input", () => {
+        player.controlSet = {
+            38: "up",
+            40: "down",
+            37: "left",
+            39: "right"
+        };
+        const convertedInput = player.convertInput(38);
+        expect(convertedInput).toEqual("up");
+    });
 
-test("Player::Get and Set Display Name::Standard Case", () => {
-    player.displayName = "b";
-    const a = player.displayName;
-    const instance = PlayerManagerInterface.mock.instances[0];
-    expect((instance.setDisplayName as any).mock.calls.length).toEqual(1);
-    expect((instance.getDisplayName as any).mock.calls.length).toEqual(1);
+    test("will return undefined on converting unknown input", () => {
+        player.controlSet = {
+            38: "up",
+            40: "down",
+            37: "left",
+            39: "right"
+        };
+        const convertedInput = player.convertInput(41);
+        expect(convertedInput).toEqual(undefined);
+    });
 });
