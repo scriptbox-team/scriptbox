@@ -3,18 +3,19 @@ import ClientConnectionPacket from "networking/packets/client-connection-packet"
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import Packet from "networking/packets/packet";
+
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import ClientAddComponentPacket from "./packets/client-add-component-packet";
 import ClientChatMessagePacket from "./packets/client-chat-message-packet";
 import ClientEditComponentPacket from "./packets/client-edit-component-packet";
+import ClientEntityCreationPacket from "./packets/client-entity-creation-packet";
+import ClientEntityDeletionPacket from "./packets/client-entity-deletion-packet";
+import ClientEntityInspectionPacket from "./packets/client-entity-inspection-packet";
 import ClientExecuteScriptPacket from "./packets/client-execute-script-packet";
 import ClientKeybindsPacket from "./packets/client-keybinds-packet";
 import ClientModifyMetadataPacket from "./packets/client-modify-metadata-packet";
-import ClientObjectCreationPacket from "./packets/client-object-creation-packet";
-import ClientObjectDeletionPacket from "./packets/client-object-deletion-packet";
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "./packets/client-token-request-packet";
-import ClientWatchEntityPacket from "./packets/client-watch-entity-packet";
 
 /**
  * A class that takes in ClientNetEvents and accordingly serializes and routes them based on type.
@@ -31,8 +32,8 @@ export default class NetEventHandler {
     private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Player) => void>;
     private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Player) => void>;
     private _chatMessageDelegates: Array<(packet: ClientChatMessagePacket, player: Player) => void>;
-    private _objectCreationDelegates: Array<(packet: ClientObjectCreationPacket, player: Player) => void>;
-    private _objectDeletionDelegates: Array<(packet: ClientObjectDeletionPacket, player: Player) => void>;
+    private _entityCreationDelegates: Array<(packet: ClientEntityCreationPacket, player: Player) => void>;
+    private _entityDeletionDelegates: Array<(packet: ClientEntityDeletionPacket, player: Player) => void>;
     private _tokenRequestDelegates: Array<(packet: ClientTokenRequestPacket, player: Player) => void>;
     private _modifyMetadataDelegates: Array<(packet: ClientModifyMetadataPacket, player: Player) => void>;
     private _addComponentDelegates: Array<(packet: ClientAddComponentPacket, player: Player) => void>;
@@ -40,7 +41,7 @@ export default class NetEventHandler {
     private _editComponentDelegates: Array<(packet: ClientEditComponentPacket, player: Player) => void>;
     private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Player) => void>;
     private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Player) => void>;
-    private _watchEntityDelegates: Array<(packet: ClientWatchEntityPacket, player: Player) => void>;
+    private _entityInspectionDelegates: Array<(packet: ClientEntityInspectionPacket, player: Player) => void>;
     private _connectionIDToPlayer: Map<number, Player> = new Map<number, Player>();
     /**
      * Creates an instance of NetEventHandler.
@@ -52,8 +53,8 @@ export default class NetEventHandler {
         this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Player) => void>();
         this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Player) => void>();
         this._chatMessageDelegates = new Array<(packet: ClientChatMessagePacket, player: Player) => void>();
-        this._objectCreationDelegates = new Array<(packet: ClientObjectCreationPacket, player: Player) => void>();
-        this._objectDeletionDelegates = new Array<(packet: ClientObjectDeletionPacket, player: Player) => void>();
+        this._entityCreationDelegates = new Array<(packet: ClientEntityCreationPacket, player: Player) => void>();
+        this._entityDeletionDelegates = new Array<(packet: ClientEntityDeletionPacket, player: Player) => void>();
         this._tokenRequestDelegates = new Array<(packet: ClientTokenRequestPacket, player: Player) => void>();
         this._modifyMetadataDelegates = new Array<(packet: ClientModifyMetadataPacket, player: Player) => void>();
         this._addComponentDelegates = new Array<(packet: ClientAddComponentPacket, player: Player) => void>();
@@ -61,7 +62,7 @@ export default class NetEventHandler {
         this._editComponentDelegates = new Array<(packet: ClientEditComponentPacket, player: Player) => void>();
         this._executeScriptDelegates = new Array<(packet: ClientExecuteScriptPacket, player: Player) => void>();
         this._keybindingDelegates = new Array<(packet: ClientKeybindsPacket, player: Player) => void>();
-        this._watchEntityDelegates = new Array<(packet: ClientWatchEntityPacket, player: Player) => void>();
+        this._entityInspectionDelegates = new Array<(packet: ClientEntityInspectionPacket, player: Player) => void>();
 
     }
     /**
@@ -99,12 +100,12 @@ export default class NetEventHandler {
         this._chatMessageDelegates.push(func);
     }
 
-    public addObjectCreationDelegate(func: (packet: ClientObjectCreationPacket, player: Player) => void) {
-        this._objectCreationDelegates.push(func);
+    public addEntityCreationDelegate(func: (packet: ClientEntityCreationPacket, player: Player) => void) {
+        this._entityCreationDelegates.push(func);
     }
 
-    public addObjectDeletionDelegate(func: (packet: ClientObjectDeletionPacket, player: Player) => void) {
-        this._objectDeletionDelegates.push(func);
+    public addEntityDeletionDelegate(func: (packet: ClientEntityDeletionPacket, player: Player) => void) {
+        this._entityDeletionDelegates.push(func);
     }
 
     public addTokenRequestDelegate(func: (packet: ClientTokenRequestPacket, playeR: Player) => void) {
@@ -135,8 +136,8 @@ export default class NetEventHandler {
         this._keybindingDelegates.push(func);
     }
 
-    public addWatchEntityDelegate(func: (packet: ClientWatchEntityPacket, player: Player) => void) {
-        this._watchEntityDelegates.push(func);
+    public addEntityInspectionDelegate(func: (packet: ClientEntityInspectionPacket, player: Player) => void) {
+        this._entityInspectionDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -192,19 +193,19 @@ export default class NetEventHandler {
                 );
                 break;
             }
-            case ClientEventType.ObjectCreation: {
+            case ClientEventType.EntityCreation: {
                 this._sendToDelegates(
-                    ClientObjectCreationPacket.deserialize(event.data),
+                    ClientEntityCreationPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
-                    this._objectCreationDelegates
+                    this._entityCreationDelegates
                 );
                 break;
             }
-            case ClientEventType.ObjectDeletion: {
+            case ClientEventType.EntityDeletion: {
                 this._sendToDelegates(
-                    ClientObjectDeletionPacket.deserialize(event.data),
+                    ClientEntityDeletionPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
-                    this._objectDeletionDelegates
+                    this._entityDeletionDelegates
                 );
                 break;
             }
@@ -264,11 +265,11 @@ export default class NetEventHandler {
                 );
                 break;
             }
-            case ClientEventType.WatchEntity: {
+            case ClientEventType.EntityInspection: {
                 this._sendToDelegates(
-                    ClientWatchEntityPacket.deserialize(event.data),
+                    ClientEntityInspectionPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
-                    this._watchEntityDelegates
+                    this._entityInspectionDelegates
                 );
                 break;
             }

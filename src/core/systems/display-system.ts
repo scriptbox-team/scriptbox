@@ -10,7 +10,7 @@ import System from "./system";
 
 export default class DisplaySystem extends System {
     private _lastExportValues: IExports;
-    private _objectDisplayCallback?: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void;
+    private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void;
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
@@ -19,7 +19,7 @@ export default class DisplaySystem extends System {
         super();
         this._lastExportValues = {
             entities: {},
-            watchedEntityInfo: {}
+            inspectedEntityInfo: {}
         };
     }
     public sendFullDisplayToPlayer(player: Player) {
@@ -28,17 +28,17 @@ export default class DisplaySystem extends System {
             acc[key] = entity.position;
         }, {} as any as {[id: string]: {x: number, y: number}});
         const updatesToSend = this._dataToDisplayObjects(diff);
-        this._sendObjectDisplaysToPlayer(updatesToSend, player);
+        this._sendDisplayObjectsToPlayer(updatesToSend, player);
     }
 
     public broadcastDisplay(exportValues: IExports) {
         const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
         const updatesToSend = this._dataToDisplayObjects(changes);
-        this._broadcastObjectDisplays(updatesToSend);
+        this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
-    public onObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void) {
-        this._objectDisplayCallback = callback;
+    public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void) {
+        this._renderDisplayObjectCallback = callback;
     }
     public onEntityInspection(callback: (
             entityID: string,
@@ -46,10 +46,10 @@ export default class DisplaySystem extends System {
             playerGroup: PlayerGroup) => void) {
         this._entityInspectionCallback = callback;
     }
-    public sendWatchedObjects(exportValues: IExports) {
-        const players = Object.keys(exportValues.watchedEntityInfo);
+    public sendInspectedEntities(exportValues: IExports) {
+        const players = Object.keys(exportValues.inspectedEntityInfo);
         for (const playerID of players) {
-            const entityInfo = exportValues.watchedEntityInfo[playerID];
+            const entityInfo = exportValues.inspectedEntityInfo[playerID];
             const components = Object.values(entityInfo.componentInfo).map((component) => {
                 const attributes = component.attributes.map((attribute) => {
                     let optionType = ComponentOptionType.Object;
@@ -98,14 +98,14 @@ export default class DisplaySystem extends System {
         }
         return arr;
     }
-    private _broadcastObjectDisplays(pack: RenderObject[]) {
-        this._objectDisplayCallback!(
+    private _broadcastDisplayObjects(pack: RenderObject[]) {
+        this._renderDisplayObjectCallback!(
             pack,
             new PlayerGroup(PlayerGroupType.All, [])
         );
     }
-    private _sendObjectDisplaysToPlayer(pack: RenderObject[], player: Player) {
-        this._objectDisplayCallback!(
+    private _sendDisplayObjectsToPlayer(pack: RenderObject[], player: Player) {
+        this._renderDisplayObjectCallback!(
             pack,
             new PlayerGroup(PlayerGroupType.Only, [player])
         );

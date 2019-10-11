@@ -1,7 +1,7 @@
-import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
+import ClientEntityDeletionPacket from "networking/packets/client-entity-deletion-packet";
 
 const serializedPacket = {id: "123"};
-const packet = new ClientObjectDeletionPacket("123");
+const packet = new ClientEntityDeletionPacket("123");
 
 describe("ClientObjectDeletionPacket", () => {
     test("serializes", () => {
@@ -10,7 +10,7 @@ describe("ClientObjectDeletionPacket", () => {
     });
 
     test("deserializes", () => {
-        const packetTest = ClientObjectDeletionPacket.deserialize(serializedPacket);
+        const packetTest = ClientEntityDeletionPacket.deserialize(serializedPacket);
         expect(packetTest).toEqual(packet);
     });
 });

@@ -1,12 +1,12 @@
 import Packet from "./packet";
 
-export default class ClientWatchEntityPacket extends Packet {
+export default class ClientEntityInspectionPacket extends Packet {
     public static deserialize(obj: any) {
         if (typeof obj === "object" && obj !== null) {
             if (
                 typeof obj.entityID === "string" || obj.entityID === undefined
             ) {
-                return new ClientWatchEntityPacket(obj.entityID);
+                return new ClientEntityInspectionPacket(obj.entityID);
             }
             return undefined;
         }

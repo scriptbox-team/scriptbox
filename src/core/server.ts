@@ -158,7 +158,7 @@ export default class Server {
                 exportValues.players[id] = player;
             }
             this._displaySystem.broadcastDisplay(exportValues);
-            this._displaySystem.sendWatchedObjects(exportValues);
+            this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {
                 this._messageSystem.sendChatMessages(exportValues.messages);

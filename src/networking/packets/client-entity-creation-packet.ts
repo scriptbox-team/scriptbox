@@ -1,14 +1,14 @@
 import Packet from "./packet";
 
-export default class ClientObjectCreationPacket extends Packet {
-    public static deserialize(obj: any): ClientObjectCreationPacket | undefined {
+export default class ClientEntityCreationPacket extends Packet {
+    public static deserialize(obj: any): ClientEntityCreationPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
                 typeof obj.prefabID === "string"
                 && typeof obj.x === "number"
                 && typeof obj.y === "number"
             ) {
-                return new ClientObjectCreationPacket(obj.prefabID, obj.x, obj.y);
+                return new ClientEntityCreationPacket(obj.prefabID, obj.x, obj.y);
             }
             return undefined;
         }

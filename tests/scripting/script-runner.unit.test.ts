@@ -10,10 +10,10 @@ test("ScriptExecutor::run\tBase Case", async () => {
     expect(result).toBe(1040);
 });
 
-// Test whether we can build a module and instantiate it
+// Test whether we can build a script and instantiate it
 test("ScriptExecutor::build\tBase Case", async () => {
     const se = new ScriptRunner();
-    const module = `
+    const testClassScript = `
         let y = 0;
         export default class Test {
             private _x: number;
@@ -37,7 +37,7 @@ test("ScriptExecutor::build\tBase Case", async () => {
         test.addY(3);
         test.getY();
     `;
-    const ref = await se.build(module);
+    const ref = await se.build(testClassScript);
     const def = await ref.getReference("default")!;
 
     const result = (await se.build(instantiationTest, {Test: def.derefInto()})).result;

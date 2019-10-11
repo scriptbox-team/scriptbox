@@ -6,12 +6,12 @@ import ClientChatMessagePacket from "networking/packets/client-chat-message-pack
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientEditComponentPacket from "networking/packets/client-edit-component-packet";
+import ClientEntityCreationPacket from "networking/packets/client-entity-creation-packet";
+import ClientEntityDeletionPacket from "networking/packets/client-entity-deletion-packet";
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeybindsPacket from "networking/packets/client-keybinds-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
-import ClientObjectCreationPacket from "networking/packets/client-object-creation-packet";
-import ClientObjectDeletionPacket from "networking/packets/client-object-deletion-packet";
 import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
 import ClientTokenRequestPacket from "networking/packets/client-token-request-packet";
 import { TokenType } from "networking/packets/server-token-packet";
@@ -67,19 +67,19 @@ describe("NetEventHandler", () => {
         expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles object creation packets", () => {
-        const packet = new ClientObjectCreationPacket("myPrefab", 10, 20);
+        const packet = new ClientEntityCreationPacket("myPrefab", 10, 20);
         const fn = jest.fn();
-        netEventHandler.addObjectCreationDelegate(fn);
-        netEventHandler.handle(1, new ClientNetEvent(ClientEventType.ObjectCreation, packet.serialize()));
+        netEventHandler.addEntityCreationDelegate(fn);
+        netEventHandler.handle(1, new ClientNetEvent(ClientEventType.EntityCreation, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
         expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles object deletion packets", () => {
-        const packet = new ClientObjectDeletionPacket("125");
+        const packet = new ClientEntityDeletionPacket("125");
         const fn = jest.fn();
-        netEventHandler.addObjectDeletionDelegate(fn);
-        netEventHandler.handle(1, new ClientNetEvent(ClientEventType.ObjectDeletion, packet.serialize()));
+        netEventHandler.addEntityDeletionDelegate(fn);
+        netEventHandler.handle(1, new ClientNetEvent(ClientEventType.EntityDeletion, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
         expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));

@@ -37,12 +37,12 @@ interface IExports {
         position: {x: number, y: number},
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
-    watchedEntityInfo: {[watcherID: string]: IEntityInfo};
+    inspectedEntityInfo: {[playerID: string]: IEntityInfo};
 }
 
 const exportValues: IExports = {
     entities: {},
-    watchedEntityInfo: {}
+    inspectedEntityInfo: {}
 };
 
 global.exportValues = exportValues;
@@ -90,7 +90,7 @@ const componentManager = new Manager<Component>(
     }
 );
 
-const watchedEntities: Map<string, string> = new Map<string, string>();
+const inspectedEntities: Map<string, string> = new Map<string, string>();
 
 // TODO: Reconsider all places that use Object.keys (can have undefined values)
 
@@ -189,10 +189,10 @@ export function update() {
             box.y2 = box.x1 + 1;
         }
     }
-    // Retrieve watched object information
-    const playersWatching = watchedEntities.keys();
-    for (const player of playersWatching) {
-        const entityID = watchedEntities.get(player);
+    // Retrieve entity inspection information
+    const playersInspecting = inspectedEntities.keys();
+    for (const player of playersInspecting) {
+        const entityID = inspectedEntities.get(player);
         if (!entityManager.has(entityID)) {
             continue;
         }
@@ -207,7 +207,7 @@ export function update() {
             name: "Entity " + entityID, // temporary
             componentInfo
         };
-        exportValues.watchedEntityInfo[player] = entityInfo;
+        exportValues.inspectedEntityInfo[player] = entityInfo;
     }
 }
 
@@ -343,12 +343,12 @@ export function setComponentClass(classObj: IClassInterface, id: string) {
     }
 }
 
-export function watchEntity(playerID: string, entityID?: string) {
+export function inspectEntity(playerID: string, entityID?: string) {
     if (entityID === undefined) {
-        watchedEntities.delete("" + playerID);
+        inspectedEntities.delete("" + playerID);
     }
     else {
-        watchedEntities.set("" + playerID, entityID);
+        inspectedEntities.set("" + playerID, entityID);
     }
     // TODO: Replace all number IDs with strings
     // TODO: Fix the compiler freaking out about things in __scripted__
@@ -356,7 +356,7 @@ export function watchEntity(playerID: string, entityID?: string) {
 
 const resetExports = () => {
     exportValues.entities = {};
-    exportValues.watchedEntityInfo = {};
+    exportValues.inspectedEntityInfo = {};
 };
 
 /**

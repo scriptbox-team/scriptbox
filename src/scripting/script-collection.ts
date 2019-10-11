@@ -1,28 +1,20 @@
-import fs from "fs";
 import IVM from "isolated-vm";
 import _ from "lodash";
-import path from "path";
 import Script from "scripting/script";
 import ScriptRunner from "scripting/script-runner";
-import ArgumentParser from "./argument-parser";
+import ArgumentParser from "../core/argument-parser";
 
 // TODO: Change Scriptwise System to pass in the scripts directly instead of a list of directories
 // TODO: Rename scriptwise system to something... other than a system
 
-export default class ScriptwiseSystem {
+export default class ScriptCollection {
     public scriptRunner: ScriptRunner;
-    private _prebuiltScripts: {[s: string]: Script};
-    constructor(baseScriptDir: string, relativeFileDirs: string[], addIns?: {[s: string]: object}) {
+    private _prebuiltScripts: {[name: string]: Script};
+    constructor(prebuiltScripts: {[name: string]: string}, addIns?: {[s: string]: object}) {
         this.scriptRunner = new ScriptRunner();
-        const scripts: any = _.transform(relativeFileDirs, (result, value) => {
-            result[value.substr(0, value.length - 3)] = fs.readFileSync(
-                path.join(baseScriptDir, value),
-                {encoding: "utf8"});
-        }, {} as {[s: string]: string});
-
-        this._prebuiltScripts = this.scriptRunner.buildManySync(scripts, addIns);
+        this._prebuiltScripts = this.scriptRunner.buildManySync(prebuiltScripts, addIns);
     }
-    public async runPlayerScript(code: string, args: string, thisValue?: IVM.Reference<any>) {
+    public async runScript(code: string, args: string, thisValue?: IVM.Reference<any>) {
         const argsArray = ArgumentParser.parse(args);
         return this.scriptRunner.build(
             code,
@@ -54,7 +46,7 @@ export default class ScriptwiseSystem {
         const component = this._getComponent(componentPath);
         return component.get(name);
     }
-    public runPostScript(componentPath: string, script: string) {
+    public runIVMScript(componentPath: string, script: string) {
         const context = this._getComponent(componentPath).context;
         return this.scriptRunner.buildSync(script, {IVM}, undefined, context);
     }

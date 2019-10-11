@@ -18,7 +18,7 @@ export default interface IExports {
         position: {x: number, y: number},
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
-    watchedEntityInfo: {[watcherID: string]: IEntityInfo};
+    inspectedEntityInfo: {[playerID: string]: IEntityInfo};
     players?: {[playerID: string]: Player};
     messages?: Array<{recipient: PlayerGroup, message: string}>;
 }

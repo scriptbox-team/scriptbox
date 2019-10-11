@@ -1,41 +1,50 @@
 import Player from "core/player";
 import PlayerGroup, { PlayerGroupType } from "core/player-group";
-import ScriptwiseSystem from "core/scriptwise-system";
+import fs from "fs-extra";
 import IVM from "isolated-vm";
+import _ from "lodash";
 import path from "path";
+import ScriptCollection from "scripting/script-collection";
 
 import System from "./system";
 
 export default class GameSystem extends System {
     public loadScriptResource?: (resourceID: string) => Promise<string>;
     private _messageQueue: Array<{recipient: PlayerGroup, message: string}>;
-    private _scriptwiseSystem: ScriptwiseSystem;
+    private _scriptCollection: ScriptCollection;
     constructor() {
         super();
         this._messageQueue = [];
-        this._scriptwiseSystem = new ScriptwiseSystem(
-            path.join(__dirname, "../../__scripted__/"), [
-                "./aspect.ts",
-                "./manager.ts",
-                "./entity.ts",
-                "./component.ts",
-                "./position.ts",
-                "./scripted-server-subsystem.ts",
-                "./aspect.ts",
-                "./control.ts",
-                "./default-control.ts",
-                "./aspect-array.ts",
-                "./velocity.ts",
-                "./collision-box.ts",
-                "./meta-info.ts",
-                "./manager.ts",
-                "./id-generator.ts"
-            ]
-        );
+        const fileDirs = [
+            "./aspect.ts",
+            "./manager.ts",
+            "./entity.ts",
+            "./component.ts",
+            "./position.ts",
+            "./scripted-server-subsystem.ts",
+            "./aspect.ts",
+            "./control.ts",
+            "./default-control.ts",
+            "./aspect-array.ts",
+            "./velocity.ts",
+            "./collision-box.ts",
+            "./meta-info.ts",
+            "./manager.ts",
+             "./id-generator.ts"
+        ];
+        const baseScriptDir = path.join(__dirname, "../../__scripted__/");
+
+        const scripts: any = _.transform(fileDirs, (result, value) => {
+            result[value.substr(0, value.length - 3)] = fs.readFileSync(
+                path.join(baseScriptDir, value),
+                {encoding: "utf8"});
+        }, {} as {[s: string]: string});
+
+        this._scriptCollection = new ScriptCollection(scripts);
     }
     public update() {
-        this._scriptwiseSystem.execute("./scripted-server-subsystem", "update");
-        const result = this._scriptwiseSystem.runPostScript("./scripted-server-subsystem",
+        this._scriptCollection.execute("./scripted-server-subsystem", "update");
+        const result = this._scriptCollection.runIVMScript("./scripted-server-subsystem",
         `
             new IVM.ExternalCopy(global.exportValues).copyInto();
         `).result;
@@ -49,8 +58,8 @@ export default class GameSystem extends System {
         return result;
     }
     public createPlayer(player: Player) {
-        const entID = this._scriptwiseSystem.execute("./scripted-server-subsystem", "createEntity");
-        this._scriptwiseSystem.execute(
+        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
             entID,
@@ -59,7 +68,7 @@ export default class GameSystem extends System {
             Math.random() * 150,
             Math.random() * 150
         );
-        this._scriptwiseSystem.execute(
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
             entID,
@@ -68,7 +77,7 @@ export default class GameSystem extends System {
             0,
             0
         );
-        this._scriptwiseSystem.execute(
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
             entID,
@@ -79,7 +88,7 @@ export default class GameSystem extends System {
     }
     public handleKeyInput(key: number, state: number, player: Player) {
         const input = player!.convertInput(key);
-        this._scriptwiseSystem.execute(
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "handleInput",
             player!.controllingEntity,
@@ -88,8 +97,8 @@ export default class GameSystem extends System {
         );
     }
     public createEntityAt(prefabID: string, x: number, y: number, player: Player) {
-        const entID = this._scriptwiseSystem.execute("./scripted-server-subsystem", "createEntity");
-        this._scriptwiseSystem.execute(
+        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
             entID,
@@ -100,13 +109,13 @@ export default class GameSystem extends System {
         );
     }
     public deleteEntity(id: string) {
-        this._scriptwiseSystem.execute("./scripted-server-subsystem", "deleteEntity", id);
+        this._scriptCollection.execute("./scripted-server-subsystem", "deleteEntity", id);
     }
-    public setPlayerEntityWatch(player: Player, entityID?: string) {
-        this._scriptwiseSystem.execute("./scripted-server-subsystem", "watchEntity", player.id, entityID);
+    public setPlayerEntityInspection(player: Player, entityID?: string) {
+        this._scriptCollection.execute("./scripted-server-subsystem", "inspectEntity", player.id, entityID);
     }
     public removeComponent(componentID: string) {
-        this._scriptwiseSystem.execute(
+        this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "deleteComponent",
             componentID
@@ -148,23 +157,23 @@ export default class GameSystem extends System {
     public async runPlayerScript(code: string, args: string, player: Player, entityID?: string, className?: string) {
         let thisValue: IVM.Reference<any> | undefined;
         if (entityID !== undefined) {
-            thisValue = this._scriptwiseSystem.executeReturnRef(
+            thisValue = this._scriptCollection.executeReturnRef(
                 "./scripted-server-subsystem",
                 "getEntity",
                 entityID
             );
         }
-        const script = await this._scriptwiseSystem.runPlayerScript(code, args, thisValue);
+        const script = await this._scriptCollection.runScript(code, args, thisValue);
         const defaultExport = script.getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
-            this._scriptwiseSystem.execute(
+            this._scriptCollection.execute(
                 "./scripted-server-subsystem",
                 "setComponentClass",
                 defaultExport.derefInto(),
                 className
             );
             if (entityID !== undefined) {
-                this._scriptwiseSystem.execute(
+                this._scriptCollection.execute(
                     "./scripted-server-subsystem",
                     "createComponent",
                     entityID,

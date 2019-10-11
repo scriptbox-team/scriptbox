@@ -18,11 +18,11 @@ export default class DisplaySystemNetworker extends Networker {
         super();
         this.connectionDelegate = this.connectionDelegate.bind(this);
 
-        this.onObjectDisplay = this.onObjectDisplay.bind(this);
+        this.onRenderObjectDisplay = this.onRenderObjectDisplay.bind(this);
         this.onEntityInspectionListing = this.onEntityInspectionListing.bind(this);
 
         this._displaySystem = displaySystem;
-        this._displaySystem.onObjectDisplay(this.onObjectDisplay);
+        this._displaySystem.onRenderObjectDisplay(this.onRenderObjectDisplay);
         this._displaySystem.onEntityInspection(this.onEntityInspectionListing);
     }
     public hookupInput(netEventHandler: NetEventHandler) {
@@ -31,7 +31,7 @@ export default class DisplaySystemNetworker extends Networker {
     public connectionDelegate(packet: ClientConnectionPacket, player: Player) {
         this._displaySystem.sendFullDisplayToPlayer(player);
     }
-    public onObjectDisplay(renderObjects: RenderObject[], playerGroup: PlayerGroup) {
+    public onRenderObjectDisplay(renderObjects: RenderObject[], playerGroup: PlayerGroup) {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.DisplayPackage, new ServerDisplayPacket(renderObjects)),
