@@ -3,19 +3,19 @@
 // This is so this can be used scripting-side
 
 export default class IDGenerator {
-    private counter: number;
-    private counterMax = 16777216;
-    private randomMax = 1099511627776;
+    private _counter: number;
+    private _counterMax = 16777216;
+    private _randomMax = 1099511627776;
     constructor(counterSeed: number) {
-        this.counter = Math.floor(this.counterMax * counterSeed);
+        this._counter = Math.floor(this._counterMax * counterSeed);
     }
     public makeFrom(prefix: string, time: number, seed: number): string {
         const id =
             prefix +
-            Math.floor(seed * this.randomMax).toString(16).padStart(10, "0")
-            + this.counter.toString(16).padStart(6, "0")
+            Math.floor(seed * this._randomMax).toString(16).padStart(10, "0")
+            + this._counter.toString(16).padStart(6, "0")
             + Math.floor(time / 1000).toString(16).padStart(8, "0");
-        this.counter = this.nextCounterValue(this.counter);
+        this._counter = this._nextCounterValue(this._counter);
         return id;
     }
     public makeFromHexString(prefix: string, hexString: string) {
@@ -27,7 +27,7 @@ export default class IDGenerator {
         const len = id.length;
         return id.substr(len - 8, 8) + id.substr(len - 24, 16);
     }
-    private nextCounterValue(current: number) {
-        return this.counter + 1 >= this.counterMax ? 0 : current + 1;
+    private _nextCounterValue(current: number) {
+        return this._counter + 1 >= this._counterMax ? 0 : current + 1;
     }
 }

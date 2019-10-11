@@ -27,9 +27,9 @@ export default class ResourceSystem extends System {
     private _idGenerator: IDGenerator;
     constructor(idGenerator: IDGenerator, options: IResourceSystemOptions) {
         super();
-        this.resourceCreate = this.resourceCreate.bind(this);
-        this.onResourceDelete = this.onResourceDelete.bind(this);
-        this._resourceManager = new Manager<Resource>(this.resourceCreate, this.onResourceDelete);
+        this._resourceCreate = this._resourceCreate.bind(this);
+        this._onResourceDelete = this._onResourceDelete.bind(this);
+        this._resourceManager = new Manager<Resource>(this._resourceCreate, this._onResourceDelete);
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
         this._playerTokens = new Map<number, Player>();
         this._resourceServer.onFileUpload = this.handleFileUpload;
@@ -53,7 +53,7 @@ export default class ResourceSystem extends System {
             ""
         );
         playerResourceData.resources.push(resource.id);
-        this.updateResourceListing(user, this.collectPlayerResources(user));
+        this._updateResourceListing(user, this._collectPlayerResources(user));
         return this._resourceServer.add(resource, file);
     }
     public async updateResource(
@@ -74,7 +74,7 @@ export default class ResourceSystem extends System {
         resource.type = type;
         resource.time = Date.now();
         // TODO: Allow resources to have multiple contributors (owners)
-        this.updateResourceListing(owner, this.collectPlayerResources(owner));
+        this._updateResourceListing(owner, this._collectPlayerResources(owner));
         return this._resourceServer.update(resource, file);
     }
     public deleteResource(user: string, resourceID: string): void {
@@ -93,7 +93,7 @@ export default class ResourceSystem extends System {
             ownerData.resources.splice(ownerData.resources.findIndex((id) => id === resourceID), 1);
         }
         this._resourceManager.queueForDeletion(resourceID);
-        this.updateResourceListing(owner, this.collectPlayerResources(owner));
+        this._updateResourceListing(owner, this._collectPlayerResources(owner));
     }
     public handleFileUpload = (token: number, file: UploadedFile, resourceID?: string) => {
         const player = this.getPlayerFromToken(token);
@@ -163,7 +163,7 @@ export default class ResourceSystem extends System {
                 throw new Error(`Resource attribute ${attribute} is not recognized as a valid modifiable attribute`);
             }
         }
-        this.updateResourceListing(owner, this.collectPlayerResources(owner));
+        this._updateResourceListing(owner, this._collectPlayerResources(owner));
     }
     public handleFileDelete = (token: number, resourceID: string) => {
         const player = this.getPlayerFromToken(token);
@@ -192,7 +192,7 @@ export default class ResourceSystem extends System {
     public deleteQueued() {
         this._resourceManager.deleteQueued();
     }
-    private updateResourceListing(owner: string, resources: Resource[]) {
+    private _updateResourceListing(owner: string, resources: Resource[]) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);
             if (player !== undefined && this.onPlayerListingUpdate !== undefined) {
@@ -200,14 +200,14 @@ export default class ResourceSystem extends System {
             }
         }
     }
-    private collectPlayerResources(owner: string): Resource[] {
+    private _collectPlayerResources(owner: string): Resource[] {
         const resourceData = this._playerResourceData.get(owner);
         if (resourceData === undefined) {
             return [];
         }
         return resourceData.resources.map((resID) => this._resourceManager.get(resID)!);
     }
-    private resourceCreate(
+    private _resourceCreate(
             id: string,
             type: ResourceType,
             name: string,
@@ -218,7 +218,7 @@ export default class ResourceSystem extends System {
             icon: string) {
         return new Resource(id, type, name, creator, owner, description, time, icon);
     }
-    private onResourceDelete(resource: Resource) {
+    private _onResourceDelete(resource: Resource) {
         this._resourceServer.delete(resource);
     }
 }

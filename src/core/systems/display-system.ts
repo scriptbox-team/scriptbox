@@ -27,14 +27,14 @@ export default class DisplaySystem extends System {
         diff.added = _.transform(this._lastExportValues.entities, (acc, entity, key) => {
             acc[key] = entity.position;
         }, {} as any as {[id: string]: {x: number, y: number}});
-        const updatesToSend = this.dataToDisplayObjects(diff);
-        this.sendObjectDisplaysToPlayer(updatesToSend, player);
+        const updatesToSend = this._dataToDisplayObjects(diff);
+        this._sendObjectDisplaysToPlayer(updatesToSend, player);
     }
 
     public broadcastDisplay(exportValues: IExports) {
-        const changes = this.getDisplayDifferences(this._lastExportValues, exportValues);
-        const updatesToSend = this.dataToDisplayObjects(changes);
-        this.broadcastObjectDisplays(updatesToSend);
+        const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
+        const updatesToSend = this._dataToDisplayObjects(changes);
+        this._broadcastObjectDisplays(updatesToSend);
         this._lastExportValues = exportValues;
     }
     public onObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void) {
@@ -82,7 +82,7 @@ export default class DisplaySystem extends System {
             }
         }
     }
-    private dataToDisplayObjects(data: Difference<{x: number, y: number}>) {
+    private _dataToDisplayObjects(data: Difference<{x: number, y: number}>) {
         let arr: RenderObject[] = [];
         for (const datum of [data.added, data.updated, data.removed]) {
             arr = _.transform(datum, (acc, position, id) => {
@@ -98,20 +98,20 @@ export default class DisplaySystem extends System {
         }
         return arr;
     }
-    private broadcastObjectDisplays(pack: RenderObject[]) {
+    private _broadcastObjectDisplays(pack: RenderObject[]) {
         this._objectDisplayCallback!(
             pack,
             new PlayerGroup(PlayerGroupType.All, [])
         );
     }
-    private sendObjectDisplaysToPlayer(pack: RenderObject[], player: Player) {
+    private _sendObjectDisplaysToPlayer(pack: RenderObject[], player: Player) {
         this._objectDisplayCallback!(
             pack,
             new PlayerGroup(PlayerGroupType.Only, [player])
         );
     }
 
-    private getDisplayDifferences(lastExportValues: IExports, exportValues: IExports) {
+    private _getDisplayDifferences(lastExportValues: IExports, exportValues: IExports) {
         // Lodash type annotations are really restrictive
         // So please ignore the following casting shenanigans
         const diffs = _.transform(exportValues.entities, (acc, entity, key) => {

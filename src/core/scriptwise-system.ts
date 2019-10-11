@@ -34,12 +34,12 @@ export default class ScriptwiseSystem {
         );
     }
     public execute(componentPath: string, name: string, ...params: any) {
-        const component = this.getComponent(componentPath);
+        const component = this._getComponent(componentPath);
         return component.execute(name, ...params);
     }
     public executeReturnRef(componentPath: string, name: string, ...params: any) {
-        const funcRef = this.getComponent(componentPath).getReference(name);
-        const context = this.getComponent(componentPath).context;
+        const funcRef = this._getComponent(componentPath).getReference(name);
+        const context = this._getComponent(componentPath).context;
         const script = `
             export function run(func, ...args) {return new IVM.Reference(func(args))};
         `;
@@ -51,14 +51,14 @@ export default class ScriptwiseSystem {
         return res;
     }
     public get(componentPath: string, name: string): any {
-        const component = this.getComponent(componentPath);
+        const component = this._getComponent(componentPath);
         return component.get(name);
     }
     public runPostScript(componentPath: string, script: string) {
-        const context = this.getComponent(componentPath).context;
+        const context = this._getComponent(componentPath).context;
         return this.scriptRunner.buildSync(script, {IVM}, undefined, context);
     }
-    private getComponent(componentPath: string) {
+    private _getComponent(componentPath: string) {
         const component = this._prebuiltScripts[componentPath];
         if (component === undefined) {
             throw new Error("Component at path " + componentPath + " could not be found.");

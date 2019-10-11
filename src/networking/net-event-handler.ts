@@ -152,7 +152,7 @@ export default class NetEventHandler {
                 if (data !== undefined) {
                     const player = this.playerCreate!(connectionID, data);
                     this._connectionIDToPlayer.set(connectionID, player);
-                    this.sendToDelegates(
+                    this._sendToDelegates(
                         data,
                         player,
                         this._connectionDelegates
@@ -163,9 +163,9 @@ export default class NetEventHandler {
             case ClientEventType.Disconnect: {
                 const data = ClientDisconnectPacket.deserialize(event.data);
                 if (data !== undefined) {
-                    const player = this.getPlayerFromConnectionID(connectionID);
+                    const player = this._getPlayerFromConnectionID(connectionID);
                     if (player !== undefined) {
-                        this.sendToDelegates(
+                        this._sendToDelegates(
                             data,
                             player,
                             this._disconnectionDelgates
@@ -177,97 +177,97 @@ export default class NetEventHandler {
                 break;
             }
             case ClientEventType.Input: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientKeyboardInputPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._inputDelegates
                 );
                 break;
             }
             case ClientEventType.ChatMessage: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientChatMessagePacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._chatMessageDelegates
                 );
                 break;
             }
             case ClientEventType.ObjectCreation: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientObjectCreationPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._objectCreationDelegates
                 );
                 break;
             }
             case ClientEventType.ObjectDeletion: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientObjectDeletionPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._objectDeletionDelegates
                 );
                 break;
             }
             case ClientEventType.TokenRequest: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientTokenRequestPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._tokenRequestDelegates
                 );
                 break;
             }
             case ClientEventType.ModifyMetadata: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientModifyMetadataPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._modifyMetadataDelegates
                 );
                 break;
             }
             case ClientEventType.AddComponent: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientAddComponentPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._addComponentDelegates
                 );
                 break;
             }
             case ClientEventType.RemoveComponent: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientRemoveComponentPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._removeComponentDelegates
                 );
                 break;
             }
             case ClientEventType.EditComponent: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientEditComponentPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._editComponentDelegates
                 );
                 break;
             }
             case ClientEventType.ExecuteScript: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientExecuteScriptPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._executeScriptDelegates
                 );
                 break;
             }
             case ClientEventType.Keybinds: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientKeybindsPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._keybindingDelegates
                 );
                 break;
             }
             case ClientEventType.WatchEntity: {
-                this.sendToDelegates(
+                this._sendToDelegates(
                     ClientWatchEntityPacket.deserialize(event.data),
-                    this.getPlayerFromConnectionID(connectionID),
+                    this._getPlayerFromConnectionID(connectionID),
                     this._watchEntityDelegates
                 );
                 break;
@@ -284,7 +284,7 @@ export default class NetEventHandler {
      * @param {(Array<(packet: T, player: Player) => void>)} delegates The delegates to send to
      * @memberof NetEventHandler
      */
-    private sendToDelegates<T extends Packet>(
+    private _sendToDelegates<T extends Packet>(
         packet: T | undefined,
         player: Player | undefined,
         delegates: Array<(packet: T, player: Player) => void>,
@@ -295,7 +295,7 @@ export default class NetEventHandler {
             }
         }
     }
-    private getPlayerFromConnectionID(connectionID: number) {
+    private _getPlayerFromConnectionID(connectionID: number) {
         return this._connectionIDToPlayer.get(connectionID);
     }
 }

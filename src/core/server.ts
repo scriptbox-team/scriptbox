@@ -81,16 +81,16 @@ export default class Server {
      * @memberof Server
      */
     constructor(options: IServerConstructorOptions) {
-        this.tick = this.tick.bind(this);
-        this.createPlayer = this.createPlayer.bind(this);
-        this.deletePlayer = this.deletePlayer.bind(this);
+        this._tick = this._tick.bind(this);
+        this._createPlayer = this._createPlayer.bind(this);
+        this._deletePlayer = this._deletePlayer.bind(this);
         this._idGenerator = new IDGenerator(Math.random());
 
         this._tickRate = 60;
         if (options.tickRate !== undefined) {
             this._tickRate = options.tickRate;
         }
-        this._playerManager = new Manager<Player>(this.createPlayer, this.deletePlayer);
+        this._playerManager = new Manager<Player>(this._createPlayer, this._deletePlayer);
         this._playerManagerNetworker = new PlayerManagerNetworker(this._playerManager, this._idGenerator);
         this._usernameToPlayer = new Map<string, Player>();
 
@@ -128,7 +128,7 @@ export default class Server {
         });
 
         this._resourceSystem.onPlayerListingUpdate = this._resourceSystemNetworker.onPlayerListing;
-        this._loop = new GameLoop(this.tick, this._tickRate);
+        this._loop = new GameLoop(this._tick, this._tickRate);
     }
 
     /**
@@ -149,7 +149,7 @@ export default class Server {
      * @private
      * @memberof Server
      */
-    private tick() {
+    private _tick() {
         try {
             const exportValues = this._gameSystem.update();
             exportValues.players = {};
@@ -172,12 +172,12 @@ export default class Server {
             console.log(error);
         }
     }
-    private createPlayer(id: string, clientID: number, username: string, displayName: string) {
+    private _createPlayer(id: string, clientID: number, username: string, displayName: string) {
         const player = new Player(id, clientID, username, displayName);
         this._usernameToPlayer.set(username, player);
         return player;
     }
-    private deletePlayer(player: Player) {
+    private _deletePlayer(player: Player) {
         this._usernameToPlayer.delete(player.username);
     }
 }

@@ -17,7 +17,7 @@ export default class AspectArray<T extends (string | number | boolean | symbol)>
     }
 
     public getValue(): readonly T[] {
-        return this.calcValue();
+        return this._calcValue();
     }
 
     public get base() {
@@ -53,7 +53,7 @@ export default class AspectArray<T extends (string | number | boolean | symbol)>
         this._modifierStartIndex = 0;
     }
 
-    private calcValue(): readonly T[] {
+    private _calcValue(): readonly T[] {
         // Doing some caching here later might be a good idea
         // But for now it is probably best left as-is
         let val = this._baseValue;

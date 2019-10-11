@@ -36,39 +36,39 @@ interface INetClientConstructorOptions {
  * @class NetClient
  */
 export default class NetClient {
-    private emitter: EventEmitter;
-    private id: number;
-    private ip: string;
-    private socket: WebSocket;
+    private _emitter: EventEmitter;
+    private _id: number;
+    private _ip: string;
+    private _socket: WebSocket;
     /**
      * Creates an instance of NetClient.
      * @param {INetClientConstructorOptions} options The options to initialize the client with.
      * @memberof NetClient
      */
     constructor(options: INetClientConstructorOptions) {
-        this.emitter = new EventEmitter();
-        this.id = options.id;
-        this.socket = options.socket;
-        this.ip = options.ip;
-        this.socket.on("message", (event: WebSocket.Data) => {
+        this._emitter = new EventEmitter();
+        this._id = options.id;
+        this._socket = options.socket;
+        this._ip = options.ip;
+        this._socket.on("message", (event: WebSocket.Data) => {
             try {
                 const packetData = ClientNetEvent.deserialize(event);
                 if (packetData !== undefined) {
-                    this.receive(packetData);
+                    this._receive(packetData);
                 }
             }
             catch (e) {
                 console.error(e);
             }
         });
-        this.socket.on("close", (code: number, reason: string) => {
-            this.emitter.emit("disconnect", {code});
+        this._socket.on("close", (code: number, reason: string) => {
+            this._emitter.emit("disconnect", {code});
         });
-        this.socket.on("unexpected-response", (request: ClientRequest) => {
-            console.error("Received unexpected response from Client " + this.id);
+        this._socket.on("unexpected-response", (request: ClientRequest) => {
+            console.error("Received unexpected response from Client " + this._id);
         });
-        this.socket.on("error", (err) => {
-            console.error("Error from client " + this.id + ": " + err.message);
+        this._socket.on("error", (err) => {
+            console.error("Error from client " + this._id + ": " + err.message);
         });
     }
 
@@ -81,7 +81,7 @@ export default class NetClient {
      * @memberof NetClient
      */
     public on(event: string | symbol, callback: (...args: any[]) => void) {
-        this.emitter.on(event, callback);
+        this._emitter.on(event, callback);
     }
 
     /**
@@ -93,8 +93,8 @@ export default class NetClient {
      */
     public send(e: ServerNetEvent) {
         try {
-            if (this.socket.readyState === 1) {
-                this.socket.send(e.serialize());
+            if (this._socket.readyState === 1) {
+                this._socket.send(e.serialize());
             }
         }
         catch (e) {
@@ -108,8 +108,8 @@ export default class NetClient {
      * @memberof NetClient
      */
     public async disconnect() {
-        this.emitter.emit("disconnect", {code: 1000});
-        this.socket.close();
+        this._emitter.emit("disconnect", {code: 1000});
+        this._socket.close();
     }
 
     /**
@@ -119,7 +119,7 @@ export default class NetClient {
      * @param {ClientNetEvent} e
      * @memberof NetClient
      */
-    private receive(e: ClientNetEvent) {
-        this.emitter.emit("event", e);
+    private _receive(e: ClientNetEvent) {
+        this._emitter.emit("event", e);
     }
 }

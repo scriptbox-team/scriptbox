@@ -37,7 +37,7 @@ export default class ServerMessageBroadcaster {
                     for (const [k, v] of pairs) {
                         const connection = v.clientID;
                         if (connection !== undefined) {
-                            this.sendPacket(connection, m.message);
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
@@ -53,7 +53,7 @@ export default class ServerMessageBroadcaster {
                     for (const c of playersToSendTo) {
                         const connection = c.clientID;
                         if (connection !== undefined) {
-                            this.sendPacket(connection, m.message);
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
@@ -62,7 +62,7 @@ export default class ServerMessageBroadcaster {
                     for (const c of m.recipient.players) {
                         const connection = c.clientID;
                         if (connection !== undefined) {
-                            this.sendPacket(connection, m.message);
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
@@ -97,7 +97,7 @@ export default class ServerMessageBroadcaster {
      * @param {ServerNetEvent} message The net event to send.
      * @memberof ServerMessageBroadcaster
      */
-    private sendPacket(clientID: number, message: ServerNetEvent) {
+    private _sendPacket(clientID: number, message: ServerNetEvent) {
         this._packetCallback!(clientID, message);
     }
 }

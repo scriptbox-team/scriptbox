@@ -8,15 +8,15 @@ import hrtime from "browser-process-hrtime";
  * @class GameLoop
  */
 export default class GameLoop {
-    private funcToLoop: (delta: number) => void;
-    private tickDelay: number;
-    private skipThreshhold: number;
+    private _funcToLoop: (delta: number) => void;
+    private _tickDelay: number;
+    private _skipThreshhold: number;
 
-    private running: boolean;
+    private _running: boolean;
 
-    private lastTickTime: number;
-    private nextTickTime: number;
-    private hrTimeDiff: [number, number];
+    private _lastTickTime: number;
+    private _nextTickTime: number;
+    private _hrTimeDiff: [number, number];
 
     /**
      * Creates an instance of GameLoop.
@@ -26,17 +26,17 @@ export default class GameLoop {
      * @memberof GameLoop
      */
     constructor(funcToLoop: (delta: number) => void, tickRate: number) {
-        this.funcToLoop = funcToLoop;
-        this.tickDelay = 1 / tickRate;
-        this.skipThreshhold = 1; // 1 second
+        this._funcToLoop = funcToLoop;
+        this._tickDelay = 1 / tickRate;
+        this._skipThreshhold = 1; // 1 second
 
-        this.running = false;
+        this._running = false;
 
-        this.lastTickTime = 0;
-        this.nextTickTime = this.tickDelay;
-        this.hrTimeDiff = hrtime();
+        this._lastTickTime = 0;
+        this._nextTickTime = this._tickDelay;
+        this._hrTimeDiff = hrtime();
 
-        this.tick = this.tick.bind(this);
+        this._tick = this._tick.bind(this);
     }
 
     /**
@@ -45,9 +45,9 @@ export default class GameLoop {
      * @memberof GameLoop
      */
     public start() {
-        this.running = true;
-        this.hrTimeDiff = hrtime();
-        setTimeout(this.tick, this.tickDelay * 1000, this.tickDelay);
+        this._running = true;
+        this._hrTimeDiff = hrtime();
+        setTimeout(this._tick, this._tickDelay * 1000, this._tickDelay);
     }
 
     /**
@@ -56,7 +56,7 @@ export default class GameLoop {
      * @memberof GameLoop
      */
     public stop() {
-        this.running = false;
+        this._running = false;
     }
 
     /**
@@ -66,10 +66,10 @@ export default class GameLoop {
      * @private
      * @memberof GameLoop
      */
-    private tick() {
-        if (this.running) {
-            this.nextTickDo(this.tick);
-            this.funcToLoop(this.tickDelay);
+    private _tick() {
+        if (this._running) {
+            this._nextTickDo(this._tick);
+            this._funcToLoop(this._tickDelay);
         }
     }
 
@@ -81,21 +81,21 @@ export default class GameLoop {
      * @param {() => void} func The functoin to perform in a tick.
      * @memberof GameLoop
      */
-    private nextTickDo(func: () => void) {
-        const tickDiff = this.getTickTime();
-        this.lastTickTime += tickDiff;
-        this.nextTickTime += this.tickDelay;
+    private _nextTickDo(func: () => void) {
+        const tickDiff = this._getTickTime();
+        this._lastTickTime += tickDiff;
+        this._nextTickTime += this._tickDelay;
 
-        let timeToWait = this.nextTickTime - this.lastTickTime;
+        let timeToWait = this._nextTickTime - this._lastTickTime;
 
         // If we're too far behind, just set it to a tick from now
-        if (timeToWait < -this.skipThreshhold) {
-            this.nextTickTime = this.lastTickTime + this.tickDelay;
-            timeToWait = this.tickDelay;
+        if (timeToWait < -this._skipThreshhold) {
+            this._nextTickTime = this._lastTickTime + this._tickDelay;
+            timeToWait = this._tickDelay;
         }
 
         setTimeout(func, timeToWait * 1000);
-        this.hrTimeDiff = hrtime();
+        this._hrTimeDiff = hrtime();
     }
 
     /**
@@ -105,8 +105,8 @@ export default class GameLoop {
      * @returns The time of the current tick.
      * @memberof GameLoop
      */
-    private getTickTime() {
-        const tickDiffSeparate: [number, number] = hrtime(this.hrTimeDiff);
+    private _getTickTime() {
+        const tickDiffSeparate: [number, number] = hrtime(this._hrTimeDiff);
         return tickDiffSeparate[0] + tickDiffSeparate[1] / 1000000000;
     }
 }
