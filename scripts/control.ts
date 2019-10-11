@@ -1,8 +1,8 @@
 import Aspect from "./aspect";
 import AspectArray from "./aspect-array";
-import Module from "./module";
+import Component from "./component";
 
-export default abstract class Control extends Module {
+export default abstract class Control extends Component {
     public abstract commands: AspectArray<string>;
     public inputStates: {[key: string]: boolean} = {};
     public pastInputStates: {[key: string]: boolean} = {};

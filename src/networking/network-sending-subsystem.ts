@@ -1,7 +1,10 @@
+import Manager from "core/manager";
+import Player from "core/player";
 import ServerMessage from "networking/server-messages/server-message";
 import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
+
 import NetHost from "./net-host";
-import PlayerNetworkManager from "./player-network-manager";
+import Networker from "./networker";
 import ServerNetEvent from "./server-net-event";
 
 /**
@@ -13,12 +16,10 @@ import ServerNetEvent from "./server-net-event";
  */
 export default class NetworkSendingSubsystem {
     private _netHost: NetHost;
-    private _playerNetworkManager: PlayerNetworkManager;
     private _serverMessageBroadcaster: ServerMessageBroadcaster;
-    constructor(netHost: NetHost, playerNetworkManager: PlayerNetworkManager) {
+    constructor(netHost: NetHost, playerManager: Manager<Player>) {
         this._netHost = netHost;
-        this._playerNetworkManager = playerNetworkManager;
-        this._serverMessageBroadcaster = new ServerMessageBroadcaster(this._playerNetworkManager);
+        this._serverMessageBroadcaster = new ServerMessageBroadcaster(playerManager);
         this._serverMessageBroadcaster.setPacketCallback((client: number, message: ServerNetEvent) => {
             this._netHost.send(client, message);
         });
@@ -41,5 +42,11 @@ export default class NetworkSendingSubsystem {
      */
     public sendMessages() {
         this._serverMessageBroadcaster.sendMessages();
+    }
+
+    public setNetworkerSenders(networkers: Networker[]) {
+        networkers.forEach((networker) =>
+            networker.onServerMessageSend = (msg) => this._serverMessageBroadcaster.addToQueue(msg)
+        );
     }
 }

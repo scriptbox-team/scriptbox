@@ -1,7 +1,11 @@
-import EntityManagerInterface from "./entity-manager-interface";
-import Module from "./module";
+import Component from "./component";
+import MetaInfo from "./meta-info";
 
-const interfaceWeakmap = new WeakMap<Entity, EntityManagerInterface>();
+interface IProtectedEntityData {
+    id: string;
+    metaInfo: MetaInfo;
+}
+const dataWeakmap = new WeakMap<Entity, IProtectedEntityData>();
 
 /**
  * Represents an entity, which is essentially an ID linking to a set of components.
@@ -12,6 +16,8 @@ const interfaceWeakmap = new WeakMap<Entity, EntityManagerInterface>();
  * @class Entity
  */
 export default class Entity {
+    private _components: Map<string, Component>;
+    private _componentsInverse: WeakMap<Component, string>;
     /**
      * Creates an instance of Entity.
      * This should only be used by the EntityManager.
@@ -19,38 +25,69 @@ export default class Entity {
      * @param {EntityManagerInterface} entityManagerInterface The interface of functions to call.
      * @memberof Entity
      */
-    constructor(id: number, entityManagerInterface: EntityManagerInterface) {
-        (this as any).test = 0;
-        interfaceWeakmap.set(this, entityManagerInterface);
+    constructor(id: string, metaInfo: MetaInfo) {
+        dataWeakmap.set(this, {id, metaInfo});
+        this._components = new Map<string, Component>();
+        this._componentsInverse = new WeakMap<Component, string>();
+    }
+    public add(localID: string, component: Component) {
+        this._components.set(localID, component);
+        this._componentsInverse.set(component, localID);
+    }
+    public remove(localID: string) {
+        const component = this._components.get(localID);
+        this._components.delete(localID);
+        this._componentsInverse.delete(component);
     }
     /**
-     * Get a module belonging to this entity
+     * Get a component belonging to this entity
      *
-     * @param {string} name The name of the module
-     * @returns {(Module | null)} A module object if the module exists in the entity, false otherwise
+     * @param {string} name The name of the component
+     * @returns {(Component | null)} A component object if the component exists in the entity, false otherwise
      * @memberof Entity
      */
-    public get<T extends Module = any>(name: string): T | null {
-        return interfaceWeakmap.get(this)!.getModule<T>(name);
+    public get<T extends Component = any>(name: string): T | undefined {
+        return this._components.get(name) as T;
     }
 
-    public with<T extends Module = any>(name: string, func: (t: T) => void) {
-        const module = this.get(name);
-        if (module !== null) {
-            func(module as T);
+    public componentIterator() {
+        return this._components.values();
+    }
+
+    public with<T extends Component = any>(name: string, func: (t: T) => void) {
+        const component = this.get(name);
+        if (component !== undefined) {
+            func(component as T);
         }
     }
 
-    public withMany<T extends Module[] = any[]>(names: string[], func: (t: T) => void) {
-        const modules = [];
+    public withMany<T extends Component[] = any[]>(names: string[], func: (t: T) => void) {
+        const components = [];
         for (const name of names) {
-            const module = this.get(name);
-            if (module === null) {
+            const component = this.get(name);
+            if (component === undefined) {
                 return;
             }
-            modules.push(module);
+            components.push(component);
         }
-        func(modules as T);
+        func(components as T);
+    }
+    public delete() {
+        for (const [localID, component] of this._components) {
+            this._components.delete(localID);
+        }
+    }
+    public getComponentLocalID(component: Component) {
+        return this._componentsInverse.get(component);
+    }
+    public setComponentLocalID(component: Component, newID: string) {
+        if (this._components.has(newID)) {
+            throw new Error(`Entity ${this.id} already has a component with a local ID of ${newID}.`);
+        }
+        const currentLocalID = this._componentsInverse.get(component);
+        this._components.delete(currentLocalID);
+        this._components.set(newID, component);
+        this._componentsInverse.set(component, newID);
     }
     /**
      * Get whether this entity exists or not.
@@ -60,10 +97,14 @@ export default class Entity {
      * @memberof Entity
      */
     get exists(): boolean {
-        return interfaceWeakmap.get(this)!.entityExists();
+        return dataWeakmap.get(this)!.metaInfo.exists;
     }
 
-    get id(): number {
-        return interfaceWeakmap.get(this)!.getID();
+    public get enabled() {
+        return dataWeakmap.get(this)!.metaInfo.enabled;
+    }
+
+    get id(): string {
+        return dataWeakmap.get(this)!.id;
     }
 }

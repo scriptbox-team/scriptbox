@@ -1,7 +1,9 @@
-import PlayerNetworkManager from "networking/player-network-manager";
+import Manager from "core/manager";
+import Player from "core/player";
+import { PlayerGroupType } from "core/player-group";
 import ServerNetEvent from "networking/server-net-event";
+
 import ServerMessage from "./server-message";
-import { MessageRecipientType } from "./server-message-recipient";
 
 /**
  * A class responsible for converting outgoing server messages into packets to be sent to multiple clients.
@@ -12,14 +14,14 @@ import { MessageRecipientType } from "./server-message-recipient";
 export default class ServerMessageBroadcaster {
     private _packetCallback: ((client: number, event: ServerNetEvent) => void) | undefined;
     private _messageQueue: ServerMessage[];
-    private _playerNetworkManager: PlayerNetworkManager;
+    private _playerManager: Manager<Player>;
     /**
      * Creates an instance of ServerMessageBroadcaster.
      * @param {PlayerNetworkManager} playerNetworkManager The PlayerNetworkManager to retrieve data from.
      * @memberof ServerMessageBroadcaster
      */
-    constructor(playerNetworkManager: PlayerNetworkManager) {
-        this._playerNetworkManager = playerNetworkManager;
+    constructor(playerManager: Manager<Player>) {
+        this._playerManager = playerManager;
         this._messageQueue = [];
     }
     /**
@@ -29,35 +31,38 @@ export default class ServerMessageBroadcaster {
      */
     public sendMessages() {
         for (const m of this._messageQueue) {
-            switch (m.recipient.recipientType) {
-                case MessageRecipientType.All: {
-                    const players = this._playerNetworkManager.getConnectedPlayers();
-                    for (const c of players) {
-                        const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
-                        if (connection != null) {
-                            this.sendPacket(connection, m.message);
+            switch (m.recipient.groupType) {
+                case PlayerGroupType.All: {
+                    const pairs = this._playerManager.entries();
+                    for (const [k, v] of pairs) {
+                        const connection = v.clientID;
+                        if (connection !== undefined) {
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case MessageRecipientType.Except: {
-                    const playerSet = new Set(this._playerNetworkManager.getConnectedPlayers());
-                    for (const c of m.recipient.players) {
-                        playerSet.delete(c.id);
+                case PlayerGroupType.Except: {
+                    const pairs = this._playerManager.entries();
+                    const playersToSendTo: Player[] = [];
+                    for (const [k, v] of pairs) {
+                        if (m.recipient.players.findIndex((p) => p.id === v.id) === -1) {
+                            playersToSendTo.push(v);
+                        }
                     }
-                    for (const c of playerSet) {
-                        const connection = this._playerNetworkManager.getClientIDFromPlayerID(c);
-                        if (connection != null) {
-                            this.sendPacket(connection, m.message);
+                    for (const c of playersToSendTo) {
+                        const connection = c.clientID;
+                        if (connection !== undefined) {
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case MessageRecipientType.Only: {
+                case PlayerGroupType.Only: {
                     for (const c of m.recipient.players) {
-                        const connection = this._playerNetworkManager.getClientIDFromPlayer(c);
-                        if (connection != null) {
-                            this.sendPacket(connection, m.message);
+                        const connection = c.clientID;
+                        if (connection !== undefined) {
+                            this._sendPacket(connection, m.message);
                         }
                     }
                     break;
@@ -92,7 +97,7 @@ export default class ServerMessageBroadcaster {
      * @param {ServerNetEvent} message The net event to send.
      * @memberof ServerMessageBroadcaster
      */
-    private sendPacket(clientID: number, message: ServerNetEvent) {
+    private _sendPacket(clientID: number, message: ServerNetEvent) {
         this._packetCallback!(clientID, message);
     }
 }

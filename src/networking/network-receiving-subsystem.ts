@@ -1,7 +1,8 @@
 import NetEventHandler from "networking/net-event-handler";
+import Networker from "networking/networker";
+
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetHost from "./net-host";
-import PlayerNetworkManager from "./player-network-manager";
 
 /**
  * A subsystem for the Network system concerned with receiving packets from clients.
@@ -10,22 +11,23 @@ import PlayerNetworkManager from "./player-network-manager";
  * @class NetworkReceivingSubsystem
  */
 export default class NetworkReceivingSubsystem {
-    public netEventHandler: NetEventHandler;
+    private _netEventHandler: NetEventHandler;
     private _netHost: NetHost;
-    private _playerNetworkManager: PlayerNetworkManager;
-    constructor(netHost: NetHost, playerNetworkManager: PlayerNetworkManager) {
+    constructor(netHost: NetHost) {
         this._netHost = netHost;
-        this._playerNetworkManager = playerNetworkManager;
-        this.netEventHandler = new NetEventHandler(this._playerNetworkManager);
+        this._netEventHandler = new NetEventHandler();
 
         this._netHost.on("connection", (connectionID: number, event: ClientNetEvent) => {
-            this.netEventHandler.handle(connectionID, event);
+            this._netEventHandler.handle(connectionID, event);
         });
         this._netHost.on("disconnect", (connectionID: number, event: ClientNetEvent) => {
-            this.netEventHandler.handle(connectionID, event);
+            this._netEventHandler.handle(connectionID, event);
         });
         this._netHost.on("event", (connectionID: number, event: ClientNetEvent) => {
-            this.netEventHandler.handle(connectionID, event);
+            this._netEventHandler.handle(connectionID, event);
         });
+    }
+    public hookupNetworkers(networkers: Networker[]) {
+        networkers.forEach((networker) => networker.hookupInput(this._netEventHandler));
     }
 }

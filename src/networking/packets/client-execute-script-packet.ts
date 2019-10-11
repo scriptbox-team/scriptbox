@@ -6,7 +6,7 @@ export default class ClientExecuteScriptPacket extends Packet {
             if (
                 typeof obj.script === "string"
                 && typeof obj.args === "string"
-                && typeof obj.entityID === "number" || typeof obj.entityID === "undefined"
+                && typeof obj.entityID === "string" || typeof obj.entityID === "undefined"
             ) {
                 return new ClientExecuteScriptPacket(obj.script, obj.args, obj.entityID);
             }
@@ -16,8 +16,8 @@ export default class ClientExecuteScriptPacket extends Packet {
 
     public script: string;
     public args: string;
-    public entityID?: number;
-    constructor(script: string, args: string, entityID?: number) {
+    public entityID?: string;
+    constructor(script: string, args: string, entityID?: string) {
         super();
         this.script = script;
         this.args = args;

@@ -2,7 +2,7 @@ import ComponentOption from "./component-option";
 
 export default class ComponentInfo {
     public static serialize(
-        id: number,
+        id: string,
         name: string,
         creator: string,
         description: string,
@@ -11,7 +11,7 @@ export default class ComponentInfo {
         options: ComponentOption[]
     ) {
         if (
-                typeof id === "number"
+                typeof id === "string"
                 && typeof name === "string"
                 && typeof creator === "string"
                 && typeof description === "string"
@@ -22,7 +22,7 @@ export default class ComponentInfo {
             return new ComponentInfo(id, name, creator, description, time, icon, options);
         }
     }
-    public id: number;
+    public id: string;
     public name: string;
     public creator: string;
     public description: string;
@@ -30,7 +30,7 @@ export default class ComponentInfo {
     public icon: string;
     public options: ComponentOption[];
     constructor(
-            id: number,
+            id: string,
             name: string,
             creator: string,
             description: string,

@@ -41,9 +41,9 @@ export default class ScriptRunner {
             context = this.makeContext(addIns);
         }
         else {
-            this.addToContext(context, addIns);
+            this._addToContext(context, addIns);
         }
-        const transpiledCode = this.transpile(code);
+        const transpiledCode = this._transpile(code);
         const module = await this._isolate.compileModule(transpiledCode);
         if (moduleResolutionHandler !== undefined) {
             await module.instantiate(context, moduleResolutionHandler);
@@ -72,9 +72,9 @@ export default class ScriptRunner {
             context = this.makeContext(addIns);
         }
         else {
-            this.addToContext(context, addIns);
+            this._addToContext(context, addIns);
         }
-        const transpiledCode = this.transpile(code);
+        const transpiledCode = this._transpile(code);
         const module = this._isolate.compileModuleSync(transpiledCode);
         if (moduleResolutionHandler !== undefined) {
             module.instantiateSync(context, moduleResolutionHandler);
@@ -98,14 +98,14 @@ export default class ScriptRunner {
             addIns = {};
         }
         const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, path) => {
-            const transpiledCode = this.transpile(code);
+            const transpiledCode = this._transpile(code);
             acc[path] = this._isolate.compileModuleSync(transpiledCode);
         }, {} as {[s: string]: IVM.Module});
         return _.transform(modules, (acc, module, path) => {
             const context = this.makeContext(addIns![path]);
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
-                context.global.setSync("_log", new IVM.Reference(this.log));
+                context.global.setSync("_log", new IVM.Reference(this._log));
                 // Just a simple test log function
                 // Essentially taken from the isolated-vm readme
                 this._isolate.compileScriptSync(
@@ -138,11 +138,11 @@ export default class ScriptRunner {
      */
     public makeContext(addIns: object = {}) {
         const context = this._isolate.createContextSync();
-        this.addToContext(context, addIns);
+        this._addToContext(context, addIns);
         return context;
     }
 
-    private addToContext(context: IVM.Context, addIns: object = {}) {
+    private _addToContext(context: IVM.Context, addIns: object = {}) {
         for (const [key, value] of Object.entries(addIns)) {
             let valueToCopy = value;
             if (Array.isArray(value) || typeof value === "object" && value !== null) {
@@ -160,7 +160,7 @@ export default class ScriptRunner {
      * @returns {string} The resulting javascript code
      * @memberof ScriptExecutor
      */
-    private transpile(input: string): string {
+    private _transpile(input: string): string {
         try {
             const compileOptions = {compilerOptions: {target: ts.ScriptTarget.ES2016}};
             return ts.transpileModule(input, compileOptions).outputText;
@@ -170,7 +170,7 @@ export default class ScriptRunner {
         }
     }
 
-    private log(message: string) {
+    private _log(message: string) {
         console.log(message);
     }
 }

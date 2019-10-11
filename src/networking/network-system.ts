@@ -1,7 +1,9 @@
 
-import Player from "core/players/player";
+import Manager from "core/manager";
+import Player from "core/player";
 import NetHost from "networking/net-host";
-import PlayerNetworkManager from "networking/player-network-manager";
+import Networker from "networking/networker";
+
 import NetworkReceivingSubsystem from "./network-receiving-subsystem";
 import NetworkSendingSubsystem from "./network-sending-subsystem";
 import ServerMessage from "./server-messages/server-message";
@@ -20,7 +22,6 @@ interface INetworkSystemConstructorOptions {
  */
 export default class NetworkSystem {
     private _netHost: NetHost;
-    private _playerNetworkManager: PlayerNetworkManager;
     private _networkReceivingSubsystem: NetworkReceivingSubsystem;
     private _networkSendingSubsystem: NetworkSendingSubsystem;
     private _maxPlayers: number;
@@ -31,7 +32,7 @@ export default class NetworkSystem {
      * @param {INetworkSystemConstructorOptions} options
      * @memberof NetworkSystem
      */
-    constructor(options: INetworkSystemConstructorOptions) {
+    constructor(options: INetworkSystemConstructorOptions, playerManager: Manager<Player>) {
         this._maxPlayers = 8;
         this._port = 7777;
 
@@ -41,19 +42,11 @@ export default class NetworkSystem {
         if (options.port !== undefined) {
             this._port = options.port;
         }
-        this._playerNetworkManager = new PlayerNetworkManager();
+
         this._netHost = new NetHost({port: this._port, maxClients: this._maxPlayers});
 
-        this._networkReceivingSubsystem = new NetworkReceivingSubsystem(this._netHost, this._playerNetworkManager);
-        this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, this._playerNetworkManager);
-
-        this._networkReceivingSubsystem.netEventHandler.addConnectionDelegate(
-            this._playerNetworkManager.connectionDelegate
-        );
-
-        this._networkReceivingSubsystem.netEventHandler.addDisconnectionDelegate(
-            this._playerNetworkManager.disconnectionDelegate
-        );
+        this._networkReceivingSubsystem = new NetworkReceivingSubsystem(this._netHost);
+        this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, playerManager);
     }
     /**
      * Open the system to new connections
@@ -83,17 +76,8 @@ export default class NetworkSystem {
         this._networkSendingSubsystem.sendMessages();
     }
 
-    /**
-     * Get the NetEventHandler, which is used to route packets to delegates
-     *
-     * @readonly
-     * @memberof NetworkSystem
-     */
-    get netEventHandler() {
-        return this._networkReceivingSubsystem.netEventHandler;
-    }
-
-    public getPlayerFromIP(ip: string) {
-        return this._playerNetworkManager.getPlayerFromIP(ip);
+    public hookup(networkers: Networker[]) {
+        this._networkReceivingSubsystem.hookupNetworkers(networkers);
+        this._networkSendingSubsystem.setNetworkerSenders(networkers);
     }
 }
