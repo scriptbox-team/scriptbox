@@ -1,4 +1,4 @@
-import DisplaySystem from "resource-management/display-system";
+import DisplaySystem from "core/systems/display-system";
 
 describe("DisplaySystem", () => {
     test("temp test", () => {
