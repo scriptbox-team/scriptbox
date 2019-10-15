@@ -8,24 +8,24 @@ import Resource, { ResourceType } from "resource-management/resource";
 
 import System from "./system";
 
-interface IResourceSystemOptions {
+interface ResourceSystemOptions {
     serverPort: string;
     resourcePath: string;
 }
 
-interface IPlayerResourceData {
+interface PlayerResourceData {
     resources: string[];
 }
 
 export default class ResourceSystem extends System {
     public onPlayerListingUpdate?: (user: Client, resources: Resource[]) => void;
     public playerByUsername?: (username: string) => Client | undefined;
-    private _playerResourceData: Map<string, IPlayerResourceData> = new Map<string, IPlayerResourceData>();
+    private _playerResourceData: Map<string, PlayerResourceData> = new Map<string, PlayerResourceData>();
     private _resourceManager: Manager<Resource>;
     private _resourceServer: ResourceServer;
     private _playerTokens: Map<number, Client>;
     private _idGenerator: IDGenerator;
-    constructor(idGenerator: IDGenerator, options: IResourceSystemOptions) {
+    constructor(idGenerator: IDGenerator, options: ResourceSystemOptions) {
         super();
         this._resourceCreate = this._resourceCreate.bind(this);
         this._onResourceDelete = this._onResourceDelete.bind(this);

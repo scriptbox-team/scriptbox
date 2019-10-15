@@ -1,8 +1,8 @@
 import Entity from "./entity";
-import MetaInfo, { IMetaInfoProxy } from "./meta-info";
+import MetaInfo, { MetaInfoProxy } from "./meta-info";
 import Player from "./player";
 
-export interface IComponentInfoProxy extends IMetaInfoProxy {
+export interface ComponentInfoProxy extends MetaInfoProxy {
     readonly id: string;
     readonly entity: Entity;
 }

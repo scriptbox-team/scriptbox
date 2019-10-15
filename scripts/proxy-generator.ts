@@ -1,4 +1,4 @@
-import IExistable from "./existable";
+import Existable from "./existable";
 import MetaInfo from "./meta-info";
 
 export default class ProxyGenerator {
@@ -48,7 +48,7 @@ export default class ProxyGenerator {
             }
         });
     }
-    public static makeDeletable<T extends object & IExistable>(
+    public static makeDeletable<T extends object & Existable>(
         obj: T,
         readOnlyProps: ReadonlyArray<(string | number | symbol)> = [],
         hiddenProps: ReadonlyArray<(string | number | symbol)> = [],

@@ -1,7 +1,7 @@
 import Entity from "./entity";
 import PlayerSoul from "./player-soul";
 
-export interface IPlayerProxy {
+export interface PlayerProxy {
     readonly id: string;
     readonly username: string;
     displayName: string;

@@ -1,6 +1,6 @@
 import Player from "./player";
 
-export interface IMetaInfoProxy {
+export interface MetaInfoProxy {
     name: string;
     description: string;
     owner?: Player;

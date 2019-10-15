@@ -1,21 +1,21 @@
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import Component from "./component";
-import ComponentInfo, { IComponentInfoProxy } from "./component-info";
+import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
-import Entity, { IEntityProxy } from "./entity";
+import Entity, { EntityProxy } from "./entity";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import MetaInfo from "./meta-info";
-import Player, { IPlayerProxy } from "./player";
+import Player, { PlayerProxy } from "./player";
 import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Velocity from "./velocity";
 
 //tslint:disable
-type IClassInterface = {new (...args: any[]): any};
+type ClassInterface = {new (...args: any[]): any};
 // tslint:enable
 
 const idGenerator = new IDGenerator(Math.random());
@@ -24,37 +24,37 @@ const makeID = (prefix: string) => {
     return idGenerator.makeFrom(prefix, Date.now(), Math.random());
 };
 
-interface IComponentInfo {
+interface ComponentExportInfo {
     id: string;
     name: string;
     attributes: Array<{name: string, kind: string, value: string}>;
 }
 
-interface IEntityInfo {
+interface EntityExportInfo {
     id: string;
     name: string;
-    componentInfo: {[localID: string]: IComponentInfo};
+    componentInfo: {[localID: string]: ComponentExportInfo};
 }
 
-interface IExports {
+interface Exports {
     entities: {[id: string]: {
         position: {x: number, y: number},
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
-    inspectedEntityInfo: {[playerID: string]: IEntityInfo};
+    inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
 }
 
-const exportValues: IExports = {
+const exportValues: Exports = {
     entities: {},
     inspectedEntityInfo: {}
 };
 
 global.exportValues = exportValues;
 
-const classList = new Map<string, IClassInterface>();
+const classList = new Map<string, ClassInterface>();
 
 const playerSoulMap = new WeakMap<Player, PlayerSoul>();
-const playerProxyMap = new WeakMap<Player, IPlayerProxy>();
+const playerProxyMap = new WeakMap<Player, PlayerProxy>();
 const playerManager = new Manager<Player>((
         id: string,
         username: string,
@@ -77,7 +77,7 @@ const playerManager = new Manager<Player>((
     player.exists = false;
 });
 
-const entityProxyMap = new WeakMap<Entity, IEntityProxy>();
+const entityProxyMap = new WeakMap<Entity, EntityProxy>();
 const entityManager = new Manager<Entity>((id: string, creator: Player) => {
     const info = new MetaInfo(
         `Entity ${id}`,
@@ -88,7 +88,7 @@ const entityManager = new Manager<Entity>((id: string, creator: Player) => {
         creator
     );
     const entity = new Entity(id, info);
-    const proxy = ProxyGenerator.makeDeletable<IEntityProxy>(
+    const proxy = ProxyGenerator.makeDeletable<EntityProxy>(
         entity,
         Entity.hiddenProps,
         Entity.readOnlyProps
@@ -108,7 +108,7 @@ const componentInfoMap = new WeakMap<Component, ComponentInfo>();
 const componentProxyMap = new WeakMap<Component, Component>();
 const componentManager = new Manager<Component>((
             componentID: string,
-            componentClass: IClassInterface,
+            componentClass: ClassInterface,
             entity: Entity,
             localID: string,
             creator: Player,
@@ -124,7 +124,7 @@ const componentManager = new Manager<Component>((
             creator
         );
         // TODO: Throw an error if a component doesn't actually extend component
-        const infoProxy = ProxyGenerator.make<IComponentInfoProxy>(
+        const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
             info,
             ["id", "entity", "exists"],
             ["_enabled", "_tags"]
@@ -162,16 +162,14 @@ const inspectedEntities: Map<string, string> = new Map<string, string>();
 
 function runOnAll(funcName: string) {
     const componentIterator = componentManager.entries();
-    for (const [, component] of componentIterator) {
+    for (const [key, component] of componentIterator) {
         try {
             if (funcName in component && typeof (component as any)[funcName] === "function") {
                 (component as any)[funcName]();
             }
         }
         catch (err) {
-            if (component instanceof Component) {
-                // TODO: Notify the entity owner if their code errors
-            }
+            const info = componentInfoMap.get(component);
             global.log(`Error during ${funcName}: ${err}`);
         }
     }
@@ -268,7 +266,7 @@ export function update() {
             acc[component.localID] = getComponentInfo(component);
             return acc;
         }, {});
-        const entityInfo: IEntityInfo = {
+        const entityInfo: EntityExportInfo = {
             id: entityID,
             name: "Entity " + entityID, // temporary
             componentInfo
@@ -277,7 +275,7 @@ export function update() {
     }
 }
 
-function getComponentInfo(component: Component): IComponentInfo {
+function getComponentInfo(component: Component): ComponentExportInfo {
     const keys = Object.keys(component);
     const attributes = keys.map((key) => {
         let value = component[key];
@@ -364,8 +362,8 @@ export function deleteComponent(componentID: string) {
     global.log("Component queued for deletion (ID: " + componentID + ")");
 }
 
-export function create(classParam: string | IClassInterface, ...args: any[]) {
-    let classToCreate: IClassInterface;
+export function create(classParam: string | ClassInterface, ...args: any[]) {
+    let classToCreate: ClassInterface;
     if (typeof classParam === "string") {
         classToCreate = classList.get(classParam);
     }
@@ -422,7 +420,7 @@ export function handleInput(playerID: string, input: number, state: InputType) {
     }
 }
 
-export function setComponentClass(classObj: IClassInterface, id: string) {
+export function setComponentClass(classObj: ClassInterface, id: string) {
     if (classObj.prototype instanceof Component) {
         // TODO: If a component class already exists on upload, re-instantiate instances of it with the new version
         classList.set(id, classObj);

@@ -2,7 +2,7 @@ import Component from "./component";
 import MetaInfo from "./meta-info";
 import Player from "./player";
 
-export interface IEntityProxy {
+export interface EntityProxy {
     readonly add: (localID: string, component: Component) => void;
     readonly remove: (localID: string) => void;
     readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;

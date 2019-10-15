@@ -1,3 +1,3 @@
-export default interface IExistable {
+export default interface Existable {
     readonly exists: boolean;
 }

@@ -1,6 +1,6 @@
 import Client from "core/client";
 import Difference from "core/difference";
-import IExports from "core/export-values";
+import Exports from "core/export-values";
 import Group, { GroupType } from "core/group";
 import _ from "lodash";
 import ComponentInfo from "resource-management/component-info";
@@ -10,7 +10,7 @@ import RenderObject from "resource-management/render-object";
 import System from "./system";
 
 export default class DisplaySystem extends System {
-    private _lastExportValues: IExports;
+    private _lastExportValues: Exports;
     private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
     private _entityInspectionCallback?: (
         entityID: string,
@@ -32,7 +32,7 @@ export default class DisplaySystem extends System {
         this._sendDisplayObjectsToPlayer(updatesToSend, player);
     }
 
-    public broadcastDisplay(exportValues: IExports) {
+    public broadcastDisplay(exportValues: Exports) {
         const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
         const updatesToSend = this._dataToDisplayObjects(changes);
         this._broadcastDisplayObjects(updatesToSend);
@@ -47,7 +47,7 @@ export default class DisplaySystem extends System {
             playerGroup: Group<Client>) => void) {
         this._entityInspectionCallback = callback;
     }
-    public sendInspectedEntities(exportValues: IExports) {
+    public sendInspectedEntities(exportValues: Exports) {
         const players = Object.keys(exportValues.inspectedEntityInfo);
         for (const playerID of players) {
             const entityInfo = exportValues.inspectedEntityInfo[playerID];
@@ -112,7 +112,7 @@ export default class DisplaySystem extends System {
         );
     }
 
-    private _getDisplayDifferences(lastExportValues: IExports, exportValues: IExports) {
+    private _getDisplayDifferences(lastExportValues: Exports, exportValues: Exports) {
         // Lodash type annotations are really restrictive
         // So please ignore the following casting shenanigans
         const diffs = _.transform(exportValues.entities, (acc, entity, key) => {

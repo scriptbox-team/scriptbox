@@ -7,9 +7,9 @@ import ServerNetEvent from "./server-net-event";
 /**
  * The constructor options for the Net Client
  *
- * @interface INetClientConstructorOptions
+ * @interface NetClientConstructorOptions
  */
-interface INetClientConstructorOptions {
+interface NetClientConstructorOptions {
     /**
      * The ID to assign to the client
      *
@@ -42,10 +42,10 @@ export default class NetClient {
     private _socket: WebSocket;
     /**
      * Creates an instance of NetClient.
-     * @param {INetClientConstructorOptions} options The options to initialize the client with.
+     * @param {NetClientConstructorOptions} options The options to initialize the client with.
      * @memberof NetClient
      */
-    constructor(options: INetClientConstructorOptions) {
+    constructor(options: NetClientConstructorOptions) {
         this._emitter = new EventEmitter();
         this._id = options.id;
         this._socket = options.socket;
