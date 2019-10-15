@@ -1,11 +1,19 @@
 import Component from "./component";
 import MetaInfo from "./meta-info";
+import Player from "./player";
 
-interface IProtectedEntityData {
-    id: string;
-    metaInfo: MetaInfo;
+export interface IEntityProxy {
+    readonly add: (localID: string, component: Component) => void;
+    readonly remove: (localID: string) => void;
+    readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;
+    readonly withMany: <T extends Component[] = any[]>(names: string[], func: (t: T) => void) => void;
+    readonly getComponentLocalID: (component: Component) => string;
+    readonly setComponentLocalID: (component: Component, newID: string) => void;
+    readonly enabled: boolean;
+    readonly exists: boolean;
+    readonly controller?: Player;
+    readonly id: string;
 }
-const dataWeakmap = new WeakMap<Entity, IProtectedEntityData>();
 
 /**
  * Represents an entity, which is essentially an ID linking to a set of components.
@@ -16,8 +24,30 @@ const dataWeakmap = new WeakMap<Entity, IProtectedEntityData>();
  * @class Entity
  */
 export default class Entity {
+    public static readOnlyProps = Object.freeze([
+        "add",
+        "remove",
+        "with",
+        "withMany",
+        "getComponentLocalID",
+        "setComponentLocalID",
+        "enabled",
+        "exists",
+        "controller",
+        "id"
+    ]);
+    public static hiddenProps = Object.freeze([
+        "_components",
+        "_componentsInverse",
+        "_id",
+        "_controller",
+        "_metaInfo"
+    ]);
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;
+    private _id: string;
+    private _controller?: Player;
+    private _metaInfo: MetaInfo;
     /**
      * Creates an instance of Entity.
      * This should only be used by the EntityManager.
@@ -25,8 +55,10 @@ export default class Entity {
      * @param {EntityManagerInterface} entityManagerInterface The interface of functions to call.
      * @memberof Entity
      */
-    constructor(id: string, metaInfo: MetaInfo) {
-        dataWeakmap.set(this, {id, metaInfo});
+    constructor(id: string, metaInfo: MetaInfo, controller?: Player) {
+        this._id = id;
+        this._metaInfo = metaInfo;
+        this._controller = controller;
         this._components = new Map<string, Component>();
         this._componentsInverse = new WeakMap<Component, string>();
     }
@@ -36,8 +68,10 @@ export default class Entity {
     }
     public remove(localID: string) {
         const component = this._components.get(localID);
-        this._components.delete(localID);
-        this._componentsInverse.delete(component);
+        if (component !== undefined) {
+            this._components.delete(localID);
+            this._componentsInverse.delete(component);
+        }
     }
     /**
      * Get a component belonging to this entity
@@ -85,9 +119,11 @@ export default class Entity {
             throw new Error(`Entity ${this.id} already has a component with a local ID of ${newID}.`);
         }
         const currentLocalID = this._componentsInverse.get(component);
-        this._components.delete(currentLocalID);
-        this._components.set(newID, component);
-        this._componentsInverse.set(component, newID);
+        if (currentLocalID !== undefined) {
+            this._components.delete(currentLocalID);
+            this._components.set(newID, component);
+            this._componentsInverse.set(component, newID);
+        }
     }
     /**
      * Get whether this entity exists or not.
@@ -97,14 +133,27 @@ export default class Entity {
      * @memberof Entity
      */
     get exists(): boolean {
-        return dataWeakmap.get(this)!.metaInfo.exists;
+        return this._metaInfo.exists;
+    }
+
+    // Note: Function not exposed to player scripting
+    set exists(value: boolean) {
+        this._metaInfo.exists = value;
     }
 
     public get enabled() {
-        return dataWeakmap.get(this)!.metaInfo.enabled;
+        return this._metaInfo.enabled;
+    }
+
+    public get controller() {
+        return this._controller;
+    }
+    // Note: Function not exposed to player scripting
+    public set controller(value: Player | undefined) {
+        this._controller = value;
     }
 
     get id(): string {
-        return dataWeakmap.get(this)!.id;
+        return this._id;
     }
 }

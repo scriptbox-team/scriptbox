@@ -1,4 +1,4 @@
-import Player from "core/player";
+import Client from "core/client";
 import ClientNetEvent, { ClientEventType } from "networking/client-net-event";
 import NetEventHandler from "networking/net-event-handler";
 import ClientAddComponentPacket from "networking/packets/client-add-component-packet";
@@ -21,11 +21,11 @@ let netEventHandler!: NetEventHandler;
 beforeEach(() => {
     netEventHandler = new NetEventHandler();
     netEventHandler.playerCreate = jest.fn((connID, packet) => {
-        return new Player("testPlayerID", connID, "testPlayer", "Test Player");
+        return new Client("testPlayerID", connID, "testPlayer", "Test Player");
     });
     netEventHandler.playerRemove = jest.fn();
-    (netEventHandler as any)._connectionIDToPlayer = new Map<number, Player>([
-        [1, new Player("testPlayerID2", 1, "testPlayer2", "Test Player2")]
+    (netEventHandler as any)._connectionIDToPlayer = new Map<number, Client>([
+        [1, new Client("testPlayerID2", 1, "testPlayer2", "Test Player2")]
     ]);
 });
 
@@ -37,7 +37,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(0, new ClientNetEvent(ClientEventType.Connection, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID", 0, "testPlayer", "Test Player"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID", 0, "testPlayer", "Test Player"));
     });
     test("handles disconnection packets", () => {
         const packet = new ClientDisconnectPacket(1001);
@@ -46,7 +46,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.Disconnect, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles input packets", () => {
         const packet = new ClientKeyboardInputPacket(20, 0, 0);
@@ -55,7 +55,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.Input, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles chat message packets", () => {
         const packet = new ClientChatMessagePacket("test");
@@ -64,7 +64,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.ChatMessage, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles object creation packets", () => {
         const packet = new ClientEntityCreationPacket("myPrefab", 10, 20);
@@ -73,7 +73,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.EntityCreation, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles object deletion packets", () => {
         const packet = new ClientEntityDeletionPacket("125");
@@ -82,7 +82,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.EntityDeletion, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles token request packets", () => {
         const packet = new ClientTokenRequestPacket(TokenType.FileUpload);
@@ -91,7 +91,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.TokenRequest, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles metadata modification packets", () => {
         const packet = new ClientModifyMetadataPacket("testResource", "description", "a good resource");
@@ -100,7 +100,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.ModifyMetadata, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles component addition packets", () => {
         const packet = new ClientAddComponentPacket("testClass", "testComponent");
@@ -109,7 +109,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.AddComponent, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles component removal packets", () => {
         const packet = new ClientRemoveComponentPacket("123");
@@ -118,7 +118,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.RemoveComponent, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles component editing packets", () => {
         const packet = new ClientEditComponentPacket("testComponent", "someProp", "25", "number");
@@ -127,7 +127,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.EditComponent, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles script execution packets", () => {
         const packet = new ClientExecuteScriptPacket("testScript", "arg1 arg2");
@@ -136,7 +136,7 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.ExecuteScript, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
     test("handles keybinding packets", () => {
         const packet = new ClientKeybindsPacket({12: "jump", 522: "fire laser"}, "242");
@@ -145,6 +145,6 @@ describe("NetEventHandler", () => {
         netEventHandler.handle(1, new ClientNetEvent(ClientEventType.Keybinds, packet.serialize()));
         expect(fn).toBeCalledTimes(1);
         expect(fn.mock.calls[0][0]).toEqual(packet);
-        expect(fn.mock.calls[0][1]).toEqual(new Player("testPlayerID2", 1, "testPlayer2", "Test Player2"));
+        expect(fn.mock.calls[0][1]).toEqual(new Client("testPlayerID2", 1, "testPlayer2", "Test Player2"));
     });
 });

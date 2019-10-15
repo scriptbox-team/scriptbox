@@ -1,6 +1,6 @@
+import Client from "core/client";
 import IDGenerator from "core/id-generator";
 import Manager from "core/manager";
-import Player from "core/player";
 import { UploadedFile } from "express-fileupload";
 import ResourceServer from "networking/resource-server";
 import TokenGenerator from "networking/token-generator";
@@ -18,12 +18,12 @@ interface IPlayerResourceData {
 }
 
 export default class ResourceSystem extends System {
-    public onPlayerListingUpdate?: (user: Player, resources: Resource[]) => void;
-    public playerByUsername?: (username: string) => Player | undefined;
+    public onPlayerListingUpdate?: (user: Client, resources: Resource[]) => void;
+    public playerByUsername?: (username: string) => Client | undefined;
     private _playerResourceData: Map<string, IPlayerResourceData> = new Map<string, IPlayerResourceData>();
     private _resourceManager: Manager<Resource>;
     private _resourceServer: ResourceServer;
-    private _playerTokens: Map<number, Player>;
+    private _playerTokens: Map<number, Client>;
     private _idGenerator: IDGenerator;
     constructor(idGenerator: IDGenerator, options: IResourceSystemOptions) {
         super();
@@ -31,7 +31,7 @@ export default class ResourceSystem extends System {
         this._onResourceDelete = this._onResourceDelete.bind(this);
         this._resourceManager = new Manager<Resource>(this._resourceCreate, this._onResourceDelete);
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
-        this._playerTokens = new Map<number, Player>();
+        this._playerTokens = new Map<number, Client>();
         this._resourceServer.onFileUpload = this.handleFileUpload;
         this._resourceServer.onFileDelete = this.handleFileDelete;
         this._idGenerator = idGenerator;
@@ -175,7 +175,7 @@ export default class ResourceSystem extends System {
     public host() {
         this._resourceServer.host();
     }
-    public makePlayerToken(player: Player) {
+    public makePlayerToken(player: Client) {
         const token = TokenGenerator.makeToken();
         this._playerTokens.set(token, player);
         return token;

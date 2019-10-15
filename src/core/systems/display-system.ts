@@ -1,20 +1,21 @@
+import Client from "core/client";
 import Difference from "core/difference";
 import IExports from "core/export-values";
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import Group, { GroupType } from "core/group";
 import _ from "lodash";
 import ComponentInfo from "resource-management/component-info";
 import ComponentOption, { ComponentOptionType } from "resource-management/component-option";
 import RenderObject from "resource-management/render-object";
+
 import System from "./system";
 
 export default class DisplaySystem extends System {
     private _lastExportValues: IExports;
-    private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void;
+    private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
-        playerGroup: PlayerGroup) => void;
+        playerGroup: Group<Client>) => void;
     constructor() {
         super();
         this._lastExportValues = {
@@ -22,7 +23,7 @@ export default class DisplaySystem extends System {
             inspectedEntityInfo: {}
         };
     }
-    public sendFullDisplayToPlayer(player: Player) {
+    public sendFullDisplayToPlayer(player: Client) {
         const diff = new Difference<{x: number, y: number}>();
         diff.added = _.transform(this._lastExportValues.entities, (acc, entity, key) => {
             acc[key] = entity.position;
@@ -37,13 +38,13 @@ export default class DisplaySystem extends System {
         this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
-    public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: PlayerGroup) => void) {
+    public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: Group<Client>) => void) {
         this._renderDisplayObjectCallback = callback;
     }
     public onEntityInspection(callback: (
             entityID: string,
             components: ComponentInfo[],
-            playerGroup: PlayerGroup) => void) {
+            playerGroup: Group<Client>) => void) {
         this._entityInspectionCallback = callback;
     }
     public sendInspectedEntities(exportValues: IExports) {
@@ -77,7 +78,7 @@ export default class DisplaySystem extends System {
                 this._entityInspectionCallback!(
                     entityInfo.id,
                     components,
-                    new PlayerGroup(PlayerGroupType.Only, [player])
+                    new Group(GroupType.Only, [player])
                 );
             }
         }
@@ -101,13 +102,13 @@ export default class DisplaySystem extends System {
     private _broadcastDisplayObjects(pack: RenderObject[]) {
         this._renderDisplayObjectCallback!(
             pack,
-            new PlayerGroup(PlayerGroupType.All, [])
+            new Group(GroupType.All, [])
         );
     }
-    private _sendDisplayObjectsToPlayer(pack: RenderObject[], player: Player) {
+    private _sendDisplayObjectsToPlayer(pack: RenderObject[], player: Client) {
         this._renderDisplayObjectCallback!(
             pack,
-            new PlayerGroup(PlayerGroupType.Only, [player])
+            new Group(GroupType.Only, [player])
         );
     }
 

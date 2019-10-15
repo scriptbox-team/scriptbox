@@ -1,4 +1,4 @@
-import Player from "core/player";
+import Client from "core/client";
 import NetEventHandler from "networking/net-event-handler";
 import Networker from "networking/networker";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
@@ -36,29 +36,29 @@ export default class GameSystemNetworker extends Networker {
         netEventHandler.addInputDelegate(this.playerInputDelegate);
         netEventHandler.addExecuteScriptDelegate(this.executeScriptDelegate);
     }
-    public playerConnectionDelegate(packet: ClientConnectionPacket, player: Player) {
+    public playerConnectionDelegate(packet: ClientConnectionPacket, player: Client) {
         this._gameSystem.createPlayer(player);
     }
-    public playerDisconnectDelegate(packet: ClientDisconnectPacket, player: Player) {
+    public playerDisconnectDelegate(packet: ClientDisconnectPacket, player: Client) {
         this._gameSystem.setPlayerEntityInspection(player, undefined);
     }
-    public playerInputDelegate(packet: ClientKeyboardInputPacket, player: Player) {
+    public playerInputDelegate(packet: ClientKeyboardInputPacket, player: Client) {
         this._gameSystem.handleKeyInput(packet.key, packet.state, player);
     }
-    public entityCreationDelegate(packet: ClientEntityCreationPacket, player: Player) {
+    public entityCreationDelegate(packet: ClientEntityCreationPacket, player: Client) {
         this._gameSystem.createEntityAt(packet.prefabID, packet.x, packet.y, player);
     }
-    public entityDeletionDelegate(packet: ClientEntityDeletionPacket, player: Player) {
+    public entityDeletionDelegate(packet: ClientEntityDeletionPacket, player: Client) {
         this._gameSystem.deleteEntity(packet.id);
     }
-    public entityInspectionDelegate(packet: ClientEntityInspectionPacket, player: Player) {
+    public entityInspectionDelegate(packet: ClientEntityInspectionPacket, player: Client) {
         this._gameSystem.setPlayerEntityInspection(player, packet.entityID);
     }
-    public removeComponentDelegate(packet: ClientRemoveComponentPacket, player: Player) {
+    public removeComponentDelegate(packet: ClientRemoveComponentPacket, player: Client) {
         this._gameSystem.removeComponent(packet.componentID);
     }
     public executeScriptDelegate(
-            packet: ClientExecuteScriptPacket, player: Player) {
+            packet: ClientExecuteScriptPacket, player: Client) {
         this._gameSystem.runResourcePlayerScript(packet.script, packet.args, player, packet.entityID);
     }
 }

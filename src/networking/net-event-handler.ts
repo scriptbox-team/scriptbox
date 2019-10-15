@@ -1,4 +1,4 @@
-import Player from "core/player";
+import Client from "core/client";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
@@ -26,117 +26,117 @@ import ClientTokenRequestPacket from "./packets/client-token-request-packet";
  * @class NetEventHandler
  */
 export default class NetEventHandler {
-    public playerCreate?: (connectionID: number, packet: ClientConnectionPacket) => Player;
-    public playerRemove?: (packet: ClientDisconnectPacket, player: Player) => void;
-    private _connectionDelegates: Array<(packet: ClientConnectionPacket, player: Player) => void>;
-    private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Player) => void>;
-    private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Player) => void>;
-    private _chatMessageDelegates: Array<(packet: ClientChatMessagePacket, player: Player) => void>;
-    private _entityCreationDelegates: Array<(packet: ClientEntityCreationPacket, player: Player) => void>;
-    private _entityDeletionDelegates: Array<(packet: ClientEntityDeletionPacket, player: Player) => void>;
-    private _tokenRequestDelegates: Array<(packet: ClientTokenRequestPacket, player: Player) => void>;
-    private _modifyMetadataDelegates: Array<(packet: ClientModifyMetadataPacket, player: Player) => void>;
-    private _addComponentDelegates: Array<(packet: ClientAddComponentPacket, player: Player) => void>;
-    private _removeComponentDelegates: Array<(packet: ClientRemoveComponentPacket, player: Player) => void>;
-    private _editComponentDelegates: Array<(packet: ClientEditComponentPacket, player: Player) => void>;
-    private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Player) => void>;
-    private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Player) => void>;
-    private _entityInspectionDelegates: Array<(packet: ClientEntityInspectionPacket, player: Player) => void>;
-    private _connectionIDToPlayer: Map<number, Player> = new Map<number, Player>();
+    public playerCreate?: (connectionID: number, packet: ClientConnectionPacket) => Client;
+    public playerRemove?: (packet: ClientDisconnectPacket, player: Client) => void;
+    private _connectionDelegates: Array<(packet: ClientConnectionPacket, player: Client) => void>;
+    private _disconnectionDelgates: Array<(packet: ClientDisconnectPacket, player: Client) => void>;
+    private _inputDelegates: Array<(packet: ClientKeyboardInputPacket, player: Client) => void>;
+    private _chatMessageDelegates: Array<(packet: ClientChatMessagePacket, player: Client) => void>;
+    private _entityCreationDelegates: Array<(packet: ClientEntityCreationPacket, player: Client) => void>;
+    private _entityDeletionDelegates: Array<(packet: ClientEntityDeletionPacket, player: Client) => void>;
+    private _tokenRequestDelegates: Array<(packet: ClientTokenRequestPacket, player: Client) => void>;
+    private _modifyMetadataDelegates: Array<(packet: ClientModifyMetadataPacket, player: Client) => void>;
+    private _addComponentDelegates: Array<(packet: ClientAddComponentPacket, player: Client) => void>;
+    private _removeComponentDelegates: Array<(packet: ClientRemoveComponentPacket, player: Client) => void>;
+    private _editComponentDelegates: Array<(packet: ClientEditComponentPacket, player: Client) => void>;
+    private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Client) => void>;
+    private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Client) => void>;
+    private _entityInspectionDelegates: Array<(packet: ClientEntityInspectionPacket, player: Client) => void>;
+    private _connectionIDToPlayer: Map<number, Client> = new Map<number, Client>();
     /**
      * Creates an instance of NetEventHandler.
      * @param {PlayerNetworkManager} playerNetworkManager The PlayerNetworkManager to take in
      * @memberof NetEventHandler
      */
     constructor() {
-        this._connectionDelegates = new Array<(packet: ClientConnectionPacket, player: Player) => void>();
-        this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Player) => void>();
-        this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Player) => void>();
-        this._chatMessageDelegates = new Array<(packet: ClientChatMessagePacket, player: Player) => void>();
-        this._entityCreationDelegates = new Array<(packet: ClientEntityCreationPacket, player: Player) => void>();
-        this._entityDeletionDelegates = new Array<(packet: ClientEntityDeletionPacket, player: Player) => void>();
-        this._tokenRequestDelegates = new Array<(packet: ClientTokenRequestPacket, player: Player) => void>();
-        this._modifyMetadataDelegates = new Array<(packet: ClientModifyMetadataPacket, player: Player) => void>();
-        this._addComponentDelegates = new Array<(packet: ClientAddComponentPacket, player: Player) => void>();
-        this._removeComponentDelegates = new Array<(packet: ClientRemoveComponentPacket, player: Player) => void>();
-        this._editComponentDelegates = new Array<(packet: ClientEditComponentPacket, player: Player) => void>();
-        this._executeScriptDelegates = new Array<(packet: ClientExecuteScriptPacket, player: Player) => void>();
-        this._keybindingDelegates = new Array<(packet: ClientKeybindsPacket, player: Player) => void>();
-        this._entityInspectionDelegates = new Array<(packet: ClientEntityInspectionPacket, player: Player) => void>();
+        this._connectionDelegates = new Array<(packet: ClientConnectionPacket, player: Client) => void>();
+        this._disconnectionDelgates = new Array<(packet: ClientDisconnectPacket, player: Client) => void>();
+        this._inputDelegates = new Array<(packet: ClientKeyboardInputPacket, player: Client) => void>();
+        this._chatMessageDelegates = new Array<(packet: ClientChatMessagePacket, player: Client) => void>();
+        this._entityCreationDelegates = new Array<(packet: ClientEntityCreationPacket, player: Client) => void>();
+        this._entityDeletionDelegates = new Array<(packet: ClientEntityDeletionPacket, player: Client) => void>();
+        this._tokenRequestDelegates = new Array<(packet: ClientTokenRequestPacket, player: Client) => void>();
+        this._modifyMetadataDelegates = new Array<(packet: ClientModifyMetadataPacket, player: Client) => void>();
+        this._addComponentDelegates = new Array<(packet: ClientAddComponentPacket, player: Client) => void>();
+        this._removeComponentDelegates = new Array<(packet: ClientRemoveComponentPacket, player: Client) => void>();
+        this._editComponentDelegates = new Array<(packet: ClientEditComponentPacket, player: Client) => void>();
+        this._executeScriptDelegates = new Array<(packet: ClientExecuteScriptPacket, player: Client) => void>();
+        this._keybindingDelegates = new Array<(packet: ClientKeybindsPacket, player: Client) => void>();
+        this._entityInspectionDelegates = new Array<(packet: ClientEntityInspectionPacket, player: Client) => void>();
 
     }
     /**
      * Add a delegate for when a client connects.
      *
-     * @param {((packet: ClientConnectionPacket, player: Player | undefined) => void)} func
+     * @param {((packet: ClientConnectionPacket, player: Client | undefined) => void)} func
      * The delegate to run when a client connects.
      * @memberof NetEventHandler
      */
-    public addConnectionDelegate(func: (packet: ClientConnectionPacket, player: Player) => void) {
+    public addConnectionDelegate(func: (packet: ClientConnectionPacket, player: Client) => void) {
         this._connectionDelegates.push(func);
     }
     /**
      * Add a delegate for when a client disconnects.
      *
-     * @param {((packet: ClientDisconnectPacket, player: Player | undefined) => void)} func
+     * @param {((packet: ClientDisconnectPacket, player: Client | undefined) => void)} func
      * The delegate to run when a client disconnects
      * @memberof NetEventHandler
      */
-    public addDisconnectionDelegate(func: (packet: ClientDisconnectPacket, player: Player) => void) {
+    public addDisconnectionDelegate(func: (packet: ClientDisconnectPacket, player: Client) => void) {
         this._disconnectionDelgates.push(func);
     }
     /**
      * Add a delegate for when a client makes an input
      *
-     * @param {((packet: ClientKeyboardInputPacket, player: Player | undefined) => void)} func
+     * @param {((packet: ClientKeyboardInputPacket, player: Client | undefined) => void)} func
      * The delegate to run when a player performs an input
      * @memberof NetEventHandler
      */
-    public addInputDelegate(func: (packet: ClientKeyboardInputPacket, player: Player) => void) {
+    public addInputDelegate(func: (packet: ClientKeyboardInputPacket, player: Client) => void) {
         this._inputDelegates.push(func);
     }
 
-    public addChatMessageDelegate(func: (packet: ClientChatMessagePacket, player: Player) => void) {
+    public addChatMessageDelegate(func: (packet: ClientChatMessagePacket, player: Client) => void) {
         this._chatMessageDelegates.push(func);
     }
 
-    public addEntityCreationDelegate(func: (packet: ClientEntityCreationPacket, player: Player) => void) {
+    public addEntityCreationDelegate(func: (packet: ClientEntityCreationPacket, player: Client) => void) {
         this._entityCreationDelegates.push(func);
     }
 
-    public addEntityDeletionDelegate(func: (packet: ClientEntityDeletionPacket, player: Player) => void) {
+    public addEntityDeletionDelegate(func: (packet: ClientEntityDeletionPacket, player: Client) => void) {
         this._entityDeletionDelegates.push(func);
     }
 
-    public addTokenRequestDelegate(func: (packet: ClientTokenRequestPacket, playeR: Player) => void) {
+    public addTokenRequestDelegate(func: (packet: ClientTokenRequestPacket, playeR: Client) => void) {
         this._tokenRequestDelegates.push(func);
     }
 
-    public addModifyMetadataDelegate(func: (packet: ClientModifyMetadataPacket, player: Player) => void) {
+    public addModifyMetadataDelegate(func: (packet: ClientModifyMetadataPacket, player: Client) => void) {
         this._modifyMetadataDelegates.push(func);
     }
 
-    public addAddComponentDelegate(func: (packet: ClientAddComponentPacket, player: Player) => void) {
+    public addAddComponentDelegate(func: (packet: ClientAddComponentPacket, player: Client) => void) {
         this._addComponentDelegates.push(func);
     }
 
-    public addRemoveComponentDelegate(func: (packet: ClientRemoveComponentPacket, player: Player) => void) {
+    public addRemoveComponentDelegate(func: (packet: ClientRemoveComponentPacket, player: Client) => void) {
         this._removeComponentDelegates.push(func);
     }
 
-    public addEditComponentDelegate(func: (packet: ClientEditComponentPacket, player: Player) => void) {
+    public addEditComponentDelegate(func: (packet: ClientEditComponentPacket, player: Client) => void) {
         this._editComponentDelegates.push(func);
     }
 
-    public addExecuteScriptDelegate(func: (packet: ClientExecuteScriptPacket, player: Player) => void) {
+    public addExecuteScriptDelegate(func: (packet: ClientExecuteScriptPacket, player: Client) => void) {
         this._executeScriptDelegates.push(func);
     }
 
-    public addKeybindingDelegate(func: (packet: ClientKeybindsPacket, player: Player) => void) {
+    public addKeybindingDelegate(func: (packet: ClientKeybindsPacket, player: Client) => void) {
         this._keybindingDelegates.push(func);
     }
 
-    public addEntityInspectionDelegate(func: (packet: ClientEntityInspectionPacket, player: Player) => void) {
+    public addEntityInspectionDelegate(func: (packet: ClientEntityInspectionPacket, player: Client) => void) {
         this._entityInspectionDelegates.push(func);
     }
     /**
@@ -281,14 +281,14 @@ export default class NetEventHandler {
      * @private
      * @template T The type of the packet
      * @param {(T | undefined)} packet The packet to send
-     * @param {(Player | undefined)} player The player associated with the packet
-     * @param {(Array<(packet: T, player: Player) => void>)} delegates The delegates to send to
+     * @param {(Client | undefined)} player The player associated with the packet
+     * @param {(Array<(packet: T, player: Client) => void>)} delegates The delegates to send to
      * @memberof NetEventHandler
      */
     private _sendToDelegates<T extends Packet>(
         packet: T | undefined,
-        player: Player | undefined,
-        delegates: Array<(packet: T, player: Player) => void>,
+        player: Client | undefined,
+        delegates: Array<(packet: T, player: Client) => void>,
     ) {
         if (packet !== undefined && player !== undefined) {
             for (const f of delegates) {

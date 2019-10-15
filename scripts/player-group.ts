@@ -1,4 +1,4 @@
-import Player from "core/player";
+import Player from "./player";
 
 /**
  * A group type to add meaning to the players associated with the player group.

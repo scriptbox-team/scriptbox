@@ -1,17 +1,10 @@
-import Entity from "./entity";
-import MetaInfo from "./meta-info";
+import IComponentProtectedInfo from "./component-info";
 
-interface IProtectedComponentData {
-    id: string;
-    entity: Entity;
-    metaInfo: MetaInfo;
-}
-
-const dataWeakmap = new WeakMap<Component, IProtectedComponentData>();
+const dataWeakmap = new WeakMap<Component, IComponentProtectedInfo>();
 
 export default class Component {
-    constructor(id: string, entity: Entity, metaInfo: MetaInfo) {
-        dataWeakmap.set(this, {id, entity, metaInfo});
+    constructor(info: IComponentProtectedInfo) {
+        dataWeakmap.set(this, info);
     }
     public update() {
 
@@ -23,10 +16,7 @@ export default class Component {
         return dataWeakmap.get(this)!.id;
     }
     public get localID() {
-        if (this.entity !== undefined) {
-            return this.entity.getComponentLocalID(this);
-        }
-        return undefined;
+        return this.entity.getComponentLocalID(this)!;
     }
     public set localID(newID: string) {
         if (this.entity !== undefined) {
@@ -34,30 +24,24 @@ export default class Component {
         }
     }
     public get entity() {
-        return dataWeakmap.get(this)!.entity!;
-    }
-    public set entity(newEntity: Entity) {
-        if (this.entity !== undefined) {
-            this.entity.remove(this.localID);
-        }
-        dataWeakmap.get(this)!.entity = newEntity;
+        return dataWeakmap.get(this)!.entity;
     }
     public get exists() {
-        return dataWeakmap.get(this)!.metaInfo.exists;
+        return dataWeakmap.get(this)!.exists;
     }
     public get enabled() {
-        return dataWeakmap.get(this)!.metaInfo.enabled;
+        return dataWeakmap.get(this)!.enabled;
     }
     public get name() {
-        return dataWeakmap.get(this)!.metaInfo.name;
+        return dataWeakmap.get(this)!.name;
     }
     public set name(newName: string) {
-        dataWeakmap.get(this)!.metaInfo.name = newName;
+        dataWeakmap.get(this)!.name = newName;
     }
     public get description() {
-        return dataWeakmap.get(this)!.metaInfo.description;
+        return dataWeakmap.get(this)!.description;
     }
     public set description(newDescription: string) {
-        dataWeakmap.get(this)!.metaInfo.description = newDescription;
+        dataWeakmap.get(this)!.description = newDescription;
     }
 }

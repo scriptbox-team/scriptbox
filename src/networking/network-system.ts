@@ -1,6 +1,6 @@
 
+import Client from "core/client";
 import Manager from "core/manager";
-import Player from "core/player";
 import NetHost from "networking/net-host";
 import Networker from "networking/networker";
 
@@ -32,7 +32,7 @@ export default class NetworkSystem {
      * @param {INetworkSystemConstructorOptions} options
      * @memberof NetworkSystem
      */
-    constructor(options: INetworkSystemConstructorOptions, playerManager: Manager<Player>) {
+    constructor(options: INetworkSystemConstructorOptions, playerManager: Manager<Client>) {
         this._maxPlayers = 8;
         this._port = 7777;
 

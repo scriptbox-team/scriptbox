@@ -1,6 +1,6 @@
+import Client from "core/client";
+import Group, { GroupType } from "core/group";
 import _Manager from "core/manager";
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
 import ServerMessage from "networking/server-messages/server-message";
 import ServerMessageBroadcaster from "networking/server-messages/server-message-broadcaster";
@@ -8,21 +8,21 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
 
 jest.mock("core/manager");
 // tslint:disable-next-line: variable-name
-const PlayerManager = _Manager as jest.Mock<_Manager<Player>>;
+const PlayerManager = _Manager as jest.Mock<_Manager<Client>>;
 
-let playerMap!: Map<string, Player>;
-let mockManager!: _Manager<Player>;
+let playerMap!: Map<string, Client>;
+let mockManager!: _Manager<Client>;
 let serverMessageBroadcaster!: ServerMessageBroadcaster;
 
 beforeEach(() => {
     mockManager = new PlayerManager();
     serverMessageBroadcaster = new ServerMessageBroadcaster(mockManager);
-    playerMap = new Map<string, Player>([
-        ["player2id", new Player("player2id", 2, "player2", "Player 2")],
-        ["player4id", new Player("player4id", 4, "player4", "Player 4")],
-        ["player5id", new Player("player5id", 5, "player5", "Player 5")],
-        ["player6id", new Player("player6id", 6, "player6", "Player 6")],
-        ["player7id", new Player("player7id", 7, "player7", "Player 7")]
+    playerMap = new Map<string, Client>([
+        ["player2id", new Client("player2id", 2, "player2", "Player 2")],
+        ["player4id", new Client("player4id", 4, "player4", "Player 4")],
+        ["player5id", new Client("player5id", 5, "player5", "Player 5")],
+        ["player6id", new Client("player6id", 6, "player6", "Player 6")],
+        ["player7id", new Client("player7id", 7, "player7", "Player 7")]
     ]);
     mockManager.entries = jest.fn(() => {
         return playerMap.entries();
@@ -35,7 +35,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.All, [])
+            new Group(GroupType.All, [])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
@@ -55,7 +55,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.Only, [new Player("player5id", 5, "player5", "Player 5")])
+            new Group(GroupType.Only, [new Client("player5id", 5, "player5", "Player 5")])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);
@@ -71,9 +71,9 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.Only, [
-                new Player("player5id", 5, "player5", "Player 5"),
-                new Player("player4id", 4, "player4", "Player 4")
+            new Group(GroupType.Only, [
+                new Client("player5id", 5, "player5", "Player 5"),
+                new Client("player4id", 4, "player4", "Player 4")
             ])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
@@ -91,7 +91,7 @@ describe("ServerMessageBroadcaster", () => {
         const event = new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket("test"));
         const message = new ServerMessage(
             event,
-            new PlayerGroup(PlayerGroupType.Except, [new Player("player5id", 5, "player5", "Player 5")])
+            new Group(GroupType.Except, [new Client("player5id", 5, "player5", "Player 5")])
         );
         serverMessageBroadcaster.setPacketCallback(callback);
         serverMessageBroadcaster.addToQueue(message);

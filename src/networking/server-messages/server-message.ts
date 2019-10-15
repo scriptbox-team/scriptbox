@@ -1,4 +1,5 @@
-import PlayerGroup from "core/player-group";
+import Client from "core/client";
+import Group from "core/group";
 import ServerNetEvent from "networking/server-net-event";
 
 /**
@@ -8,15 +9,15 @@ import ServerNetEvent from "networking/server-net-event";
  * @class ServerMessage
  */
 export default class ServerMessage {
-    public recipient: PlayerGroup;
+    public recipient: Group<Client>;
     public message: ServerNetEvent;
     /**
      * Creates an instance of ServerMessage.
      * @param {ServerNetEvent} message The ServerNetEvent to send
-     * @param {PlayerGroup} recipient The recipient(s) of the message.
+     * @param {Group} recipient The recipient(s) of the message.
      * @memberof ServerMessage
      */
-    constructor(message: ServerNetEvent, recipient: PlayerGroup) {
+    constructor(message: ServerNetEvent, recipient: Group<Client>) {
         this.recipient = recipient;
         this.message = message;
     }

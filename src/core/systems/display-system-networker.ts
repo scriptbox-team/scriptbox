@@ -1,5 +1,5 @@
-import Player from "core/player";
-import PlayerGroup from "core/player-group";
+import Client from "core/client";
+import Group from "core/group";
 import NetEventHandler from "networking/net-event-handler";
 import Networker from "networking/networker";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
@@ -28,10 +28,10 @@ export default class DisplaySystemNetworker extends Networker {
     public hookupInput(netEventHandler: NetEventHandler) {
         netEventHandler.addConnectionDelegate(this.connectionDelegate);
     }
-    public connectionDelegate(packet: ClientConnectionPacket, player: Player) {
+    public connectionDelegate(packet: ClientConnectionPacket, player: Client) {
         this._displaySystem.sendFullDisplayToPlayer(player);
     }
-    public onRenderObjectDisplay(renderObjects: RenderObject[], playerGroup: PlayerGroup) {
+    public onRenderObjectDisplay(renderObjects: RenderObject[], playerGroup: Group<Client>) {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.DisplayPackage, new ServerDisplayPacket(renderObjects)),
@@ -39,7 +39,7 @@ export default class DisplaySystemNetworker extends Networker {
             )
         );
     }
-    public onEntityInspectionListing(entityID: string, components: ComponentInfo[], playerGroup: PlayerGroup) {
+    public onEntityInspectionListing(entityID: string, components: ComponentInfo[], playerGroup: Group<Client>) {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.EntityInspectListing, new ServerEntityInspectionListingPacket(

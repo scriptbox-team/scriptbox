@@ -1,5 +1,5 @@
-import Player from "./player";
-import PlayerGroup from "./player-group";
+import Client from "./client";
+import Group from "./group";
 
 interface IComponentInfo {
     id: string;
@@ -19,6 +19,6 @@ export default interface IExports {
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
     inspectedEntityInfo: {[playerID: string]: IEntityInfo};
-    players?: {[playerID: string]: Player};
-    messages?: Array<{recipient: PlayerGroup, message: string}>;
+    players?: {[playerID: string]: Client};
+    messages?: Array<{recipient: Group<Client>, message: string}>;
 }

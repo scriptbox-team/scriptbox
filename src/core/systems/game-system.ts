@@ -1,5 +1,5 @@
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import Client from "core/client";
+import Group, { GroupType } from "core/group";
 import fs from "fs-extra";
 import IVM from "isolated-vm";
 import _ from "lodash";
@@ -10,27 +10,31 @@ import System from "./system";
 
 export default class GameSystem extends System {
     public loadScriptResource?: (resourceID: string) => Promise<string>;
-    private _messageQueue: Array<{recipient: PlayerGroup, message: string}>;
+    private _messageQueue: Array<{recipient: Group<Client>, message: string}>;
     private _scriptCollection: ScriptCollection;
     constructor() {
         super();
         this._messageQueue = [];
         const fileDirs = [
+            "./aspect-array.ts",
             "./aspect.ts",
-            "./manager.ts",
-            "./entity.ts",
+            "./collision-box.ts",
+            "./component-info.ts",
             "./component.ts",
-            "./position.ts",
-            "./scripted-server-subsystem.ts",
-            "./aspect.ts",
             "./control.ts",
             "./default-control.ts",
-            "./aspect-array.ts",
-            "./velocity.ts",
-            "./collision-box.ts",
-            "./meta-info.ts",
+            "./entity.ts",
+            "./existable.ts",
+            "./id-generator.ts",
             "./manager.ts",
-             "./id-generator.ts"
+            "./meta-info.ts",
+            "./player-group.ts",
+            "./player-soul.ts",
+            "./player.ts",
+            "./position.ts",
+            "./proxy-generator.ts",
+            "./scripted-server-subsystem.ts",
+            "./velocity.ts"
         ];
         const baseScriptDir = path.join(__dirname, "../../__scripted__/");
 
@@ -57,8 +61,17 @@ export default class GameSystem extends System {
 
         return result;
     }
-    public createPlayer(player: Player) {
+    public createPlayer(client: Client) {
         const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
+        this._scriptCollection.execute(
+            "./scripted-server-subsystem",
+            "createPlayer",
+            client.id,
+            client.username,
+            client.displayName
+        );
+        // Creating the entity is temporary
+        // Until players can add default modules on their own
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
@@ -84,19 +97,23 @@ export default class GameSystem extends System {
             "default-control",
             "control"
         );
-        player!.controllingEntity = entID;
+        this._scriptCollection.execute(
+            "./scripted-server-subsystem",
+            "setPlayerControllingEntity",
+            client.id,
+            entID
+        );
     }
-    public handleKeyInput(key: number, state: number, player: Player) {
-        const input = player!.convertInput(key);
+    public handleKeyInput(key: number, state: number, client: Client) {
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "handleInput",
-            player!.controllingEntity,
-            input,
+            client.id,
+            key,
             state
         );
     }
-    public createEntityAt(prefabID: string, x: number, y: number, player: Player) {
+    public createEntityAt(prefabID: string, x: number, y: number, player: Client) {
         const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
@@ -111,7 +128,7 @@ export default class GameSystem extends System {
     public deleteEntity(id: string) {
         this._scriptCollection.execute("./scripted-server-subsystem", "deleteEntity", id);
     }
-    public setPlayerEntityInspection(player: Player, entityID?: string) {
+    public setPlayerEntityInspection(player: Client, entityID?: string) {
         this._scriptCollection.execute("./scripted-server-subsystem", "inspectEntity", player.id, entityID);
     }
     public removeComponent(componentID: string) {
@@ -121,40 +138,40 @@ export default class GameSystem extends System {
             componentID
         );
     }
-    public async runResourcePlayerScript(resourceID: string, args: string, player: Player, entityID?: string) {
+    public async runResourcePlayerScript(resourceID: string, args: string, player: Client, entityID?: string) {
         try {
             if (this.loadScriptResource !== undefined) {
                 const script = await this.loadScriptResource(resourceID);
                 const result = await this.runPlayerScript(script, args, player, entityID, resourceID);
                 if (result !== undefined) {
-                    this.addMessageToQueue(new PlayerGroup(PlayerGroupType.Only, [player]), `Script result: ${result}`);
+                    this.addMessageToQueue(new Group(GroupType.Only, [player]), `Script result: ${result}`);
                 }
             }
         }
         catch (err) {
-            this.addMessageToQueue(new PlayerGroup(PlayerGroupType.Only, [player]),
+            this.addMessageToQueue(new Group(GroupType.Only, [player]),
                 `<${err.stack}>`
             );
         }
     }
-    public async runGenericPlayerScript(script: string, player: Player) {
+    public async runGenericPlayerScript(script: string, player: Client) {
         try {
             const result = await this.runPlayerScript(script, "", player);
             if (result !== undefined) {
                 this.addMessageToQueue(
-                    new PlayerGroup(PlayerGroupType.Only, [player]),
+                    new Group(GroupType.Only, [player]),
                     `${script} Result: ${result}`
                 );
             }
         }
         catch (err) {
-            this.addMessageToQueue(new PlayerGroup(PlayerGroupType.Only, [player]),
+            this.addMessageToQueue(new Group(GroupType.Only, [player]),
                 `<${err.stack}>`
             );
             console.log(err);
         }
     }
-    public async runPlayerScript(code: string, args: string, player: Player, entityID?: string, className?: string) {
+    public async runPlayerScript(code: string, args: string, player: Client, entityID?: string, className?: string) {
         let thisValue: IVM.Reference<any> | undefined;
         if (entityID !== undefined) {
             thisValue = this._scriptCollection.executeReturnRef(
@@ -188,7 +205,7 @@ export default class GameSystem extends System {
         return undefined;
     }
 
-    public addMessageToQueue(playerGroup: PlayerGroup, message: string) {
-        this._messageQueue.push({recipient: playerGroup, message});
+    public addMessageToQueue(clientGroup: Group<Client>, message: string) {
+        this._messageQueue.push({recipient: clientGroup, message});
     }
 }

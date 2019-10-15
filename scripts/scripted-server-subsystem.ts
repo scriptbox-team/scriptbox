@@ -1,13 +1,17 @@
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import Component from "./component";
+import ComponentInfo, { IComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
-import Entity from "./entity";
+import Entity, { IEntityProxy } from "./entity";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import MetaInfo from "./meta-info";
+import Player, { IPlayerProxy } from "./player";
+import PlayerSoul from "./player-soul";
 import Position from "./position";
+import ProxyGenerator from "./proxy-generator";
 import Velocity from "./velocity";
 
 //tslint:disable
@@ -48,34 +52,94 @@ const exportValues: IExports = {
 global.exportValues = exportValues;
 
 const classList = new Map<string, IClassInterface>();
-const entityMeta = new WeakMap<Entity, MetaInfo>();
-const entityManager = new Manager<Entity>((id: string) => {
+
+const playerSoulMap = new WeakMap<Player, PlayerSoul>();
+const playerProxyMap = new WeakMap<Player, IPlayerProxy>();
+const playerManager = new Manager<Player>((
+        id: string,
+        username: string,
+        displayName: string,
+        controlSet: {[id: number]: string},
+        controllingEntity?: Entity) => {
+    const soul = new PlayerSoul(0, 0);
+    const player = new Player(id, username, displayName, controlSet, soul, controllingEntity);
+    const proxy = ProxyGenerator.makeDeletable(
+        player,
+        Player.readOnlyProps,
+        Player.hiddenProps
+    );
+    playerSoulMap.set(player, soul);
+    playerProxyMap.set(player, proxy);
+    return player;
+},
+(player: Player) => {
+    player.unpossess();
+    player.exists = false;
+});
+
+const entityProxyMap = new WeakMap<Entity, IEntityProxy>();
+const entityManager = new Manager<Entity>((id: string, creator: Player) => {
     const info = new MetaInfo(
         `Entity ${id}`,
         "",
-        "",
         true,
         true,
-    []);
+        [],
+        creator
+    );
     const entity = new Entity(id, info);
-    entityMeta.set(entity, info);
+    const proxy = ProxyGenerator.makeDeletable<IEntityProxy>(
+        entity,
+        Entity.hiddenProps,
+        Entity.readOnlyProps
+    );
+    entityProxyMap.set(entity, proxy);
     return entity;
 },
-(ent: Entity) => {
+(entity: Entity) => {
+    if (entity.controller) {
+        entity.controller.unpossess();
+    }
+    entity.delete();
+    entity.exists = false;
 });
-const componentMeta = new WeakMap<Component, MetaInfo>();
-const componentManager = new Manager<Component>(
-    (componentID: string, componentClass: IClassInterface, entity: Entity, localID: string, ...args: any[]) => {
-        const info = new MetaInfo(
+
+const componentInfoMap = new WeakMap<Component, ComponentInfo>();
+const componentProxyMap = new WeakMap<Component, Component>();
+const componentManager = new Manager<Component>((
+            componentID: string,
+            componentClass: IClassInterface,
+            entity: Entity,
+            localID: string,
+            creator: Player,
+            ...args: any[]) => {
+        const info = new ComponentInfo(
+            componentID,
+            entity,
             localID,
             "",
-            "",
             true,
             true,
-        []);
+            [],
+            creator
+        );
         // TODO: Throw an error if a component doesn't actually extend component
-        const component = new componentClass(componentID, entity, info);
-        componentMeta.set(component, info);
+        const infoProxy = ProxyGenerator.make<IComponentInfoProxy>(
+            info,
+            ["id", "entity", "exists"],
+            ["_enabled", "_tags"]
+        );
+        const component = new componentClass(infoProxy);
+        const proxy = ProxyGenerator.makeDeletable(
+            component,
+            [],
+            [],
+            (checkedComponent: Component) => {
+                return componentInfoMap.get(checkedComponent).exists;
+            }
+        );
+        componentInfoMap.set(component, info);
+        componentProxyMap.set(component, proxy);
 
         if (typeof component.create === "function") {
             component.create(...args);
@@ -87,6 +151,8 @@ const componentManager = new Manager<Component>(
         if (typeof (component as any).delete === "function") {
             (component as any).delete();
         }
+        const info = componentInfoMap.get(component);
+        info.entity.remove(info.entity.getComponentLocalID(component));
     }
 );
 
@@ -96,7 +162,7 @@ const inspectedEntities: Map<string, string> = new Map<string, string>();
 
 function runOnAll(funcName: string) {
     const componentIterator = componentManager.entries();
-    for (const [id, component] of componentIterator) {
+    for (const [, component] of componentIterator) {
         try {
             if (funcName in component && typeof (component as any)[funcName] === "function") {
                 (component as any)[funcName]();
@@ -104,7 +170,6 @@ function runOnAll(funcName: string) {
         }
         catch (err) {
             if (component instanceof Component) {
-                const owner = (component as Component).entity;
                 // TODO: Notify the entity owner if their code errors
             }
             global.log(`Error during ${funcName}: ${err}`);
@@ -118,6 +183,7 @@ export function update() {
     runOnAll("postUpdate");
     entityManager.deleteQueued();
     componentManager.deleteQueued();
+    playerManager.deleteQueued();
     // After the update and postupdate are called we should let the exports know about important changes
     resetExports();
     // We need a new iterator since we reached the end of the last one
@@ -237,7 +303,7 @@ function getComponentInfo(component: Component): IComponentInfo {
     };
 }
 
-export function call(entID: string, compLocalID: string, funcName: string, ...args: any[]) {
+export function call(entID: string, funcName: string, ...args: any[]) {
     // Call a function on a component if it exists
     const entity = entityManager.get(entID);
     if (entity !== undefined) {
@@ -248,7 +314,7 @@ export function call(entID: string, compLocalID: string, funcName: string, ...ar
     }
 }
 
-export function get(entID: string, compLocalID: string, propName: string) {
+export function get(entID: string, propName: string) {
     // Get a property from a component if it exists
     // Call a function on a component if it exists
     const entity = entityManager.get(entID);
@@ -294,7 +360,8 @@ export function createComponent(entID: string, className: string, localID: strin
 }
 
 export function deleteComponent(componentID: string) {
-    entityManager.queueForDeletion(componentID);
+    componentManager.queueForDeletion(componentID);
+    global.log("Component queued for deletion (ID: " + componentID + ")");
 }
 
 export function create(classParam: string | IClassInterface, ...args: any[]) {
@@ -310,27 +377,46 @@ export function create(classParam: string | IClassInterface, ...args: any[]) {
     }
 }
 
-export function handleInput(entityID: string, input: string, state: InputType) {
-    if (!entityManager.has(entityID)) {
-        return;
-    }
-    const entity = entityManager.get(entityID);
-    if (entity !== undefined) {
-        const component = entity.get("control");
-        if (component instanceof Control) {
-            switch (state) {
-                case InputType.Press: {
-                    if (typeof component.sendKeyPress === "function") {
-                        component.sendKeyPress(input);
+export function handleInput(playerID: string, input: number, state: InputType) {
+    const player = playerManager.get(playerID);
+    if (player !== undefined) {
+        const entity = player.controllingEntity;
+        if (entity !== undefined) {
+            const component = entity.get("control");
+            if (component instanceof Control) {
+                switch (state) {
+                    case InputType.Press: {
+                        if (typeof component.sendKeyPress === "function") {
+                            component.sendKeyPress(player.controlSet["" + input]);
+                        }
+                        break;
                     }
-                    break;
-                }
-                case InputType.Release: {
-                    if (typeof component.sendKeyRelease === "function") {
-                        component.sendKeyRelease(input);
+                    case InputType.Release: {
+                        if (typeof component.sendKeyRelease === "function") {
+                            component.sendKeyRelease(player.controlSet["" + input]);
+                        }
+                        break;
                     }
-                    break;
                 }
+            }
+        }
+        else {
+            // Soul mode
+            const inputName = player.controlSet["" + input];
+            const soul = playerSoulMap.get(player);
+            switch (inputName) {
+                case "up":
+                    soul.keyInput("up", state === InputType.Press);
+                    break;
+                case "down":
+                    soul.keyInput("down", state === InputType.Press);
+                    break;
+                case "left":
+                    soul.keyInput("left", state === InputType.Press);
+                    break;
+                case "right":
+                    soul.keyInput("right", state === InputType.Press);
+                    break;
             }
         }
     }
@@ -354,6 +440,38 @@ export function inspectEntity(playerID: string, entityID?: string) {
     // TODO: Fix the compiler freaking out about things in __scripted__
 }
 
+export function createPlayer(
+        id: string,
+        username: string,
+        displayName: string) {
+    const controlSet = {
+        38: "up",
+        40: "down",
+        37: "left",
+        39: "right"
+    };
+    playerManager.create(id, username, displayName, controlSet);
+}
+
+export function deletePlayer(id: string) {
+    playerManager.queueForDeletion(id);
+}
+
+export function renamePlayer(id: string, displayName: string) {
+    const player = playerManager.get(id);
+    if (player !== undefined) {
+        player.displayName = displayName;
+    }
+}
+
+export function setPlayerControllingEntity(id: string, entityID?: string) {
+    const player = playerManager.get(id);
+    const entity = entityID !== undefined ? entityManager.get(entityID): undefined;
+    if (player !== undefined) {
+        player.possess(entity);
+    }
+}
+
 const resetExports = () => {
     exportValues.entities = {};
     exportValues.inspectedEntityInfo = {};
@@ -370,18 +488,6 @@ enum InputType {
     Press = 0,
     Release = 1,
     Move = 2
-}
-
-/**
- * The type of device an input came from
- *
- * @export
- * @enum {number}
- */
-enum DeviceType {
-    Keyboard = 0,
-    Mouse = 1,
-    Controller = 2
 }
 
 classList.set("position", Position);
