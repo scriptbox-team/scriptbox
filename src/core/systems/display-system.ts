@@ -15,6 +15,7 @@ export default class DisplaySystem extends System {
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
+        controlledByInspector: boolean,
         playerGroup: Group<Client>) => void;
     constructor() {
         super();
@@ -45,6 +46,7 @@ export default class DisplaySystem extends System {
     public onEntityInspection(callback: (
             entityID: string,
             components: ComponentInfo[],
+            controlledByInspector: boolean,
             playerGroup: Group<Client>) => void) {
         this._entityInspectionCallback = callback;
     }
@@ -79,6 +81,7 @@ export default class DisplaySystem extends System {
                 this._entityInspectionCallback!(
                     entityInfo.id,
                     components,
+                    entityInfo.controlledBy === playerID,
                     new Group(GroupType.Only, [player])
                 );
             }

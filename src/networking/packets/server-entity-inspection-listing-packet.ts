@@ -8,6 +8,7 @@ export default class ServerEntityInspectionListingPacket extends Packet {
             if (
                 Array.isArray(obj.components)
                 && typeof(obj.entityID) === "string"
+                && typeof(obj.controlledByPlayer) === "boolean"
             ) {
                 const componentArray: ComponentInfo[] = [];
                 const allClear = _.every(obj.resources, (elem) => {
@@ -27,7 +28,10 @@ export default class ServerEntityInspectionListingPacket extends Packet {
                     return false;
                 });
                 if (allClear) {
-                    return new ServerEntityInspectionListingPacket(obj.components, obj.entityID);
+                    return new ServerEntityInspectionListingPacket(
+                        obj.components,
+                        obj.entityID,
+                        obj.controlledByPlayer);
                 }
             }
             return undefined;
@@ -36,10 +40,12 @@ export default class ServerEntityInspectionListingPacket extends Packet {
 
     public components: ComponentInfo[];
     public entityID: string;
-    constructor(components: ComponentInfo[], entityID: string) {
+    public controlledByPlayer: boolean;
+    constructor(components: ComponentInfo[], entityID: string, controlledByPlayer: boolean) {
         super();
         this.components = components;
         this.entityID = entityID;
+        this.controlledByPlayer = controlledByPlayer;
     }
     public serialize() {
         return this;

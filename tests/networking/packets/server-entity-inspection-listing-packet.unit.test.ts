@@ -65,7 +65,7 @@ const serializedPacket = {components: [
             currentValue: "false"
         }]
     }
-], entityID: "123"};
+], entityID: "123", controlledByPlayer: false};
 const packet = new ServerEntityInspectionListingPacket(
     [
         new ComponentInfo("123", "Test Component", "nobody", "a good component", 10000, "noIcon", [
@@ -79,7 +79,7 @@ const packet = new ServerEntityInspectionListingPacket(
             new ComponentOption("testVar6", "Test Var 6", ComponentOptionType.Boolean, "true", false, "false")
         ])
     ]
-    , "123");
+    , "123", false);
 
 test("ServerEntityInspectionListingPacket::Serialization", () => {
     const serializedTest = packet.serialize();

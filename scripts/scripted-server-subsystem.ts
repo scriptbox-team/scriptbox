@@ -289,7 +289,8 @@ export function update() {
         const entityInfo: EntityExportInfo = {
             id: entityID,
             name: "Entity " + entityID, // temporary
-            componentInfo
+            componentInfo,
+            controlledBy: entity.controller !== undefined ? entity.controller.id : undefined
         };
         exportValues.inspectedEntityInfo[player] = entityInfo;
     }

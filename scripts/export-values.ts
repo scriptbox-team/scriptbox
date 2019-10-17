@@ -7,6 +7,7 @@ export interface ComponentExportInfo {
 export interface EntityExportInfo {
     id: string;
     name: string;
+    controlledBy?: string;
     componentInfo: {[localID: string]: ComponentExportInfo};
 }
 export interface MessageExportInfo {
