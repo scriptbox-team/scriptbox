@@ -3,7 +3,9 @@ import NetworkSystem from "networking/network-system";
 
 import Client from "./client";
 import ClientManagerNetworker from "./client-manager-networker";
+import { MessageExportInfo } from "./export-values";
 import GameLoop from "./game-loop";
+import Group, { GroupType } from "./group";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import DisplaySystem from "./systems/display-system";
@@ -161,7 +163,17 @@ export default class Server {
             this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {
-                this._messageSystem.sendChatMessages(exportValues.messages);
+                const messages = exportValues.messages.map((msg: MessageExportInfo) => {
+                    return {
+                        message: msg.message,
+                        kind: msg.kind,
+                        recipient: new Group<Client>(
+                            GroupType.Only,
+                            msg.recipient.map((pID) => exportValues.players[pID])
+                        )
+                    };
+                });
+                this._messageSystem.sendChatMessages(messages);
             }
 
             this._networkSystem.sendMessages();

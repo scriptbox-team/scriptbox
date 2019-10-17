@@ -25,10 +25,11 @@ export default class GameSystem extends System {
             "./default-control.ts",
             "./entity.ts",
             "./existable.ts",
+            "./export-values.ts",
+            "./group.ts",
             "./id-generator.ts",
             "./manager.ts",
             "./meta-info.ts",
-            "./player-group.ts",
             "./player-soul.ts",
             "./player.ts",
             "./position.ts",
@@ -62,7 +63,6 @@ export default class GameSystem extends System {
         return result;
     }
     public createPlayer(client: Client) {
-        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createPlayer",
@@ -70,6 +70,7 @@ export default class GameSystem extends System {
             client.username,
             client.displayName
         );
+        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity", client.id);
         // Creating the entity is temporary
         // Until players can add default modules on their own
         this._scriptCollection.execute(
@@ -78,6 +79,7 @@ export default class GameSystem extends System {
             entID,
             "position",
             "position",
+            client.id,
             Math.random() * 150,
             Math.random() * 150
         );
@@ -87,6 +89,7 @@ export default class GameSystem extends System {
             entID,
             "velocity",
             "velocity",
+            client.id,
             0,
             0
         );
@@ -95,7 +98,8 @@ export default class GameSystem extends System {
             "createComponent",
             entID,
             "default-control",
-            "control"
+            "control",
+            client.id
         );
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
@@ -114,13 +118,14 @@ export default class GameSystem extends System {
         );
     }
     public createEntityAt(prefabID: string, x: number, y: number, player: Client) {
-        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity");
+        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity", player.id);
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
             "createComponent",
             entID,
             "position",
             "position",
+            player.id,
             x,
             y
         );
@@ -195,7 +200,8 @@ export default class GameSystem extends System {
                     "createComponent",
                     entityID,
                     className,
-                    className
+                    className,
+                    player.id
                 );
             }
         }

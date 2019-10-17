@@ -1,19 +1,17 @@
-import Client from "./client";
-
-interface ComponentExportInfo {
+export interface ComponentExportInfo {
     id: string;
     name: string;
     attributes: Array<{name: string, kind: string, value: string}>;
 }
 
-interface EntityExportInfo {
+export interface EntityExportInfo {
     id: string;
     name: string;
     componentInfo: {[localID: string]: ComponentExportInfo};
 }
 export interface MessageExportInfo {
     message: string;
-    kind: "Chat" | "Announcement" | "Error";
+    kind: "chat" | "announcement" | "status" | "error" | "error-status";
     recipient: string[];
 }
 
@@ -23,6 +21,5 @@ export default interface Exports {
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
-    players?: {[playerID: string]: Client};
     messages: MessageExportInfo[];
 }

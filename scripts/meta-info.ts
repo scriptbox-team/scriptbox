@@ -1,9 +1,9 @@
-import Player from "./player";
+import TruePlayer from "./player";
 
 export interface MetaInfoProxy {
     name: string;
     description: string;
-    owner?: Player;
+    owner?: TruePlayer;
     enabled: boolean;
     readonly exists: boolean;
 }
@@ -11,19 +11,25 @@ export interface MetaInfoProxy {
 export default class MetaInfo {
     public name: string;
     public description: string;
-    public owner?: Player;
-    public forceDisabled: boolean;
+    public owner?: TruePlayer;
     public exists: boolean;
     private _enabled: boolean;
     private _tags: Set<string>;
-    constructor(name: string, description: string, enabled: boolean, exists: boolean, tags: string[], owner?: Player) {
+    private _forceDisabled: boolean;
+    constructor(
+            name: string,
+            description: string,
+            enabled: boolean,
+            exists: boolean,
+            tags: string[],
+            owner?: TruePlayer) {
         this.name = name;
         this.description = description;
         this.owner = owner;
         this._enabled = enabled;
         this.exists = exists;
         this._tags = new Set<string>(tags);
-        this.forceDisabled = false;
+        this._forceDisabled = false;
     }
     public addTag(tag: string) {
         this._tags.add(tag);
@@ -37,11 +43,19 @@ export default class MetaInfo {
     public getTags() {
         return Array.from(this._tags.values());
     }
+    public forceDisable() {
+        this._forceDisabled = true;
+        this._enabled = false;
+    }
+    public manualEnable() {
+        this._forceDisabled = false;
+        this._enabled = true;
+    }
     get enabled() {
         return this._enabled;
     }
     set enabled(value: boolean) {
-        if (!this.forceDisabled) {
+        if (!this._forceDisabled || this._enabled) {
             this._enabled = value;
         }
     }

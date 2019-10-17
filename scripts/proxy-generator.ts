@@ -1,5 +1,4 @@
 import Existable from "./existable";
-import MetaInfo from "./meta-info";
 
 export default class ProxyGenerator {
     public static make<T extends object>(
@@ -8,43 +7,45 @@ export default class ProxyGenerator {
             hiddenProps: ReadonlyArray<(string | number | symbol)> = []) {
         return new Proxy(obj, {
             getPrototypeOf: (target: T) => {
-                throw new Error(`Cannot get prototype of ${target} in this context`);
+                throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
             },
             setPrototypeOf: (target: T, v: any) => {
-                throw new Error(`Cannot set prototype of ${target} in this context`);
+                throw new Error(`Cannot set prototype of ${target.constructor.name} in this context`);
             },
             isExtensible: (target: T) => {
                 return false;
             },
             preventExtensions: (target: T) => {
-                throw new Error(`Cannot modify extensibility of ${target} in this context`);
+                throw new Error(`Cannot modify extensibility of ${target.constructor.name} in this context`);
             },
             defineProperty: (target: T) => {
-                throw new Error(`Cannot define or redefine properties of ${target} in this context`);
+                throw new Error(`Cannot define or redefine properties of ${target.constructor.name} in this context`);
             },
             get: (target: T, p: string | number | symbol, receiver: any) => {
                 if (p === "prototype") {
-                    throw new Error(`Cannot get prototype of ${target} in this context`);
+                    throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
                 }
                 else if (p in hiddenProps) {
-                    throw new Error(`Property ${String(p)} of ${target} is inaccessible in this context`);
+                    // tslint:disable-next-line: max-line-length
+                    throw new Error(`Property ${String(p)} of ${target.constructor.name} is inaccessible in this context`);
                 }
-                return Reflect.get(target, p, receiver);
+                return Reflect.get(target, p, target);
             },
             set: (target: T, p: string | number | symbol, value: any, receiver: any) => {
                 if (p === "prototype") {
-                    throw new Error(`Cannot set prototype of ${target} in this context`);
+                    throw new Error(`Cannot set prototype of ${target.constructor.name} in this context`);
                 }
                 else if (p in readOnlyProps) {
-                    throw new Error(`Property ${String(p)} of ${target} is read-only in this context`);
+                    throw new Error(`Property ${String(p)} of ${target.constructor.name} is read-only in this context`);
                 }
                 else if (p in hiddenProps) {
-                    throw new Error(`Property ${String(p)} of ${target} is inaccessible in this context`);
+                    // tslint:disable-next-line: max-line-length
+                    throw new Error(`Property ${String(p)} of ${target.constructor.name} is inaccessible in this context`);
                 }
-                return Reflect.set(target, p, value, receiver);
+                return Reflect.set(target, p, value, target);
             },
             deleteProperty: (target: T, p: string | number | symbol) => {
-                throw new Error(`Cannot delete properties of ${target} in this context`);
+                throw new Error(`Cannot delete properties of ${target.constructor.name} in this context`);
             }
         });
     }
@@ -52,52 +53,52 @@ export default class ProxyGenerator {
         obj: T,
         readOnlyProps: ReadonlyArray<(string | number | symbol)> = [],
         hiddenProps: ReadonlyArray<(string | number | symbol)> = [],
-        exists: (ent: T) => boolean = (ent: T) => ent.exists) {
+        exists: (ent?: T) => boolean = (ent?: T) => ent !== undefined && ent.exists) {
     return new Proxy(obj, {
         getPrototypeOf: (target: T) => {
-            throw new Error(`Cannot get prototype of ${target} in this context`);
+            throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
         },
         setPrototypeOf: (target: T, v: any) => {
-            throw new Error(`Cannot set prototype of ${target} in this context`);
+            throw new Error(`Cannot set prototype of ${target.constructor.name} in this context`);
         },
         isExtensible: (target: T) => {
             return false;
         },
         preventExtensions: (target: T) => {
-            throw new Error(`Cannot modify extensibility of ${target} in this context`);
+            throw new Error(`Cannot modify extensibility of ${target.constructor.name} in this context`);
         },
         defineProperty: (target: T) => {
-            throw new Error(`Cannot define or redefine properties of ${target} in this context`);
+            throw new Error(`Cannot define or redefine properties of ${target.constructor.name} in this context`);
         },
         get: (target: T, p: string | number | symbol, receiver: any) => {
             if (!exists(target) && p !== "exists") {
-                throw new Error(`Cannot get property from deleted object ${target}`);
+                throw new Error(`Cannot get property from deleted object ${target.constructor.name}`);
             }
             else if (p === "prototype") {
-                throw new Error(`Cannot get prototype of ${target} in this context`);
+                throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
             }
             else if (p in hiddenProps) {
-                throw new Error(`Property ${String(p)} of ${target} is inaccessible in this context`);
+                throw new Error(`Property ${String(p)} of ${target.constructor.name} is inaccessible in this context`);
             }
-            return Reflect.get(target, p, receiver);
+            return Reflect.get(target, p, target);
         },
         set: (target: T, p: string | number | symbol, value: any, receiver: any) => {
             if (!exists(target)) {
-                throw new Error(`Cannot set property of deleted object ${target}`);
+                throw new Error(`Cannot set property of deleted object ${target.constructor.name}`);
             }
             else if (p === "prototype") {
-                throw new Error(`Cannot set prototype of ${target} in this context`);
+                throw new Error(`Cannot set prototype of ${target.constructor.name} in this context`);
             }
             else if (p in readOnlyProps) {
-                throw new Error(`Property ${String(p)} of ${target} is read-only in this context`);
+                throw new Error(`Property ${String(p)} of ${target.constructor.name} is read-only in this context`);
             }
             else if (p in hiddenProps) {
-                throw new Error(`Property ${String(p)} of ${target} is inaccessible in this context`);
+                throw new Error(`Property ${String(p)} of ${target.constructor.name} is inaccessible in this context`);
             }
-            return Reflect.set(target, p, value, receiver);
+            return Reflect.set(target, p, value, target);
         },
         deleteProperty: (target: T, p: string | number | symbol) => {
-            throw new Error(`Cannot delete properties of ${target} in this context`);
+            throw new Error(`Cannot delete properties of ${target.constructor.name} in this context`);
         }
     });
 }

@@ -20,7 +20,8 @@ export default class DisplaySystem extends System {
         super();
         this._lastExportValues = {
             entities: {},
-            inspectedEntityInfo: {}
+            inspectedEntityInfo: {},
+            messages: []
         };
     }
     public sendFullDisplayToPlayer(player: Client) {

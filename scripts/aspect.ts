@@ -62,4 +62,7 @@ export default class Aspect<T extends (string | number | boolean | symbol)> {
         }
         return val;
     }
+    public get displayData() {
+        return {baseValue: this._baseValue, currentValue: this.getValue()};
+    }
 }

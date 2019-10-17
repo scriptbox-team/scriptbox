@@ -1,9 +1,9 @@
-import Player from "scripts/player";
+import TruePlayer from "scripts/player";
 
-let player!: Player;
+let player!: TruePlayer;
 
 beforeEach(() => {
-    player = new Player("testPlayerID", "testPlayer", "Test Player", {
+    player = new TruePlayer("testPlayerID", "testPlayer", "Test Player", {
         38: "up",
         40: "down",
         37: "left",

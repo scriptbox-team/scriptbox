@@ -1,17 +1,19 @@
 import Component from "./component";
 import MetaInfo from "./meta-info";
-import Player from "./player";
+import { TruePlayer } from "./player";
 
-export interface EntityProxy {
+export default interface Entity {
     readonly add: (localID: string, component: Component) => void;
     readonly remove: (localID: string) => void;
+    readonly get: <T extends Component = any>(name: string) => T | undefined;
     readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;
     readonly withMany: <T extends Component[] = any[]>(names: string[], func: (t: T) => void) => void;
     readonly getComponentLocalID: (component: Component) => string;
     readonly setComponentLocalID: (component: Component, newID: string) => void;
+    readonly componentIterator: () => IterableIterator<Component>;
     readonly enabled: boolean;
     readonly exists: boolean;
-    readonly controller?: Player;
+    readonly controller?: TruePlayer;
     readonly id: string;
 }
 
@@ -23,7 +25,7 @@ export interface EntityProxy {
  * @export
  * @class Entity
  */
-export default class Entity {
+export class TrueEntity {
     public static readOnlyProps = Object.freeze([
         "add",
         "remove",
@@ -46,7 +48,7 @@ export default class Entity {
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;
     private _id: string;
-    private _controller?: Player;
+    private _controller?: TruePlayer;
     private _metaInfo: MetaInfo;
     /**
      * Creates an instance of Entity.
@@ -55,7 +57,7 @@ export default class Entity {
      * @param {EntityManagerInterface} entityManagerInterface The interface of functions to call.
      * @memberof Entity
      */
-    constructor(id: string, metaInfo: MetaInfo, controller?: Player) {
+    constructor(id: string, metaInfo: MetaInfo, controller?: TruePlayer) {
         this._id = id;
         this._metaInfo = metaInfo;
         this._controller = controller;
@@ -77,7 +79,7 @@ export default class Entity {
      * Get a component belonging to this entity
      *
      * @param {string} name The name of the component
-     * @returns {(Component | null)} A component object if the component exists in the entity, false otherwise
+     * @returns {(Component | undefined)} A component object if the component exists in the entity, undefined otherwise
      * @memberof Entity
      */
     public get<T extends Component = any>(name: string): T | undefined {
@@ -149,11 +151,14 @@ export default class Entity {
         return this._controller;
     }
     // Note: Function not exposed to player scripting
-    public set controller(value: Player | undefined) {
+    public set controller(value: TruePlayer | undefined) {
         this._controller = value;
     }
 
     get id(): string {
         return this._id;
+    }
+    public get displayData() {
+        return {id: this.id};
     }
 }

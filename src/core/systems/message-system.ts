@@ -76,7 +76,7 @@ export default class MessageSystem extends System {
     public outputConsoleMessage(message: any) {
         console.log(message);
     }
-    public sendChatMessages(messages: Array<{recipient: Group<Client>, message: string}>) {
+    public sendChatMessages(messages: Array<{recipient: Group<Client>, message: string, kind: string}>) {
         for (const message of messages) {
             this._messageSendCallback!(message.message, message.recipient);
         }

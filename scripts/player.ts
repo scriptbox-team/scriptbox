@@ -1,7 +1,7 @@
-import Entity from "./entity";
+import Entity, { TrueEntity } from "./entity";
 import PlayerSoul from "./player-soul";
 
-export interface PlayerProxy {
+export default interface Player {
     readonly id: string;
     readonly username: string;
     displayName: string;
@@ -12,7 +12,7 @@ export interface PlayerProxy {
     readonly unpossess: () => void;
 }
 
-export default class Player {
+export class TruePlayer {
     public static readOnlyProps = Object.freeze([
         "id",
         "username",
@@ -29,8 +29,10 @@ export default class Player {
         "_locked",
         "_soulData",
         "_id",
-        "_username"
+        "_username",
+        "trueEntityFromEntity"
     ]);
+    public trueEntityFromEntity!: (entity: Entity) => TrueEntity;
     private _displayName: string;
     private _controllingEntity?: Entity;
     private _controlSet: {[input: string]: string};
@@ -93,10 +95,12 @@ export default class Player {
     public possess(entity: Entity) {
         if (entity.controller === undefined) {
             if (this._controllingEntity !== undefined) {
-                this._controllingEntity.controller = undefined;
+                const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);
+                trueControllingEntity.controller = undefined;
             }
             this._controllingEntity = entity;
-            entity.controller = this;
+            const trueEntity = this.trueEntityFromEntity(entity);
+            trueEntity.controller = this;
             this._locked = false;
             return true;
         }
@@ -111,5 +115,8 @@ export default class Player {
         if (!this.locked) {
             this.controlSet = value;
         }
+    }
+    public get displayData() {
+        return {id: this.id};
     }
 }

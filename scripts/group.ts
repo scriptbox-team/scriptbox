@@ -1,5 +1,3 @@
-import Player from "./player";
-
 /**
  * A group type to add meaning to the players associated with the player group.
  * This can either be "All" for all players, "Except" for all except particular players,
@@ -8,7 +6,7 @@ import Player from "./player";
  * @export
  * @enum {number}
  */
-export enum PlayerGroupType {
+export enum GroupType {
     All,
     Except,
     Only
@@ -20,17 +18,17 @@ export enum PlayerGroupType {
  * @export
  * @class PlayerGroup
  */
-export default class PlayerGroup {
-    public groupType: PlayerGroupType;
-    public players: Player[];
+export default class Group<T> {
+    public groupType: GroupType;
+    public list: T[];
     /**
      * Creates an instance of PlayerGroup.
-     * @param {PlayerGroupType} groupType The way to interpret the player list.
-     * @param {Player[]} players The list of players to include/exclude
+     * @param {GroupType} groupType The way to interpret the player list.
+     * @param {Client[]} players The list of players to include/exclude
      * @memberof MessageRecipient
      */
-    constructor(groupType: PlayerGroupType, players: Player[]) {
+    constructor(groupType: GroupType, list: T[]) {
         this.groupType = groupType;
-        this.players = players;
+        this.list = list;
     }
 }

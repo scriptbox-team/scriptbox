@@ -1,10 +1,9 @@
-import IComponentProtectedInfo from "./component-info";
-
-const dataWeakmap = new WeakMap<Component, IComponentProtectedInfo>();
+import ComponentInfo from "./component-info";
 
 export default class Component {
-    constructor(info: IComponentProtectedInfo) {
-        dataWeakmap.set(this, info);
+    private _data: ComponentInfo;
+    constructor(data: ComponentInfo) {
+        this._data = data;
     }
     public update() {
 
@@ -13,7 +12,7 @@ export default class Component {
 
     }
     public get id() {
-        return dataWeakmap.get(this)!.id;
+        return this._data.id;
     }
     public get localID() {
         return this.entity.getComponentLocalID(this)!;
@@ -24,24 +23,27 @@ export default class Component {
         }
     }
     public get entity() {
-        return dataWeakmap.get(this)!.entity;
+        return this._data.entity;
     }
     public get exists() {
-        return dataWeakmap.get(this)!.exists;
+        return this._data.exists;
     }
     public get enabled() {
-        return dataWeakmap.get(this)!.enabled;
+        return this._data.enabled;
     }
     public get name() {
-        return dataWeakmap.get(this)!.name;
+        return this._data.name;
     }
     public set name(newName: string) {
-        dataWeakmap.get(this)!.name = newName;
+        this._data.name = newName;
     }
     public get description() {
-        return dataWeakmap.get(this)!.description;
+        return this._data.description;
     }
     public set description(newDescription: string) {
-        dataWeakmap.get(this)!.description = newDescription;
+        this._data.description = newDescription;
+    }
+    public get displayData() {
+        return {id: this.id};
     }
 }
