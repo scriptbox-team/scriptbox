@@ -214,4 +214,13 @@ export default class GameSystem extends System {
     public addMessageToQueue(clientGroup: Group<Client>, message: string) {
         this._messageQueue.push({recipient: clientGroup, message});
     }
+
+    public setPlayerControl(client: Client, entityID?: string) {
+        this._scriptCollection.execute(
+            "./scripted-server-subsystem",
+            "setPlayerControllingEntity",
+            client.id,
+            entityID
+        );
+    }
 }

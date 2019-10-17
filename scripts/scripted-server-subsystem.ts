@@ -59,7 +59,7 @@ const playerManager = new Manager<Player>((
 },
 (player: Player) => {
     const truePlayer = playerUnproxiedMap.get(player);
-    truePlayer.unpossess();
+    truePlayer.uncontrol();
     truePlayer.exists = false;
 });
 
@@ -85,7 +85,7 @@ const entityManager = new Manager<Entity>((id: string, creator: TruePlayer) => {
 (entity: Entity) => {
     const trueEntity = entityUnproxiedMap.get(entity);
     if (trueEntity.controller) {
-        trueEntity.controller.unpossess();
+        trueEntity.controller.uncontrol();
     }
     trueEntity.delete();
     trueEntity.exists = false;
@@ -500,7 +500,12 @@ export function setPlayerControllingEntity(id: string, entityID?: string) {
     const player = playerManager.get(id);
     const entity = entityID !== undefined ? entityManager.get(entityID) : undefined;
     if (player !== undefined) {
-        player.possess(entity);
+        if (entityID !== undefined) {
+            player.control(entity);
+        }
+        else {
+            player.uncontrol();
+        }
     }
 }
 

@@ -8,8 +8,8 @@ export default interface Player {
     readonly controllingEntity: Entity;
     controlSet: {[input: string]: string};
     readonly locked: boolean;
-    readonly possess: (entity: Entity) => boolean;
-    readonly unpossess: () => void;
+    readonly control: (entity: Entity) => boolean;
+    readonly uncontrol: () => void;
 }
 
 export class TruePlayer {
@@ -18,8 +18,8 @@ export class TruePlayer {
         "username",
         "controllingEntity",
         "locked",
-        "possess",
-        "unpossess",
+        "control",
+        "uncontrol",
         "exists"
     ]);
     public static hiddenProps = Object.freeze([
@@ -88,11 +88,11 @@ export class TruePlayer {
     public set exists(value: boolean) {
         this._exists = value;
     }
-    public unpossess() {
+    public uncontrol() {
         this._locked = true;
         this._controllingEntity = undefined;
     }
-    public possess(entity: Entity) {
+    public control(entity: Entity) {
         if (entity.controller === undefined) {
             if (this._controllingEntity !== undefined) {
                 const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);

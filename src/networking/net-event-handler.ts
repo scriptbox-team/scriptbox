@@ -15,6 +15,8 @@ import ClientExecuteScriptPacket from "./packets/client-execute-script-packet";
 import ClientKeybindsPacket from "./packets/client-keybinds-packet";
 import ClientModifyMetadataPacket from "./packets/client-modify-metadata-packet";
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
+import ClientSetComponentEnableStatePacket from "./packets/client-set-component-enable-state-packet";
+import ClientSetControlPacket from "./packets/client-set-control-packet";
 import ClientTokenRequestPacket from "./packets/client-token-request-packet";
 
 /**
@@ -42,6 +44,9 @@ export default class NetEventHandler {
     private _executeScriptDelegates: Array<(packet: ClientExecuteScriptPacket, player: Client) => void>;
     private _keybindingDelegates: Array<(packet: ClientKeybindsPacket, player: Client) => void>;
     private _entityInspectionDelegates: Array<(packet: ClientEntityInspectionPacket, player: Client) => void>;
+    private _setControlDelegates: Array<(packet: ClientSetControlPacket, player: Client) => void>;
+    private _setComponentEnableStateDelegates:
+        Array<(packet: ClientSetComponentEnableStatePacket, player: Client) => void>;
     private _connectionIDToPlayer: Map<number, Client> = new Map<number, Client>();
     /**
      * Creates an instance of NetEventHandler.
@@ -63,7 +68,9 @@ export default class NetEventHandler {
         this._executeScriptDelegates = new Array<(packet: ClientExecuteScriptPacket, player: Client) => void>();
         this._keybindingDelegates = new Array<(packet: ClientKeybindsPacket, player: Client) => void>();
         this._entityInspectionDelegates = new Array<(packet: ClientEntityInspectionPacket, player: Client) => void>();
-
+        this._setControlDelegates = new Array<(packet: ClientSetControlPacket, player: Client) => void>();
+        this._setComponentEnableStateDelegates
+            = new Array<(packet: ClientSetComponentEnableStatePacket, player: Client) => void>();
     }
     /**
      * Add a delegate for when a client connects.
@@ -138,6 +145,15 @@ export default class NetEventHandler {
 
     public addEntityInspectionDelegate(func: (packet: ClientEntityInspectionPacket, player: Client) => void) {
         this._entityInspectionDelegates.push(func);
+    }
+
+    public addSetControlDelegate(func: (packet: ClientSetControlPacket, player: Client) => void) {
+        this._setControlDelegates.push(func);
+    }
+
+    public addSetComponentEnableStateDelegate(
+            func: (packet: ClientSetComponentEnableStatePacket, player: Client) => void) {
+        this._setComponentEnableStateDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -270,6 +286,22 @@ export default class NetEventHandler {
                     ClientEntityInspectionPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
                     this._entityInspectionDelegates
+                );
+                break;
+            }
+            case ClientEventType.SetControl: {
+                this._sendToDelegates(
+                    ClientSetControlPacket.deserialize(event.data),
+                    this._getPlayerFromConnectionID(connectionID),
+                    this._setControlDelegates
+                );
+                break;
+            }
+            case ClientEventType.SetComponentEnableState: {
+                this._sendToDelegates(
+                    ClientSetComponentEnableStatePacket.deserialize(event.data),
+                    this._getPlayerFromConnectionID(connectionID),
+                    this._setComponentEnableStateDelegates
                 );
                 break;
             }
