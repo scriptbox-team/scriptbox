@@ -295,6 +295,14 @@ export function update() {
         };
         exportValues.inspectedEntityInfo[player] = entityInfo;
     }
+
+    const playerIterator = playerManager.entries();
+    for (const [playerID, player] of playerIterator) {
+        if (player.controllingEntity === undefined) {
+            const purePlayer = playerUnproxiedMap.get(player);
+            const playerSoul = playerSoulMap.get(purePlayer);
+        }
+    }
     exportValues.messages = messageQueue;
     messageQueue = [];
 }
