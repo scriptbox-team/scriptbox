@@ -21,6 +21,7 @@ export default class PlayerSoul {
     public moveStrength: number = 13;
     public friction: number = 0.7;
     public color: number = 0xFFFFFF;
+    public facing: 1 | -1; // Right | Left
     private _inputs: {
         up: boolean,
         down: boolean,
@@ -43,6 +44,7 @@ export default class PlayerSoul {
             left: false,
             right: false
         };
+        this.facing = 1;
     }
     public move(delta: number) {
         // Close enough physics
@@ -81,9 +83,11 @@ export default class PlayerSoul {
         }
         if (left && !right) {
             xDir = -1;
+            this.facing = -1;
         }
         else if (right && !left) {
             xDir = 1;
+            this.facing = 1;
         }
         if (xDir !== 0 && yDir !== 0) {
             this.force = {

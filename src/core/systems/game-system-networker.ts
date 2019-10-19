@@ -9,6 +9,8 @@ import ClientEntityInspectionPacket from "networking/packets/client-entity-inspe
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
+import ClientSetComponentEnableStatePacket from "networking/packets/client-set-component-enable-state-packet";
+import ClientSetControlPacket from "networking/packets/client-set-control-packet";
 
 import GameSystem from "./game-system";
 
@@ -24,6 +26,8 @@ export default class GameSystemNetworker extends Networker {
         this.entityInspectionDelegate = this.entityInspectionDelegate.bind(this);
         this.removeComponentDelegate = this.removeComponentDelegate.bind(this);
         this.executeScriptDelegate = this.executeScriptDelegate.bind(this);
+        this.entitySetControlDelegate = this.entitySetControlDelegate.bind(this);
+        this.setComponentEnableState = this.setComponentEnableState.bind(this);
         this._gameSystem = gameSystem;
     }
     public hookupInput(netEventHandler: NetEventHandler) {
@@ -35,12 +39,14 @@ export default class GameSystemNetworker extends Networker {
         netEventHandler.addRemoveComponentDelegate(this.removeComponentDelegate);
         netEventHandler.addInputDelegate(this.playerInputDelegate);
         netEventHandler.addExecuteScriptDelegate(this.executeScriptDelegate);
+        netEventHandler.addSetControlDelegate(this.entitySetControlDelegate);
+        netEventHandler.addSetComponentEnableStateDelegate(this.setComponentEnableState);
     }
     public playerConnectionDelegate(packet: ClientConnectionPacket, client: Client) {
         this._gameSystem.createPlayer(client);
     }
     public playerDisconnectDelegate(packet: ClientDisconnectPacket, client: Client) {
-        this._gameSystem.setPlayerEntityInspection(client, undefined);
+        this._gameSystem.deletePlayer(client);
     }
     public playerInputDelegate(packet: ClientKeyboardInputPacket, client: Client) {
         this._gameSystem.handleKeyInput(packet.key, packet.state, client);
@@ -57,8 +63,11 @@ export default class GameSystemNetworker extends Networker {
     public removeComponentDelegate(packet: ClientRemoveComponentPacket, client: Client) {
         this._gameSystem.removeComponent(packet.componentID);
     }
-    public entitySetControlDelegate(packet: ClientExecuteScriptPacket, client: Client) {
+    public entitySetControlDelegate(packet: ClientSetControlPacket, client: Client) {
         this._gameSystem.setPlayerControl(client, packet.entityID);
+    }
+    public setComponentEnableState(packet: ClientSetComponentEnableStatePacket, client: Client) {
+        this._gameSystem.setComponentEnableState(packet.componentID, packet.enableState);
     }
     public executeScriptDelegate(
             packet: ClientExecuteScriptPacket, client: Client) {

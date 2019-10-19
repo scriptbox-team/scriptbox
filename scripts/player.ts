@@ -9,7 +9,7 @@ export default interface Player {
     controlSet: {[input: string]: string};
     readonly locked: boolean;
     readonly control: (entity: Entity) => boolean;
-    readonly uncontrol: () => void;
+    readonly release: () => void;
 }
 
 export class TruePlayer {
@@ -19,7 +19,7 @@ export class TruePlayer {
         "controllingEntity",
         "locked",
         "control",
-        "uncontrol",
+        "release",
         "exists"
     ]);
     public static hiddenProps = Object.freeze([
@@ -30,6 +30,7 @@ export class TruePlayer {
         "_soulData",
         "_id",
         "_username",
+        "_removeControl",
         "trueEntityFromEntity"
     ]);
     public trueEntityFromEntity!: (entity: Entity) => TrueEntity;
@@ -88,16 +89,12 @@ export class TruePlayer {
     public set exists(value: boolean) {
         this._exists = value;
     }
-    public uncontrol() {
-        this._locked = true;
-        this._controllingEntity = undefined;
+    public release() {
+        this._removeControl();
     }
     public control(entity: Entity) {
         if (entity.controller === undefined) {
-            if (this._controllingEntity !== undefined) {
-                const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);
-                trueControllingEntity.controller = undefined;
-            }
+            this._removeControl();
             this._controllingEntity = entity;
             const trueEntity = this.trueEntityFromEntity(entity);
             trueEntity.controller = this;
@@ -115,6 +112,14 @@ export class TruePlayer {
         if (!this.locked) {
             this.controlSet = value;
         }
+    }
+    private _removeControl() {
+        if (this._controllingEntity !== undefined) {
+            const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);
+            trueControllingEntity.controller = undefined;
+        }
+        this._locked = true;
+        this._controllingEntity = undefined;
     }
     public get displayData() {
         return {id: this.id};

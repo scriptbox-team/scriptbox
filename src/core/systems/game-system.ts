@@ -108,6 +108,13 @@ export default class GameSystem extends System {
             entID
         );
     }
+    public deletePlayer(client: Client) {
+        this._scriptCollection.execute(
+            "./scripted-server-subsystem",
+            "deletePlayer",
+            client.id
+        );
+    }
     public handleKeyInput(key: number, state: number, client: Client) {
         this._scriptCollection.execute(
             "./scripted-server-subsystem",
@@ -221,6 +228,15 @@ export default class GameSystem extends System {
             "setPlayerControllingEntity",
             client.id,
             entityID
+        );
+    }
+
+    public setComponentEnableState(componentID: string, state: boolean) {
+        this._scriptCollection.execute(
+            "./scripted-server-subsystem",
+            "setComponentEnableState",
+            componentID,
+            state
         );
     }
 }

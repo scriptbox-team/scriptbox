@@ -1,6 +1,7 @@
 export interface ComponentExportInfo {
     id: string;
     name: string;
+    enabled: boolean;
     attributes: Array<{name: string, kind: string, value: string}>;
 }
 

@@ -8,6 +8,7 @@ export default class ComponentInfo {
         description: string,
         time: number,
         icon: string,
+        enabled: boolean,
         options: ComponentOption[]
     ) {
         if (
@@ -17,9 +18,10 @@ export default class ComponentInfo {
                 && typeof description === "string"
                 && typeof time === "number"
                 && typeof icon === "string"
+                && typeof enabled === "boolean"
                 && Array.isArray(options)
         ) {
-            return new ComponentInfo(id, name, creator, description, time, icon, options);
+            return new ComponentInfo(id, name, creator, description, time, icon, enabled, options);
         }
     }
     public id: string;
@@ -28,6 +30,7 @@ export default class ComponentInfo {
     public description: string;
     public time: number;
     public icon: string;
+    public enabled: boolean;
     public options: ComponentOption[];
     constructor(
             id: string,
@@ -36,6 +39,7 @@ export default class ComponentInfo {
             description: string,
             time: number,
             icon: string,
+            enabled: boolean,
             options: ComponentOption[]) {
         this.id = id;
         this.name = name;
@@ -43,6 +47,7 @@ export default class ComponentInfo {
         this.description = description;
         this.time = time;
         this.icon = icon;
+        this.enabled = enabled;
         this.options = options;
     }
 }

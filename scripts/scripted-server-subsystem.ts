@@ -58,8 +58,9 @@ const playerManager = new Manager<Player>((
     return proxy;
 },
 (player: Player) => {
+    inspectEntity(player.id, undefined);
     const truePlayer = playerUnproxiedMap.get(player);
-    truePlayer.uncontrol();
+    truePlayer.release();
     truePlayer.exists = false;
 });
 
@@ -85,7 +86,7 @@ const entityManager = new Manager<Entity>((id: string, creator: TruePlayer) => {
 (entity: Entity) => {
     const trueEntity = entityUnproxiedMap.get(entity);
     if (trueEntity.controller) {
-        trueEntity.controller.uncontrol();
+        trueEntity.controller.release();
     }
     trueEntity.delete();
     trueEntity.exists = false;
@@ -300,6 +301,7 @@ export function update() {
 
 function getComponentInfo(component: Component): ComponentExportInfo {
     const keys = Object.keys(component);
+    const info = componentInfoMap.get(component);
     // TODO: Make it so that circular types can be serialized in some way
     // Maybe use the prefab serialization method?
     const attributes = keys
@@ -316,8 +318,9 @@ function getComponentInfo(component: Component): ComponentExportInfo {
             };
         });
     return {
-        id: component.id,
-        name: component.name,
+        id: info.id,
+        name: info.name,
+        enabled: info.enabled,
         attributes
     };
 }
@@ -505,7 +508,20 @@ export function setPlayerControllingEntity(id: string, entityID?: string) {
             player.control(entity);
         }
         else {
-            player.uncontrol();
+            player.release();
+        }
+    }
+}
+
+export function setComponentEnableState(componentID: string, state: boolean) {
+    const component = componentManager.get(componentID);
+    if (component !== undefined) {
+        const info = componentInfoMap.get(component);
+        if (state) {
+            info.manualEnable();
+        }
+        else {
+            info.enabled = false;
         }
     }
 }

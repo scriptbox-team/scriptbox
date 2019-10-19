@@ -19,6 +19,7 @@ export default class ServerEntityInspectionListingPacket extends Packet {
                         elem.description,
                         elem.time,
                         elem.icon,
+                        elem.enabled,
                         elem.settings
                     );
                     if (res !== undefined) {
