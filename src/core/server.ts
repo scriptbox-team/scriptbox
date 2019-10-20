@@ -181,8 +181,8 @@ export default class Server {
             this._clientManager.deleteQueued();
         }
         catch (error) {
-            this._messageSystem.broadcastMessage(`[GLOBAL] ${error}`);
-            console.log(`[GLOBAL] ${error}`);
+            this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
+            console.log(`[GLOBAL] ${error.stack}`);
             this._gameSystem.recover();
         }
         finally {

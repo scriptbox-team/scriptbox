@@ -10,7 +10,7 @@ import System from "./system";
 
 export default class GameSystem extends System {
     public loadScriptResource?: (resourceID: string) => Promise<string>;
-    private _messageQueue: Array<{recipient: Group<Client>, message: string}>;
+    private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
     constructor(tickRate: number) {
         super();
@@ -160,43 +160,50 @@ export default class GameSystem extends System {
                 const script = await this.loadScriptResource(resourceID);
                 const result = await this.runPlayerScript(script, args, player, entityID, resourceID);
                 if (result !== undefined) {
-                    this.addMessageToQueue(new Group(GroupType.Only, [player]), `Script result: ${result}`);
+                    this.addMessageToQueue([player.id], `Script result: ${result}`);
                 }
             }
         }
         catch (err) {
-            this.addMessageToQueue(new Group(GroupType.Only, [player]),
+            this.addMessageToQueue([player.id],
                 `<${err.stack}>`
             );
         }
     }
-    public async runGenericPlayerScript(script: string, player: Client) {
+    public async runGenericPlayerScript(script: string, client: Client) {
         try {
-            const result = await this.runPlayerScript(script, "", player);
+            const result = await this.runPlayerScript(script, "", client);
             if (result !== undefined) {
                 this.addMessageToQueue(
-                    new Group(GroupType.Only, [player]),
+                    [client.id],
                     `${script} Result: ${result}`
                 );
             }
         }
         catch (err) {
-            this.addMessageToQueue(new Group(GroupType.Only, [player]),
+            this.addMessageToQueue([client.id],
                 `<${err.stack}>`
             );
             console.log(err);
         }
     }
-    public async runPlayerScript(code: string, args: string, player: Client, entityID?: string, className?: string) {
-        let thisValue: IVM.Reference<any> | undefined;
+    public async runPlayerScript(code: string, args: string, client: Client, entityID?: string, className?: string) {
+        let entityValue: IVM.Reference<any> | undefined;
+        if (entityID === undefined) {
+            entityID = this._scriptCollection.execute(
+                "./scripted-server-subsystem",
+                "getPlayerControllingEntity",
+                client.id
+            );
+        }
         if (entityID !== undefined) {
-            thisValue = this._scriptCollection.executeReturnRef(
+            entityValue = this._scriptCollection.executeReturnRef(
                 "./scripted-server-subsystem",
                 "getEntity",
                 entityID
             );
         }
-        const script = await this._scriptCollection.runScript(code, args, thisValue);
+        const script = await this._scriptCollection.runScript(code, args, entityValue);
         const defaultExport = script.getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptCollection.execute(
@@ -212,7 +219,7 @@ export default class GameSystem extends System {
                     entityID,
                     className,
                     className,
-                    player.id
+                    client.id
                 );
             }
         }
@@ -222,8 +229,8 @@ export default class GameSystem extends System {
         return undefined;
     }
 
-    public addMessageToQueue(clientGroup: Group<Client>, message: string) {
-        this._messageQueue.push({recipient: clientGroup, message});
+    public addMessageToQueue(clients: string[], message: string) {
+        this._messageQueue.push({recipient: clients, message});
     }
 
     public setPlayerControl(client: Client, entityID?: string) {

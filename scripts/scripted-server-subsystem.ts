@@ -379,8 +379,12 @@ export function createEntity(creatorID?: string): string {
     return ent.id;
 }
 
-export function getEntity(id: string): Entity {
+const _getEntity = (id: string): Entity => {
     return entityManager.get(id);
+};
+
+export function getEntity(id: string) {
+    return _getEntity(id);
 }
 
 export function deleteEntity(id: string) {
@@ -534,6 +538,11 @@ export function setPlayerControllingEntity(id: string, entityID?: string) {
             player.release();
         }
     }
+}
+
+export function getPlayerControllingEntity(id: string) {
+    const player = playerManager.get(id);
+    return player.controllingEntity !== undefined ? player.controllingEntity.id : undefined;
 }
 
 export function setComponentEnableState(componentID: string, state: boolean) {

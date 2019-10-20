@@ -14,11 +14,11 @@ export default class ScriptCollection {
         this.scriptRunner = new ScriptRunner();
         this._prebuiltScripts = this.scriptRunner.buildManySync(prebuiltScripts, addIns);
     }
-    public async runScript(code: string, args: string, thisValue?: IVM.Reference<any>) {
+    public async runScript(code: string, args: string, entityValue?: IVM.Reference<any>) {
         const argsArray = ArgumentParser.parse(args);
         return this.scriptRunner.build(
             code,
-            {args: argsArray, thisEntity: thisValue === undefined ? undefined : thisValue.derefInto()},
+            {args: argsArray, entity: entityValue === undefined ? undefined : entityValue.derefInto()},
             undefined,
             undefined,
             500,
@@ -33,11 +33,12 @@ export default class ScriptCollection {
         const funcRef = this._getComponent(componentPath).getReference(name);
         const context = this._getComponent(componentPath).context;
         const script = `
-            export function run(func, ...args) {return new IVM.Reference(func(args))};
+            export function run(func, ...args) {return new IVM.Reference(func(...args))};
         `;
         const tmpComponent = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
-        const res = tmpComponent.execute("run", ...[funcRef.derefInto(), ...params]);
+        const res = tmpComponent.execute("run", funcRef.derefInto(), ...params);
         if (res.typeof === "undefined") {
+            console.log("ref is undefined");
             return undefined;
         }
         return res;
