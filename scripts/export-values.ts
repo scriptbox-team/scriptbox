@@ -3,6 +3,7 @@ export interface ComponentExportInfo {
     name: string;
     enabled: boolean;
     attributes: Array<{name: string, kind: string, value: string}>;
+    lastFrameTime: number;
 }
 
 export interface EntityExportInfo {

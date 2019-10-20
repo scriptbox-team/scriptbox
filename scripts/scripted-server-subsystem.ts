@@ -36,6 +36,7 @@ global.exportValues = exportValues;
 let messageQueue: MessageExportInfo[] = [];
 
 const classList = new Map<string, ClassInterface>();
+let tickRate!: number;
 
 const playerSoulMap = new WeakMap<TruePlayer, PlayerSoul>();
 const playerUnproxiedMap = new WeakMap<Player, TruePlayer>();
@@ -119,18 +120,14 @@ const componentManager = new Manager<Component>((
         const component = new componentClass(infoProxy);
         componentInfoMap.set(component, info);
 
-        if (typeof component.create === "function") {
-            component.create(...args);
-        }
+        componentExecute(component, "create", ...args);
         entity.add(localID, component);
 
         return component;
     },
     (component: Component) => {
-        if (typeof (component as any).delete === "function") {
-            (component as any).delete();
-        }
         const info = componentInfoMap.get(component);
+        componentExecute(component, "delete");
         info.entity.remove(info.entity.getComponentLocalID(component));
     }
 );
@@ -138,6 +135,21 @@ const componentManager = new Manager<Component>((
 const inspectedEntities: Map<string, string> = new Map<string, string>();
 
 // TODO: Reconsider all places that use Object.keys (can have undefined values)
+
+function componentExecute(component: any, funcName: string, ...args: any[]) {
+    if (typeof component[funcName] === "function") {
+        const info = componentInfoMap.get(component);
+        return componentExecuteDirect(info, (...a) => component[funcName](...a), ...args);
+    }
+    return undefined;
+}
+
+function componentExecuteDirect<T>(info: ComponentInfo, func: (...a: any[]) => T, ...args: any[]): T {
+    info.lastFrameTime = -1;
+    let result: any;
+    info.lastFrameTime = looseProfile(() => {result = func(...args); });
+    return result;
+}
 
 function outputUserError(owner: Player, error: Error) {
     // TODO: Error.prepareStackTrace to improve how user stack traces look
@@ -174,7 +186,6 @@ function handleComponentError(component: Component, error: Error) {
     else {
         global.log(error);
     }
-    global.log("Enabled: " + componentInfoMap.get(component).enabled);
 }
 
 function runOnAll(funcName: string) {
@@ -182,16 +193,19 @@ function runOnAll(funcName: string) {
     for (const [key, component] of componentIterator) {
         const info = componentInfoMap.get(component);
         if (info !== undefined && info.enabled) {
+            info.lastFrameTime = -1;
             try {
-                if (funcName in component && typeof (component as any)[funcName] === "function") {
-                    (component as any)[funcName]();
-                }
+                componentExecute(component, funcName);
             }
             catch (err) {
                 handleComponentError(component, err);
             }
         }
     }
+}
+
+export function initialize(initTickRate: number) {
+    tickRate = initTickRate;
 }
 
 export function update() {
@@ -222,8 +236,8 @@ export function update() {
                 && typeof positionComponent.x.getValue === "function"
                 && typeof positionComponent.y.getValue === "function"
                 ) {
-                    const x = positionComponent.x.getValue();
-                    const y = positionComponent.y.getValue();
+                    const x = componentExecuteDirect(positionInfo, () => positionComponent.x.getValue());
+                    const y = componentExecuteDirect(positionInfo, () => positionComponent.y.getValue());
                     if (typeof x === "number" && typeof y === "number" && typeof id === "string") {
                         exportValues.entities[id].position = {x, y};
                     }
@@ -247,10 +261,10 @@ export function update() {
                 && typeof collisionComponent.x2.getValue === "function"
                 && typeof collisionComponent.y2.getValue === "function"
                 ) {
-                    const x1 = collisionComponent.x1.getValue();
-                    const y1 = collisionComponent.y1.getValue();
-                    const x2 = collisionComponent.x2.getValue();
-                    const y2 = collisionComponent.y2.getValue();
+                    const x1 = componentExecuteDirect(collisionInfo, () => collisionComponent.x1.getValue());
+                    const y1 = componentExecuteDirect(collisionInfo, () => collisionComponent.y1.getValue());
+                    const x2 = componentExecuteDirect(collisionInfo, () => collisionComponent.x2.getValue());
+                    const y2 = componentExecuteDirect(collisionInfo, () => collisionComponent.y2.getValue());
                     if (typeof x1 === "number" && typeof y1 === "number"
                     && typeof x2 === "number" && typeof y2 === "number"
                     && typeof id === "string") {
@@ -329,6 +343,7 @@ function getComponentInfo(component: Component): ComponentExportInfo {
         id: info.id,
         name: info.name,
         enabled: info.enabled,
+        lastFrameTime: info.lastFrameTime,
         attributes
     };
 }
@@ -530,6 +545,34 @@ export function setComponentEnableState(componentID: string, state: boolean) {
         }
         else {
             info.enabled = false;
+        }
+    }
+}
+
+function looseProfile(func: () => void): number {
+    const time = Date.now();
+    func();
+    return Date.now() - time;
+}
+
+export function recoverFromTimeout() {
+    const expectedFrameTime = 1 / tickRate;
+    const cutoffTime = expectedFrameTime * 0.3;
+    let timeAccountedFor = 0;
+    const componentIterator = componentManager.entries();
+    for (const [componentID, component] of componentIterator) {
+        const info = componentInfoMap.get(component);
+        const time = info.lastFrameTime;
+        // Note: This naively decides to disable just a component that exceeded the frame time
+        // Or if it reaches the end, it does the last component that was executing when it timed out
+        if (info.enabled) {
+            if (time > cutoffTime || time === -1) {
+                // tslint:disable-next-line: max-line-length
+                const err = new Error(`During global error, max frame time was exceeded (${Math.round(cutoffTime * 1000)}ms)`);
+                handleComponentError(component, err);
+                return;
+            }
+            timeAccountedFor += time;
         }
     }
 }

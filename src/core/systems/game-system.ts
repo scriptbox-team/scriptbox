@@ -12,7 +12,7 @@ export default class GameSystem extends System {
     public loadScriptResource?: (resourceID: string) => Promise<string>;
     private _messageQueue: Array<{recipient: Group<Client>, message: string}>;
     private _scriptCollection: ScriptCollection;
-    constructor() {
+    constructor(tickRate: number) {
         super();
         this._messageQueue = [];
         const fileDirs = [
@@ -46,6 +46,7 @@ export default class GameSystem extends System {
         }, {} as {[s: string]: string});
 
         this._scriptCollection = new ScriptCollection(scripts);
+        this._scriptCollection.execute("./scripted-server-subsystem", "initialize", tickRate);
     }
     public update() {
         this._scriptCollection.execute("./scripted-server-subsystem", "update");
@@ -61,6 +62,9 @@ export default class GameSystem extends System {
         this._messageQueue = [];
 
         return result;
+    }
+    public recover() {
+        this._scriptCollection.execute("./scripted-server-subsystem", "recoverFromTimeout");
     }
     public createPlayer(client: Client) {
         this._scriptCollection.execute(

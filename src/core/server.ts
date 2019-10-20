@@ -113,7 +113,7 @@ export default class Server {
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
-        this._gameSystem = new GameSystem();
+        this._gameSystem = new GameSystem(this._tickRate);
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
         this._gameSystem.loadScriptResource = (resource) => this._resourceSystem.loadTextResource(resource);
 
@@ -181,7 +181,14 @@ export default class Server {
             this._clientManager.deleteQueued();
         }
         catch (error) {
-            console.log(error);
+            this._messageSystem.broadcastMessage(`[GLOBAL] ${error}`);
+            console.log(`[GLOBAL] ${error}`);
+            this._gameSystem.recover();
+        }
+        finally {
+            this._networkSystem.sendMessages();
+            this._resourceSystem.deleteQueued();
+            this._clientManager.deleteQueued();
         }
     }
     private _createPlayer(id: string, clientID: number, username: string, displayName: string) {

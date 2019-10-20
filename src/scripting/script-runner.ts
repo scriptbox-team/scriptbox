@@ -17,7 +17,7 @@ export default class ScriptRunner {
      * @memberof ScriptRunner
      */
     constructor() {
-        this._isolate = new IVM.Isolate();
+        this._isolate = new IVM.Isolate({inspector: true});
     }
 
     /**
@@ -38,7 +38,7 @@ export default class ScriptRunner {
             modulePaths: {[path: string]: Script} = {}
     ): Promise<Script> {
         if (context === undefined) {
-            context = this.makeContext(addIns);
+            context = this.makeContext(false, addIns);
         }
         else {
             this._addToContext(context, addIns);
@@ -69,7 +69,7 @@ export default class ScriptRunner {
             timeout?: number
     ): Script {
         if (context === undefined) {
-            context = this.makeContext(addIns);
+            context = this.makeContext(false, addIns);
         }
         else {
             this._addToContext(context, addIns);
@@ -102,7 +102,7 @@ export default class ScriptRunner {
             acc[path] = this._isolate.compileModuleSync(transpiledCode);
         }, {} as {[s: string]: IVM.Module});
         return _.transform(modules, (acc, module, path) => {
-            const context = this.makeContext(addIns![path]);
+            const context = this.makeContext(true, addIns![path]);
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
                 context.global.setSync("_log", new IVM.Reference(this._log));
@@ -136,8 +136,8 @@ export default class ScriptRunner {
      * @returns The context for script execution.
      * @memberof ScriptExecutor
      */
-    public makeContext(addIns: object = {}) {
-        const context = this._isolate.createContextSync();
+    public makeContext(inspector: boolean, addIns: object = {}) {
+        const context = this._isolate.createContextSync({inspector});
         this._addToContext(context, addIns);
         return context;
     }
