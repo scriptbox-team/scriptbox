@@ -9,6 +9,11 @@ import ScriptCollection from "scripting/script-collection";
 import System from "./system";
 
 export default class GameSystem extends System {
+    public static readonly scriptedServerSubsystemDir = path.join(
+        process.cwd(),
+        "./__scripted__/",
+        "./scripted-server-subsystem"
+    );
     public loadScriptResource?: (resourceID: string) => Promise<string>;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
@@ -16,41 +21,40 @@ export default class GameSystem extends System {
         super();
         this._messageQueue = [];
         const fileDirs = [
-            "./aspect-array.ts",
-            "./aspect.ts",
-            "./collision-box.ts",
-            "./component-info.ts",
-            "./component.ts",
-            "./control.ts",
-            "./default-control.ts",
-            "./entity.ts",
-            "./existable.ts",
-            "./export-values.ts",
-            "./group.ts",
-            "./id-generator.ts",
-            "./manager.ts",
-            "./meta-info.ts",
-            "./player-soul.ts",
-            "./player.ts",
-            "./position.ts",
-            "./proxy-generator.ts",
-            "./scripted-server-subsystem.ts",
-            "./velocity.ts"
+            "./aspect-array",
+            "./aspect",
+            "./collision-box",
+            "./component-info",
+            "./component",
+            "./control",
+            "./default-control",
+            "./entity",
+            "./existable",
+            "./export-values",
+            "./group",
+            "./id-generator",
+            "./manager",
+            "./meta-info",
+            "./player-soul",
+            "./player",
+            "./position",
+            "./proxy-generator",
+            "./scripted-server-subsystem",
+            "./velocity"
         ];
-        const baseScriptDir = path.join(__dirname, "../../__scripted__/");
+        const baseScriptDir = path.join(process.cwd(), "./__scripted__/");
 
         const scripts: any = _.transform(fileDirs, (result, value) => {
-            result[value.substr(0, value.length - 3)] = fs.readFileSync(
-                path.join(baseScriptDir, value),
-                {encoding: "utf8"});
+            const dir = path.join(baseScriptDir, value);
+            result[dir] = fs.readFileSync(dir + ".ts", {encoding: "utf8"});
         }, {} as {[s: string]: string});
 
         this._scriptCollection = new ScriptCollection(scripts);
-        this._scriptCollection.execute("./scripted-server-subsystem", "initialize", tickRate);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", tickRate);
     }
     public update() {
-        this._scriptCollection.execute("./scripted-server-subsystem", "update");
-        const result = this._scriptCollection.runIVMScript("./scripted-server-subsystem",
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "update");
+        const result = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
         `
             new IVM.ExternalCopy(global.exportValues).copyInto();
         `).result;
@@ -64,21 +68,21 @@ export default class GameSystem extends System {
         return result;
     }
     public recover() {
-        this._scriptCollection.execute("./scripted-server-subsystem", "recoverFromTimeout");
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "recoverFromTimeout");
     }
     public createPlayer(client: Client) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "createPlayer",
             client.id,
             client.username,
             client.displayName
         );
-        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity", client.id);
+        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", client.id);
         // Creating the entity is temporary
         // Until players can add default modules on their own
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
             "position",
@@ -88,7 +92,7 @@ export default class GameSystem extends System {
             Math.random() * 150
         );
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
             "velocity",
@@ -98,7 +102,7 @@ export default class GameSystem extends System {
             0
         );
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
             "default-control",
@@ -106,7 +110,7 @@ export default class GameSystem extends System {
             client.id
         );
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
             client.id,
             entID
@@ -114,14 +118,14 @@ export default class GameSystem extends System {
     }
     public deletePlayer(client: Client) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "deletePlayer",
             client.id
         );
     }
     public handleKeyInput(key: number, state: number, client: Client) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "handleInput",
             client.id,
             key,
@@ -129,9 +133,9 @@ export default class GameSystem extends System {
         );
     }
     public createEntityAt(prefabID: string, x: number, y: number, player: Client) {
-        const entID = this._scriptCollection.execute("./scripted-server-subsystem", "createEntity", player.id);
+        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", player.id);
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
             "position",
@@ -142,14 +146,14 @@ export default class GameSystem extends System {
         );
     }
     public deleteEntity(id: string) {
-        this._scriptCollection.execute("./scripted-server-subsystem", "deleteEntity", id);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "deleteEntity", id);
     }
     public setPlayerEntityInspection(player: Client, entityID?: string) {
-        this._scriptCollection.execute("./scripted-server-subsystem", "inspectEntity", player.id, entityID);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "inspectEntity", player.id, entityID);
     }
     public removeComponent(componentID: string) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "deleteComponent",
             componentID
         );
@@ -191,20 +195,20 @@ export default class GameSystem extends System {
         let entityValue: IVM.Reference<any> | undefined;
         if (entityID === undefined) {
             entityID = this._scriptCollection.execute(
-                "./scripted-server-subsystem",
+                GameSystem.scriptedServerSubsystemDir,
                 "getPlayerControllingEntity",
                 client.id
             );
         }
         if (entityID !== undefined) {
             entityValue = this._scriptCollection.executeReturnRef(
-                "./scripted-server-subsystem",
+                GameSystem.scriptedServerSubsystemDir,
                 "getEntity",
                 entityID
             );
         }
         const playerValue = this._scriptCollection.executeReturnRef(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "getPlayer",
             client.id
         );
@@ -212,14 +216,14 @@ export default class GameSystem extends System {
         const defaultExport = script.getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptCollection.execute(
-                "./scripted-server-subsystem",
+                GameSystem.scriptedServerSubsystemDir,
                 "setComponentClass",
                 defaultExport.derefInto(),
                 className
             );
             if (entityID !== undefined) {
                 this._scriptCollection.execute(
-                    "./scripted-server-subsystem",
+                    GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
                     entityID,
                     className,
@@ -240,7 +244,7 @@ export default class GameSystem extends System {
 
     public setPlayerControl(client: Client, entityID?: string) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
             client.id,
             entityID
@@ -249,7 +253,7 @@ export default class GameSystem extends System {
 
     public setComponentEnableState(componentID: string, state: boolean) {
         this._scriptCollection.execute(
-            "./scripted-server-subsystem",
+            GameSystem.scriptedServerSubsystemDir,
             "setComponentEnableState",
             componentID,
             state

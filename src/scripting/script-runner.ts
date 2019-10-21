@@ -2,6 +2,7 @@ import IVM from "isolated-vm";
 import _ from "lodash";
 import ts from "typescript";
 import Script from "./script";
+import path from "path";
 
 /**
  * A class which handles arbitrary script execution.
@@ -50,10 +51,11 @@ export default class ScriptRunner {
         }
         else {
             await module.instantiate(context, (modulePath) => {
-                if (modulePaths[modulePath] === undefined) {
+                const absPath = path.join(process.cwd(), modulePath);
+                if (modulePaths[absPath] === undefined) {
                     throw new Error("No module of name \"" + modulePath + "\" is available.");
                 }
-                return modulePaths[modulePath].module;
+                return modulePaths[absPath].module;
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
@@ -97,12 +99,12 @@ export default class ScriptRunner {
         if (addIns === undefined) {
             addIns = {};
         }
-        const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, path) => {
+        const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, codePath) => {
             const transpiledCode = this._transpile(code);
-            acc[path] = this._isolate.compileModuleSync(transpiledCode);
+            acc[codePath] = this._isolate.compileModuleSync(transpiledCode);
         }, {} as {[s: string]: IVM.Module});
-        return _.transform(modules, (acc, module, path) => {
-            const context = this.makeContext(true, addIns![path]);
+        return _.transform(modules, (acc, module, codePath) => {
+            const context = this.makeContext(true, addIns![codePath]);
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
                 context.global.setSync("_log", new IVM.Reference(this._log));
@@ -118,13 +120,15 @@ export default class ScriptRunner {
                 `).runSync(context);
             }
             module.instantiateSync(context, (requirePath) => {
-                if (modules[requirePath] === undefined) {
-                    throw new Error("No module of name \"" + requirePath + "\" is available.");
+                const codeDir = path.dirname(codePath);
+                const modulePath = path.join(codeDir, requirePath);
+                if (modules[modulePath] === undefined) {
+                    throw new Error("No module of name \"" + requirePath + "\" is available." + Object.keys(modules));
                 }
-                return modules[requirePath];
+                return modules[modulePath];
             });
             const result = module.evaluateSync();
-            acc[path] = new Script(module, context, result);
+            acc[codePath] = new Script(module, context, result);
         }, {} as {[s: string]: Script});
     }
 

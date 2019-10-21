@@ -1,8 +1,8 @@
 import Component from "./component";
 import MetaInfo from "./meta-info";
-import Player, { TruePlayer } from "./player";
+import PlayerProxy, { Player } from "./player";
 
-export default interface Entity {
+export interface EntityProxy {
     readonly delete: () => void;
     readonly add: (componentClassID: string, localID: string, owner?: string | undefined, ...params: any[]) => void;
     readonly remove: (component: Component) => void;
@@ -14,7 +14,7 @@ export default interface Entity {
     readonly componentIterator: () => IterableIterator<Component>;
     readonly enabled: boolean;
     readonly exists: boolean;
-    readonly controller?: TruePlayer;
+    readonly controller?: Player;
     readonly id: string;
 }
 
@@ -22,7 +22,7 @@ interface EntityManagementMethods {
     delete: (entityID: string) => void;
     add: (entityID: string, componentClassID: string, localID: string, ...params: any[]) => boolean;
     remove: (entityID: string, component: Component) => void;
-    fromID: (entityID: string) => Entity;
+    fromID: (entityID: string) => EntityProxy;
 }
 
 /**
@@ -33,7 +33,7 @@ interface EntityManagementMethods {
  * @export
  * @class Entity
  */
-export class TrueEntity {
+export default class Entity {
     public static readOnlyProps = Object.freeze([
         "create",
         "delete",
@@ -64,8 +64,8 @@ export class TrueEntity {
         "_create"
     ]);
     public static externalCreate: (creatorID: string | undefined) => string;
-    public static externalGetByID: (id: string) => Entity;
-    public static create(prefabID: string, owner?: Player) {
+    public static externalGetByID: (id: string) => EntityProxy;
+    public static create(prefabID: string, owner?: PlayerProxy) {
         return this.getByID(this.externalCreate(owner !== undefined ? owner.id : owner));
     }
     public static getByID(id: string) {
@@ -82,7 +82,7 @@ export class TrueEntity {
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;
     private _id: string;
-    private _controller?: Player;
+    private _controller?: PlayerProxy;
     private _metaInfo: MetaInfo;
     /**
      * Creates an instance of Entity.
@@ -91,7 +91,7 @@ export class TrueEntity {
      * @param {EntityManagerInterface} entityManagerInterface The interface of functions to call.
      * @memberof Entity
      */
-    constructor(id: string, methods: EntityManagementMethods, metaInfo: MetaInfo, controller?: Player) {
+    constructor(id: string, methods: EntityManagementMethods, metaInfo: MetaInfo, controller?: PlayerProxy) {
         this._id = id;
         this._metaInfo = metaInfo;
         this._controller = controller;
@@ -104,7 +104,7 @@ export class TrueEntity {
     public delete() {
         this._delete(this._id);
     }
-    public add(componentClassID: string, localID: string, owner?: Player, ...params: any[]) {
+    public add(componentClassID: string, localID: string, owner?: PlayerProxy, ...params: any[]) {
         this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
     }
     public remove(component: Component) {
@@ -197,7 +197,7 @@ export class TrueEntity {
         return this._controller;
     }
     // Note: Function not exposed to player scripting
-    public set controller(value: Player | undefined) {
+    public set controller(value: PlayerProxy | undefined) {
         this._controller = value;
     }
 

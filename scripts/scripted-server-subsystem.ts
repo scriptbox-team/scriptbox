@@ -4,12 +4,12 @@ import Component from "./component";
 import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
-import Entity, { TrueEntity } from "./entity";
+import Entity, { EntityProxy } from "./entity";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import MetaInfo from "./meta-info";
-import Player, { TruePlayer } from "./player";
+import Player, { PlayerProxy } from "./player";
 import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
@@ -34,40 +34,40 @@ const exportValues: Exports = {
 global.exportValues = exportValues;
 
 let messageQueue: MessageExportInfo[] = [];
-let executingUser: Player | undefined;
+let executingUser: PlayerProxy | undefined;
 
 const classList = new Map<string, ClassInterface>();
 let tickRate!: number;
 
-const playerSoulMap = new WeakMap<TruePlayer, PlayerSoul>();
-const playerUnproxiedMap = new WeakMap<Player, TruePlayer>();
-const playerManager = new Manager<Player>((
+const playerSoulMap = new WeakMap<Player, PlayerSoul>();
+const playerUnproxiedMap = new WeakMap<PlayerProxy, Player>();
+const playerManager = new Manager<PlayerProxy>((
         id: string,
         username: string,
         displayName: string,
         controlSet: {[id: number]: string},
-        controllingEntity?: TrueEntity) => {
+        controllingEntity?: Entity) => {
     const soul = new PlayerSoul(0, 0);
-    const player = new TruePlayer(id, username, displayName, controlSet, soul, controllingEntity);
-    player.trueEntityFromEntity = (entity: Entity) => entityUnproxiedMap.get(entity);
+    const player = new Player(id, username, displayName, controlSet, soul, controllingEntity);
+    player.trueEntityFromEntity = (entity: EntityProxy) => entityUnproxiedMap.get(entity);
     const proxy = ProxyGenerator.makeDeletable(
         player,
-        TruePlayer.readOnlyProps,
-        TruePlayer.hiddenProps
+        Player.readOnlyProps,
+        Player.hiddenProps
     );
     playerSoulMap.set(player, soul);
     playerUnproxiedMap.set(proxy, player);
     return proxy;
 },
-(player: Player) => {
+(player: PlayerProxy) => {
     inspectEntity(player.id, undefined);
     const truePlayer = playerUnproxiedMap.get(player);
     truePlayer.release();
     truePlayer.exists = false;
 });
 
-const entityUnproxiedMap = new WeakMap<Entity, TrueEntity>();
-const entityManager = new Manager<Entity>((id: string, creator: TruePlayer) => {
+const entityUnproxiedMap = new WeakMap<EntityProxy, Entity>();
+const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => {
     const info = new MetaInfo(
         `Entity ${id}`,
         "",
@@ -76,20 +76,20 @@ const entityManager = new Manager<Entity>((id: string, creator: TruePlayer) => {
         [],
         creator
     );
-    const entity = new TrueEntity(id, {
+    const entity = new Entity(id, {
         delete: deleteEntity,
         add: createComponent,
         remove: deleteComponent,
     }, info);
-    const proxy = ProxyGenerator.makeDeletable<Entity>(
+    const proxy = ProxyGenerator.makeDeletable<EntityProxy>(
         entity,
-        TrueEntity.hiddenProps,
-        TrueEntity.readOnlyProps
+        Entity.hiddenProps,
+        Entity.readOnlyProps
     );
     entityUnproxiedMap.set(proxy, entity);
     return proxy;
 },
-(entity: Entity) => {
+(entity: EntityProxy) => {
     const trueEntity = entityUnproxiedMap.get(entity);
     if (trueEntity.controller) {
         trueEntity.controller.release();
@@ -102,9 +102,9 @@ const componentInfoMap = new WeakMap<Component, ComponentInfo>();
 const componentManager = new Manager<Component>((
             componentID: string,
             componentClass: ClassInterface,
-            entity: Entity,
+            entity: EntityProxy,
             localID: string,
-            creator?: TruePlayer,
+            creator?: Player,
             ...args: any[]) => {
         const info = new ComponentInfo(
             componentID,
@@ -160,7 +160,7 @@ function componentExecuteDirect<T>(info: ComponentInfo, func: (...a: any[]) => T
     return result;
 }
 
-function outputUserError(owner: Player, error: Error) {
+function outputUserError(owner: PlayerProxy, error: Error) {
     // TODO: Error.prepareStackTrace to improve how user stack traces look
     if (owner !== undefined) {
         messageQueue.push({
@@ -215,8 +215,8 @@ function runOnAll(funcName: string) {
 
 export function initialize(initTickRate: number) {
     tickRate = initTickRate;
-    TrueEntity.externalCreate = createEntity;
-    TrueEntity.externalGetByID = getEntity;
+    Entity.externalCreate = createEntity;
+    Entity.externalGetByID = getEntity;
 }
 
 export function update() {
@@ -390,7 +390,7 @@ export function createEntity(creatorID?: string): string {
     return ent.id;
 }
 
-const _getEntity = (id: string): Entity => {
+const _getEntity = (id: string): EntityProxy => {
     return entityManager.get(id);
 };
 

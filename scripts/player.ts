@@ -1,18 +1,18 @@
-import Entity, { TrueEntity } from "./entity";
+import Entity, {EntityProxy} from "./entity";
 import PlayerSoul from "./player-soul";
 
-export default interface Player {
+export interface PlayerProxy {
     readonly id: string;
     readonly username: string;
     displayName: string;
-    readonly controllingEntity: Entity;
+    readonly controllingEntity: EntityProxy;
     controlSet: {[input: string]: string};
     readonly locked: boolean;
-    readonly control: (entity: Entity) => boolean;
+    readonly control: (entity: EntityProxy) => boolean;
     readonly release: () => void;
 }
 
-export class TruePlayer {
+export default class Player {
     public static readOnlyProps = Object.freeze([
         "id",
         "username",
@@ -33,9 +33,9 @@ export class TruePlayer {
         "_removeControl",
         "trueEntityFromEntity"
     ]);
-    public trueEntityFromEntity!: (entity: Entity) => TrueEntity;
+    public trueEntityFromEntity!: (entity: EntityProxy) => Entity;
     private _displayName: string;
-    private _controllingEntity?: Entity;
+    private _controllingEntity?: EntityProxy;
     private _controlSet: {[input: string]: string};
     private _locked: boolean;
     private _soulData: PlayerSoul;
@@ -48,7 +48,7 @@ export class TruePlayer {
             displayName: string,
             controlSet: {[id: number]: string},
             soulData: PlayerSoul,
-            controllingEntity?: Entity) {
+            controllingEntity?: EntityProxy) {
         this._id = id;
         this._username = username;
         this._displayName = displayName;
@@ -92,7 +92,7 @@ export class TruePlayer {
     public release() {
         this._removeControl();
     }
-    public control(entity: Entity) {
+    public control(entity: EntityProxy) {
         if (entity.controller === undefined) {
             this._removeControl();
             this._controllingEntity = entity;
