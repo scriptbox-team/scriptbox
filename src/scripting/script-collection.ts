@@ -14,11 +14,19 @@ export default class ScriptCollection {
         this.scriptRunner = new ScriptRunner();
         this._prebuiltScripts = this.scriptRunner.buildManySync(prebuiltScripts, addIns);
     }
-    public async runScript(code: string, args: string, entityValue?: IVM.Reference<any>) {
+    public async runScript(
+            code: string,
+            args: string,
+            entityValue?: IVM.Reference<any>,
+            playerValue?: IVM.Reference<any>) {
         const argsArray = ArgumentParser.parse(args);
         return this.scriptRunner.build(
             code,
-            {args: argsArray, entity: entityValue === undefined ? undefined : entityValue.derefInto()},
+            {
+                args: argsArray,
+                entity: entityValue === undefined ? undefined : entityValue.derefInto(),
+                me: playerValue === undefined ? undefined : playerValue.derefInto()
+            },
             undefined,
             undefined,
             500,

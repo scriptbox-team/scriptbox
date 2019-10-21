@@ -203,7 +203,12 @@ export default class GameSystem extends System {
                 entityID
             );
         }
-        const script = await this._scriptCollection.runScript(code, args, entityValue);
+        const playerValue = this._scriptCollection.executeReturnRef(
+            "./scripted-server-subsystem",
+            "getPlayer",
+            client.id
+        );
+        const script = await this._scriptCollection.runScript(code, args, entityValue, playerValue);
         const defaultExport = script.getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptCollection.execute(

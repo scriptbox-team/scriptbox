@@ -34,6 +34,7 @@ const exportValues: Exports = {
 global.exportValues = exportValues;
 
 let messageQueue: MessageExportInfo[] = [];
+let executingUser: Player | undefined;
 
 const classList = new Map<string, ClassInterface>();
 let tickRate!: number;
@@ -75,7 +76,11 @@ const entityManager = new Manager<Entity>((id: string, creator: TruePlayer) => {
         [],
         creator
     );
-    const entity = new TrueEntity(id, info);
+    const entity = new TrueEntity(id, {
+        delete: deleteEntity,
+        add: createComponent,
+        remove: deleteComponent,
+    }, info);
     const proxy = ProxyGenerator.makeDeletable<Entity>(
         entity,
         TrueEntity.hiddenProps,
@@ -121,14 +126,16 @@ const componentManager = new Manager<Component>((
         componentInfoMap.set(component, info);
 
         componentExecute(component, "create", ...args);
-        entity.add(localID, component);
+        const trueEntity = entityUnproxiedMap.get(entity);
+        trueEntity.directAdd(localID, component);
 
         return component;
     },
     (component: Component) => {
         const info = componentInfoMap.get(component);
         componentExecute(component, "delete");
-        info.entity.remove(info.entity.getComponentLocalID(component));
+        const trueEntity = entityUnproxiedMap.get(info.entity);
+        trueEntity.directRemove(info.entity.getComponentLocalID(component));
     }
 );
 
@@ -145,9 +152,11 @@ function componentExecute(component: any, funcName: string, ...args: any[]) {
 }
 
 function componentExecuteDirect<T>(info: ComponentInfo, func: (...a: any[]) => T, ...args: any[]): T {
+    executingUser = info.owner;
     info.lastFrameTime = -1;
     let result: any;
     info.lastFrameTime = looseProfile(() => {result = func(...args); });
+    executingUser = undefined;
     return result;
 }
 
@@ -206,6 +215,8 @@ function runOnAll(funcName: string) {
 
 export function initialize(initTickRate: number) {
     tickRate = initTickRate;
+    TrueEntity.externalCreate = createEntity;
+    TrueEntity.externalGetByID = getEntity;
 }
 
 export function update() {
@@ -394,11 +405,11 @@ export function deleteEntity(id: string) {
 
 export function createComponent(
         entID: string,
-        className: string,
+        classID: string,
         localID: string,
         creatorID?: string,
         ...params: any[]) {
-    const classToCreate = classList.get(className);
+    const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
     if (entity !== undefined) {
@@ -518,6 +529,10 @@ export function createPlayer(
 
 export function deletePlayer(id: string) {
     playerManager.queueForDeletion(id);
+}
+
+export function getPlayer(id: string) {
+    return playerManager.get(id);
 }
 
 export function renamePlayer(id: string, displayName: string) {

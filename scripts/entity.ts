@@ -1,10 +1,11 @@
 import Component from "./component";
 import MetaInfo from "./meta-info";
-import { TruePlayer } from "./player";
+import Player, { TruePlayer } from "./player";
 
 export default interface Entity {
-    readonly add: (localID: string, component: Component) => void;
-    readonly remove: (localID: string) => void;
+    readonly delete: () => void;
+    readonly add: (componentClassID: string, localID: string, owner?: string | undefined, ...params: any[]) => void;
+    readonly remove: (component: Component) => void;
     readonly get: <T extends Component = any>(name: string) => T | undefined;
     readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;
     readonly withMany: <T extends Component[] = any[]>(names: string[], func: (t: T) => void) => void;
@@ -17,6 +18,13 @@ export default interface Entity {
     readonly id: string;
 }
 
+interface EntityManagementMethods {
+    delete: (entityID: string) => void;
+    add: (entityID: string, componentClassID: string, localID: string, ...params: any[]) => boolean;
+    remove: (entityID: string, component: Component) => void;
+    fromID: (entityID: string) => Entity;
+}
+
 /**
  * Represents an entity, which is essentially an ID linking to a set of components.
  * All of an entity's data is contained within the EntityManager. For safety reasons, this
@@ -27,6 +35,8 @@ export default interface Entity {
  */
 export class TrueEntity {
     public static readOnlyProps = Object.freeze([
+        "create",
+        "delete",
         "add",
         "remove",
         "with",
@@ -36,19 +46,43 @@ export class TrueEntity {
         "enabled",
         "exists",
         "controller",
-        "id"
+        "id",
+        "clearComponents"
     ]);
     public static hiddenProps = Object.freeze([
+        "directAdd",
+        "directRemove",
         "_components",
         "_componentsInverse",
         "_id",
         "_controller",
-        "_metaInfo"
+        "_creator",
+        "_metaInfo",
+        "_add",
+        "_remove",
+        "_delete",
+        "_create"
     ]);
+    public static externalCreate: (creatorID: string | undefined) => string;
+    public static externalGetByID: (id: string) => Entity;
+    public static create(prefabID: string, owner?: Player) {
+        return this.getByID(this.externalCreate(owner !== undefined ? owner.id : owner));
+    }
+    public static getByID(id: string) {
+        return this.externalGetByID(id);
+    })
+    private _delete!: (entityID: string) => void;
+    private _add!: (
+        entityID: string,
+        componentClassID: string,
+        localID: string,
+        owner?: string | undefined,
+        ...params: any[]) => boolean;
+    private _remove!: (entityID: string, component: Component) => void;
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;
     private _id: string;
-    private _controller?: TruePlayer;
+    private _controller?: Player;
     private _metaInfo: MetaInfo;
     /**
      * Creates an instance of Entity.
@@ -57,18 +91,30 @@ export class TrueEntity {
      * @param {EntityManagerInterface} entityManagerInterface The interface of functions to call.
      * @memberof Entity
      */
-    constructor(id: string, metaInfo: MetaInfo, controller?: TruePlayer) {
+    constructor(id: string, methods: EntityManagementMethods, metaInfo: MetaInfo, controller?: Player) {
         this._id = id;
         this._metaInfo = metaInfo;
         this._controller = controller;
         this._components = new Map<string, Component>();
         this._componentsInverse = new WeakMap<Component, string>();
+        this._delete = methods.delete;
+        this._add = methods.add;
+        this._remove = methods.remove;
     }
-    public add(localID: string, component: Component) {
+    public delete() {
+        this._delete(this._id);
+    }
+    public add(componentClassID: string, localID: string, owner?: Player, ...params: any[]) {
+        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
+    }
+    public remove(component: Component) {
+        this._remove(this._id, component);
+    }
+    public directAdd(localID: string, component: Component) {
         this._components.set(localID, component);
         this._componentsInverse.set(component, localID);
     }
-    public remove(localID: string) {
+    public directRemove(localID: string) {
         const component = this._components.get(localID);
         if (component !== undefined) {
             this._components.delete(localID);
@@ -108,7 +154,7 @@ export class TrueEntity {
         }
         func(components as T);
     }
-    public delete() {
+    public clearComponents() {
         for (const [localID, component] of this._components) {
             this._components.delete(localID);
         }
@@ -134,12 +180,12 @@ export class TrueEntity {
      * @type {boolean}
      * @memberof Entity
      */
-    get exists(): boolean {
+    public get exists(): boolean {
         return this._metaInfo.exists;
     }
 
     // Note: Function not exposed to player scripting
-    set exists(value: boolean) {
+    public set exists(value: boolean) {
         this._metaInfo.exists = value;
     }
 
@@ -151,13 +197,18 @@ export class TrueEntity {
         return this._controller;
     }
     // Note: Function not exposed to player scripting
-    public set controller(value: TruePlayer | undefined) {
+    public set controller(value: Player | undefined) {
         this._controller = value;
     }
 
-    get id(): string {
+    public get owner() {
+        return this._metaInfo.owner;
+    }
+
+    public get id(): string {
         return this._id;
     }
+
     public get displayData() {
         return {id: this.id};
     }
