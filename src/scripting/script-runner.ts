@@ -120,10 +120,15 @@ export default class ScriptRunner {
                 `).runSync(context);
             }
             module.instantiateSync(context, (requirePath) => {
+                const extension = path.extname(requirePath);
+                if (![".ts", ".js", ""].includes(extension)) {
+                    throw new Error("Modules with extension \"" + extension + "\" are not supported.");
+                }
+                const requireWithoutExtension = path.basename(requirePath, extension);
                 const codeDir = path.dirname(codePath);
-                const modulePath = path.join(codeDir, requirePath);
+                const modulePath = path.join(codeDir, requireWithoutExtension);
                 if (modules[modulePath] === undefined) {
-                    throw new Error("No module of name \"" + requirePath + "\" is available." + Object.keys(modules));
+                    throw new Error("No module of name \"" + requirePath + "\" is available.");
                 }
                 return modules[modulePath];
             });
