@@ -9,6 +9,8 @@ import ScriptCollection from "scripting/script-collection";
 import System from "./system";
 
 export default class GameSystem extends System {
+    // TODO: Make this automatically query the scripts folder
+    // Both for compilation and for module resolution
     public static readonly scriptedServerSubsystemDir = path.join(
         process.cwd(),
         "./__scripted__/",
@@ -17,8 +19,10 @@ export default class GameSystem extends System {
     public loadScriptResource?: (resourceID: string) => Promise<string>;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
+    private _scriptDir: string;
     constructor(tickRate: number) {
         super();
+        this._resolveModule = this._resolveModule.bind(this);
         this._messageQueue = [];
         const fileDirs = [
             "./aspect-array",
@@ -40,12 +44,15 @@ export default class GameSystem extends System {
             "./position",
             "./proxy-generator",
             "./scripted-server-subsystem",
-            "./velocity"
+            "./velocity",
+            "./exposed/component",
+            "./exposed/default",
+            "./exposed/entity"
         ];
-        const baseScriptDir = path.join(process.cwd(), "./__scripted__/");
+        this._scriptDir = path.join(process.cwd(), "./__scripted__/");
 
         const scripts: any = _.transform(fileDirs, (result, value) => {
-            const dir = path.join(baseScriptDir, value);
+            const dir = path.join(this._scriptDir, value);
             result[dir] = fs.readFileSync(dir + ".ts", {encoding: "utf8"});
         }, {} as {[s: string]: string});
 
@@ -212,7 +219,13 @@ export default class GameSystem extends System {
             "getPlayer",
             client.id
         );
-        const script = await this._scriptCollection.runScript(code, args, entityValue, playerValue);
+        const script = await this._scriptCollection.runScript(
+            code,
+            args,
+            entityValue,
+            playerValue,
+            this._resolveModule
+        );
         const defaultExport = script.getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptCollection.execute(
@@ -258,5 +271,17 @@ export default class GameSystem extends System {
             componentID,
             state
         );
+    }
+
+    private _resolveModule(modulePath: string) {
+        const validModules: {[id: string]: string} = {
+            component: "./exposed/entity",
+            entity: "./exposed/entity",
+            default: "./exposed/default"
+        };
+        if (validModules[modulePath] === undefined) {
+            throw new Error("No module of name \"" + modulePath + "\" is available.");
+        }
+        return this._scriptCollection.getScript(path.join(this._scriptDir, validModules[modulePath])).module;
     }
 }

@@ -1,8 +1,9 @@
 import IVM from "isolated-vm";
 import _ from "lodash";
-import ts from "typescript";
-import Script from "./script";
 import path from "path";
+import ts from "typescript";
+
+import Script from "./script";
 
 /**
  * A class which handles arbitrary script execution.
@@ -46,16 +47,20 @@ export default class ScriptRunner {
         }
         const transpiledCode = this._transpile(code);
         const module = await this._isolate.compileModule(transpiledCode);
+        const moduleList = _.reduce(modulePaths, (acc, value, key) => {
+            acc[key] = value.module;
+            return acc;
+        }, {} as {[path: string]: IVM.Module});
         if (moduleResolutionHandler !== undefined) {
             await module.instantiate(context, moduleResolutionHandler);
         }
         else {
-            await module.instantiate(context, (modulePath) => {
-                const absPath = path.join(process.cwd(), modulePath);
-                if (modulePaths[absPath] === undefined) {
-                    throw new Error("No module of name \"" + modulePath + "\" is available.");
-                }
-                return modulePaths[absPath].module;
+            await module.instantiate(context, async (modulePath) => {
+                return this._defaultModuleInstantiation(
+                    path.join(process.cwd(), "__scripted__", "code.ts"),
+                    modulePath,
+                    moduleList
+                );
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
@@ -119,18 +124,8 @@ export default class ScriptRunner {
                     };
                 `).runSync(context);
             }
-            module.instantiateSync(context, (requirePath) => {
-                const extension = path.extname(requirePath);
-                if (![".ts", ".js", ""].includes(extension)) {
-                    throw new Error("Modules with extension \"" + extension + "\" are not supported.");
-                }
-                const requireWithoutExtension = path.basename(requirePath, extension);
-                const codeDir = path.dirname(codePath);
-                const modulePath = path.join(codeDir, requireWithoutExtension);
-                if (modules[modulePath] === undefined) {
-                    throw new Error("No module of name \"" + requirePath + "\" is available.");
-                }
-                return modules[modulePath];
+            module.instantiateSync(context, (modulePath) => {
+                return this._defaultModuleInstantiation(codePath, modulePath, modules);
             });
             const result = module.evaluateSync();
             acc[codePath] = new Script(module, context, result);
@@ -181,5 +176,19 @@ export default class ScriptRunner {
 
     private _log(message: string) {
         console.log(message);
+    }
+
+    private _defaultModuleInstantiation(dir: string, requirePath: string, modules: {[path: string]: IVM.Module}) {
+        const extension = path.extname(requirePath);
+        if (![".ts", ".js", ""].includes(extension)) {
+            throw new Error("Modules with extension \"" + extension + "\" are not supported.");
+        }
+        const requireWithoutExtension = requirePath.substr(0, requirePath.length - extension.length);
+        const codeDir = path.dirname(dir);
+        const modulePath = path.join(codeDir, requireWithoutExtension);
+        if (modules[modulePath] === undefined) {
+            throw new Error("No module at \"" + modulePath + "\" is available.");
+        }
+        return modules[modulePath];
     }
 }
