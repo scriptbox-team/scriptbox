@@ -175,8 +175,6 @@ export default class Server {
                 });
                 this._messageSystem.sendChatMessages(messages);
             }
-
-            this._networkSystem.sendMessages();
             this._resourceSystem.deleteQueued();
             this._clientManager.deleteQueued();
         }
@@ -187,8 +185,6 @@ export default class Server {
         }
         finally {
             this._networkSystem.sendMessages();
-            this._resourceSystem.deleteQueued();
-            this._clientManager.deleteQueued();
         }
     }
     private _createPlayer(id: string, clientID: number, username: string, displayName: string) {

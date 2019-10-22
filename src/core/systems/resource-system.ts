@@ -4,6 +4,7 @@ import Manager from "core/manager";
 import { UploadedFile } from "express-fileupload";
 import ResourceServer from "networking/resource-server";
 import TokenGenerator from "networking/token-generator";
+import path from "path";
 import Resource, { ResourceType } from "resource-management/resource";
 
 import System from "./system";
@@ -14,7 +15,7 @@ interface ResourceSystemOptions {
 }
 
 interface PlayerResourceData {
-    resources: string[];
+    resources: Map<string, string>;
 }
 
 export default class ResourceSystem extends System {
@@ -39,20 +40,22 @@ export default class ResourceSystem extends System {
     public addResource(user: string, type: ResourceType, file: UploadedFile): Promise<Resource> {
         let playerResourceData = this._playerResourceData.get(user);
         if (playerResourceData === undefined) {
-            playerResourceData = {resources: []};
+            playerResourceData = {resources: new Map<string, string>()};
             this._playerResourceData.set(user, playerResourceData);
         }
+        const filename = this._getAvailableFilename(file.name, playerResourceData.resources);
         const resource = this._resourceManager.create(
             this._idGenerator.makeFrom("R", Date.now(), Math.random()),
             type,
-            file.name,
+            this._filenameToName(filename),
+            filename,
             user,
             user,
             "",
             Date.now(),
             ""
         );
-        playerResourceData.resources.push(resource.id);
+        playerResourceData.resources.set(filename, resource.id);
         this._updateResourceListing(user, this._collectPlayerResources(user));
         return this._resourceServer.add(resource, file);
     }
@@ -66,13 +69,17 @@ export default class ResourceSystem extends System {
             return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
         }
         const owner = resource.owner;
-        if (owner !== user) {
+        const playerResourceData = this._playerResourceData.get(owner);
+        if (owner !== user || playerResourceData === undefined) {
             // TODO: Allow admins to edit resources they don't own
-            return Promise.reject(`User ${user} does not have priveleges to edit other players' resources`);
+            return Promise.reject(`User ${user} does not have priveleges to edit this resource`);
         }
+        playerResourceData.resources.delete(resource.filename);
         // Update the type just in case they uploaded something different
         resource.type = type;
         resource.time = Date.now();
+        resource.filename = this._getAvailableFilename(file.name, playerResourceData.resources);
+        playerResourceData.resources.set(resource.filename, resource.id);
         // TODO: Allow resources to have multiple contributors (owners)
         this._updateResourceListing(owner, this._collectPlayerResources(owner));
         return this._resourceServer.update(resource, file);
@@ -87,13 +94,7 @@ export default class ResourceSystem extends System {
             // TODO: Allow admins to edit resources they don't own
             throw new Error(`User ${user} does not have priveleges to delete other players' resources`);
         }
-        // Update the type just in case they uploaded something different
-        const ownerData = this._playerResourceData.get(owner);
-        if (ownerData !== undefined) {
-            ownerData.resources.splice(ownerData.resources.findIndex((id) => id === resourceID), 1);
-        }
         this._resourceManager.queueForDeletion(resourceID);
-        this._updateResourceListing(owner, this._collectPlayerResources(owner));
     }
     public handleFileUpload = (token: number, file: UploadedFile, resourceID?: string) => {
         const player = this.getPlayerFromToken(token);
@@ -192,6 +193,13 @@ export default class ResourceSystem extends System {
     public deleteQueued() {
         this._resourceManager.deleteQueued();
     }
+    public getResourceByFilename(filename: string, playerUsername: string) {
+        const playerResourceData = this._playerResourceData.get(playerUsername);
+        if (playerResourceData === undefined) {
+            return undefined;
+        }
+        return playerResourceData.resources.get(filename);
+    }
     private _updateResourceListing(owner: string, resources: Resource[]) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);
@@ -205,20 +213,43 @@ export default class ResourceSystem extends System {
         if (resourceData === undefined) {
             return [];
         }
-        return resourceData.resources.map((resID) => this._resourceManager.get(resID)!);
+        return Array.from(resourceData.resources.values()).map((resID) => this._resourceManager.get(resID)!);
     }
     private _resourceCreate(
             id: string,
             type: ResourceType,
             name: string,
+            filename: string,
             creator: string,
             owner: string,
             description: string,
             time: number,
             icon: string) {
-        return new Resource(id, type, name, creator, owner, description, time, icon);
+        return new Resource(id, type, name, filename, creator, owner, description, time, icon);
     }
     private _onResourceDelete(resource: Resource) {
+        const ownerData = this._playerResourceData.get(resource.owner);
+        if (ownerData !== undefined) {
+            ownerData.resources.delete(resource.filename);
+        }
         this._resourceServer.delete(resource);
+        this._updateResourceListing(resource.owner, this._collectPlayerResources(resource.owner));
+    }
+    private _filenameToName(filename: string) {
+        const ext = path.extname(filename);
+        return filename.substr(0, filename.length - ext.length);
+    }
+    private _getAvailableFilename(filename: string, fileMap: Map<string, string>) {
+        const ext = path.extname(filename);
+        const fileWithoutExt = filename.substr(0, filename.length - ext.length);
+        let tryFilename = fileWithoutExt + ext;
+        let num = 1;
+        while (fileMap.get(tryFilename) !== undefined) {
+            tryFilename = fileWithoutExt + "." + (num++) + ext;
+            if (num > 100000) {
+                throw new Error("Maximum filename renumbering attempts exceeded");
+            }
+        }
+        return tryFilename;
     }
 }

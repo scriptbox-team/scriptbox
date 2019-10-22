@@ -1,6 +1,6 @@
 import Component from "./component";
 import MetaInfo from "./meta-info";
-import PlayerProxy, { Player } from "./player";
+import Player, {PlayerProxy} from "./player";
 
 export interface EntityProxy {
     readonly delete: () => void;
