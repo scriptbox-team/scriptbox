@@ -1,9 +1,9 @@
-import TruePlayer from "./player";
+import { PlayerProxy } from "./player";
 
 export interface MetaInfoProxy {
     name: string;
     description: string;
-    owner?: TruePlayer;
+    owner?: PlayerProxy;
     enabled: boolean;
     readonly exists: boolean;
 }
@@ -11,7 +11,7 @@ export interface MetaInfoProxy {
 export default class MetaInfo {
     public name: string;
     public description: string;
-    public owner?: TruePlayer;
+    public owner?: PlayerProxy;
     public exists: boolean;
     private _enabled: boolean;
     private _tags: Set<string>;
@@ -22,7 +22,7 @@ export default class MetaInfo {
             enabled: boolean,
             exists: boolean,
             tags: string[],
-            owner?: TruePlayer) {
+            owner?: PlayerProxy) {
         this.name = name;
         this.description = description;
         this.owner = owner;

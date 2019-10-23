@@ -4,7 +4,11 @@ import Player, {PlayerProxy} from "./player";
 
 export interface EntityProxy {
     readonly delete: () => void;
-    readonly add: (componentClassID: string, localID: string, owner?: string | undefined, ...params: any[]) => void;
+    readonly add: (
+        componentClassID: string,
+        localID: string,
+        owner?: PlayerProxy | undefined,
+        ...params: any[]) => void;
     readonly remove: (component: Component) => void;
     readonly get: <T extends Component = any>(name: string) => T | undefined;
     readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;
@@ -20,7 +24,12 @@ export interface EntityProxy {
 
 interface EntityManagementMethods {
     delete: (entityID: string) => void;
-    add: (entityID: string, componentClassID: string, localID: string, ...params: any[]) => boolean;
+    add: (
+        entityID: string,
+        componentClassID: string,
+        localID: string,
+        owner?: string | undefined,
+        ...params: any[]) => boolean;
     remove: (entityID: string, component: Component) => void;
     fromID: (entityID: string) => EntityProxy;
 }
@@ -41,6 +50,7 @@ export default class Entity {
         "remove",
         "with",
         "withMany",
+        "get",
         "getComponentLocalID",
         "setComponentLocalID",
         "enabled",
@@ -70,7 +80,7 @@ export default class Entity {
     }
     public static getByID(id: string) {
         return this.externalGetByID(id);
-    })
+    }
     private _delete!: (entityID: string) => void;
     private _add!: (
         entityID: string,
@@ -92,6 +102,21 @@ export default class Entity {
      * @memberof Entity
      */
     constructor(id: string, methods: EntityManagementMethods, metaInfo: MetaInfo, controller?: PlayerProxy) {
+        for (const func of [
+            "delete",
+            "add",
+            "remove",
+            "get",
+            "with",
+            "withMany",
+            "getComponentLocalID",
+            "setComponentLocalID",
+            "clearComponents",
+            "componentIterator"
+        ]) {
+            (this as any)[func] = ((this as any)[func] as (...args: any) => any).bind(this);
+        }
+
         this._id = id;
         this._metaInfo = metaInfo;
         this._controller = controller;
@@ -105,7 +130,7 @@ export default class Entity {
         this._delete(this._id);
     }
     public add(componentClassID: string, localID: string, owner?: PlayerProxy, ...params: any[]) {
-        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
+        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id: undefined, ...params);
     }
     public remove(component: Component) {
         this._remove(this._id, component);

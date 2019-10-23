@@ -13,6 +13,7 @@ import Player, { PlayerProxy } from "./player";
 import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
+import Resource from "./resource";
 import Velocity from "./velocity";
 
 //tslint:disable
@@ -34,6 +35,8 @@ const exportValues: Exports = {
 global.exportValues = exportValues;
 
 let messageQueue: MessageExportInfo[] = [];
+const playerResources = new Map<string, Map<string, Resource>>();
+
 let executingUser: PlayerProxy | undefined;
 
 const classList = new Map<string, ClassInterface>();
@@ -46,7 +49,7 @@ const playerManager = new Manager<PlayerProxy>((
         username: string,
         displayName: string,
         controlSet: {[id: number]: string},
-        controllingEntity?: Entity) => {
+        controllingEntity?: EntityProxy) => {
     const soul = new PlayerSoul(0, 0);
     const player = new Player(id, username, displayName, controlSet, soul, controllingEntity);
     player.trueEntityFromEntity = (entity: EntityProxy) => entityUnproxiedMap.get(entity);
@@ -77,12 +80,13 @@ const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => 
         creator
     );
     const entity = new Entity(id, {
-        delete: deleteEntity,
-        add: createComponent,
-        remove: deleteComponent,
+        delete: deleteEntity.bind(this),
+        add: createComponent.bind(this),
+        remove: deleteComponent.bind(this),
+        fromID: getEntity.bind(this)
     }, info);
     const proxy = ProxyGenerator.makeDeletable<EntityProxy>(
-        entity,
+        entity as any as EntityProxy,
         Entity.hiddenProps,
         Entity.readOnlyProps
     );
@@ -412,6 +416,7 @@ export function createComponent(
     const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
+    global.log(classToCreate.name);
     if (entity !== undefined) {
         const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
         global.log(
@@ -422,7 +427,9 @@ export function createComponent(
             + ", Params: "
             + JSON.stringify(params)
             +  ")");
+        return true;
     }
+    return false;
 }
 
 export function deleteComponent(componentID: string) {
@@ -490,10 +497,7 @@ export function handleInput(playerID: string, input: number, state: InputType) {
 }
 
 export function setComponentClass(classObj: ClassInterface, id: string) {
-    if (classObj.prototype instanceof Component) {
-        // TODO: If a component class already exists on upload, re-instantiate instances of it with the new version
-        classList.set(id, classObj);
-    }
+    classList.set(id, classObj);
 }
 
 export function inspectEntity(playerID: string, entityID?: string) {
@@ -571,6 +575,15 @@ export function setComponentEnableState(componentID: string, state: boolean) {
             info.enabled = false;
         }
     }
+}
+
+export function setResourceList(playerUsername: string, resources: {[filename: string]: Resource}) {
+    const keys = Object.keys(resources);
+    const resourceMap = new Map<string, Resource>();
+    for (const key of keys) {
+        resourceMap.set(key, resources[key]);
+    }
+    playerResources.set(playerUsername, resourceMap);
 }
 
 function looseProfile(func: () => void): number {

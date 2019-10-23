@@ -34,6 +34,9 @@ export default class ScriptCollection {
             this._prebuiltScripts
         );
     }
+    public convert(obj: any) {
+        return new IVM.ExternalCopy(obj).copyInto();
+    }
     public execute(scriptPath: string, name: string, ...params: any) {
         const script = this.getScript(scriptPath);
         return script.execute(name, ...params);

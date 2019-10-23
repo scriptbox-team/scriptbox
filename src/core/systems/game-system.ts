@@ -4,6 +4,7 @@ import fs from "fs-extra";
 import IVM from "isolated-vm";
 import _ from "lodash";
 import path from "path";
+import Resource from "resource-management/resource";
 import ScriptCollection from "scripting/script-collection";
 
 import System from "./system";
@@ -23,6 +24,7 @@ export default class GameSystem extends System {
     constructor(tickRate: number) {
         super();
         this._resolveModule = this._resolveModule.bind(this);
+        this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
         const fileDirs = [
             "./aspect-array",
@@ -43,6 +45,7 @@ export default class GameSystem extends System {
             "./player",
             "./position",
             "./proxy-generator",
+            "./resource",
             "./scripted-server-subsystem",
             "./velocity",
             "./exposed/component",
@@ -273,9 +276,18 @@ export default class GameSystem extends System {
         );
     }
 
+    public updateResources(player: Client, resources: {[filename: string]: Resource}) {
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "setResourceList",
+            player.id,
+            this._scriptCollection.convert(resources)
+        );
+    }
+
     private _resolveModule(modulePath: string) {
         const validModules: {[id: string]: string} = {
-            component: "./exposed/entity",
+            component: "./exposed/component",
             entity: "./exposed/entity",
             default: "./exposed/default"
         };

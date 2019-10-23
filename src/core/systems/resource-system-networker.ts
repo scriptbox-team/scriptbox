@@ -22,7 +22,7 @@ export default class ResourceSystemNetworker extends Networker {
         this.onPlayerListing = this.onPlayerListing.bind(this);
 
         this._resourceSystem = resourceSystem;
-        this._resourceSystem.onPlayerListingUpdate = this.onPlayerListing;
+        this._resourceSystem.addPlayerListingDelegate(this.onPlayerListing);
     }
     public hookupInput(netEventHandler: NetEventHandler) {
         netEventHandler.addTokenRequestDelegate(this.addTokenRequestDelegate);
@@ -52,10 +52,11 @@ export default class ResourceSystemNetworker extends Networker {
         }
     }
 
-    public onPlayerListing(player: Client, resources: Resource[]) {
+    public onPlayerListing(player: Client, resources: {[filename: string]: Resource}) {
+        const resourceList = Object.values(resources);
         this.send(
             new ServerMessage(
-                new ServerNetEvent(ServerEventType.ResourceListing, new ServerResourceListingPacket(resources)),
+                new ServerNetEvent(ServerEventType.ResourceListing, new ServerResourceListingPacket(resourceList)),
                 new Group(GroupType.Only, [player])
             )
         );

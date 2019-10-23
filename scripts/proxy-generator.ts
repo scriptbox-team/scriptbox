@@ -1,5 +1,9 @@
 import Existable from "./existable";
 
+//tslint:disable
+type ClassInterface = {new (...args: any[]): any};
+// tslint:enable
+
 export default class ProxyGenerator {
     public static make<T extends object>(
             obj: T,
@@ -104,12 +108,12 @@ export default class ProxyGenerator {
             }
         });
     }
-    public static makeImmutable<T extends object>(
+    public static makeImmutableClass<T extends ClassInterface>(
         obj: T,
         hiddenProps: ReadonlyArray<(string | number | symbol)> = []) {
     return new Proxy(obj, {
         getPrototypeOf: (target: T) => {
-            throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
+            return Reflect.getPrototypeOf(target);
         },
         setPrototypeOf: (target: T, v: any) => {
             throw new Error(`Cannot set prototype of ${target.constructor.name} in this context`);
@@ -124,10 +128,7 @@ export default class ProxyGenerator {
             throw new Error(`Cannot define or redefine properties of ${target.constructor.name} in this context`);
         },
         get: (target: T, p: string | number | symbol, receiver: any) => {
-            if (p === "prototype") {
-                throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
-            }
-            else if (p in hiddenProps) {
+            if (p in hiddenProps) {
                 // tslint:disable-next-line: max-line-length
                 throw new Error(`Property ${String(p)} of ${target.constructor.name} is inaccessible in this context`);
             }
@@ -138,6 +139,9 @@ export default class ProxyGenerator {
         },
         deleteProperty: (target: T, p: string | number | symbol) => {
             throw new Error(`Cannot delete properties of ${target.constructor.name} in this context`);
+        },
+        construct: (target: T, argArray: any, newTarget?: any) => {
+            return Reflect.construct(target, argArray, newTarget);
         }
     });
 }

@@ -129,7 +129,8 @@ export default class Server {
             return await this._gameSystem.runGenericPlayerScript(code, player);
         });
 
-        this._resourceSystem.onPlayerListingUpdate = this._resourceSystemNetworker.onPlayerListing;
+        this._resourceSystem.addPlayerListingDelegate(this._gameSystem.updateResources);
+
         this._loop = new GameLoop(this._tick, this._tickRate);
     }
 
