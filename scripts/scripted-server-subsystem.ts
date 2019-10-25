@@ -58,6 +58,7 @@ const playerManager = new Manager<PlayerProxy>((
         Player.readOnlyProps,
         Player.hiddenProps
     );
+    player.proxy = proxy;
     playerSoulMap.set(player, soul);
     playerUnproxiedMap.set(proxy, player);
     return proxy;
@@ -76,7 +77,6 @@ const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => 
         "",
         true,
         true,
-        [],
         creator
     );
     const entity = new Entity(id, {
@@ -117,14 +117,13 @@ const componentManager = new Manager<Component>((
             "",
             true,
             true,
-            [],
             creator
         );
         // TODO: Throw an error if a component doesn't actually extend component
         const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
             info,
             ["id", "entity", "exists"],
-            ["_enabled", "_tags"]
+            ["_enabled"]
         );
         const component = new componentClass(infoProxy);
         componentInfoMap.set(component, info);

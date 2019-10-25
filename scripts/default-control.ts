@@ -1,11 +1,22 @@
 import Aspect from "./aspect";
-import AspectArray from "./aspect-array";
+import AspectModifier from "./aspect-modifier";
+import AspectSet from "./aspect-set";
 import Control from "./control";
 import Position from "./position";
 import Velocity from "./velocity";
 
 export default class DefaultControl extends Control {
-    public commands: AspectArray<string> = new AspectArray<string>(["up", "down", "left", "right"]);
+    public commands: AspectSet<string>
+        = new AspectSet(["up", "down", "left", "right"]);
+    public moveSpeed: Aspect<number> = new Aspect<number>(3);
+    private _xMoveVelocity = 0;
+    private _yMoveVelocity = 0;
+    public create() {
+        this.entity.with<Velocity>("velocity", (velocity) => {
+            velocity.x.addModifier((v) => v + this._xMoveVelocity);
+            velocity.y.addModifier((v) => v + this._yMoveVelocity);
+        });
+    }
     public update() {
         super.update();
         this.entity.withMany<[Velocity, Position]>(["velocity", "position"], ([velocity, position]) => {
@@ -15,23 +26,23 @@ export default class DefaultControl extends Control {
             const right = this.commandDown("right");
 
             if (up && down || !up && !down) {
-                velocity.setY(0);
+                this._yMoveVelocity = 0;
             }
             else if (up) {
-                velocity.setY(-3);
+                this._yMoveVelocity = -this.moveSpeed.getValue();
             }
             else { // down
-                velocity.setY(3);
+                this._yMoveVelocity = this.moveSpeed.getValue();
             }
 
             if (left && right || !left && !right) {
-                velocity.setX(0);
+                this._xMoveVelocity = 0;
             }
             else if (left) {
-                velocity.setX(-3);
+                this._xMoveVelocity = -this.moveSpeed.getValue();
             }
             else { // right
-                velocity.setX(3);
+                this._xMoveVelocity = this.moveSpeed.getValue();
             }
         });
     }

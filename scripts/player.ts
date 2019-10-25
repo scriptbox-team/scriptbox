@@ -31,7 +31,8 @@ export default class Player {
         "_id",
         "_username",
         "_removeControl",
-        "trueEntityFromEntity"
+        "trueEntityFromEntity",
+        "proxy"
     ]);
     public trueEntityFromEntity!: (entity: EntityProxy) => Entity;
     private _displayName: string;
@@ -41,6 +42,7 @@ export default class Player {
     private _soulData: PlayerSoul;
     private _id: string;
     private _username: string;
+    private _proxy!: PlayerProxy;
     private _exists: boolean;
     constructor(
             id: string,
@@ -57,6 +59,9 @@ export default class Player {
         this._soulData = soulData;
         this._locked = true;
         this._exists = true;
+    }
+    public set proxy(value: PlayerProxy) {
+        this._proxy = value;
     }
     public get id() {
         return this._id;
@@ -97,7 +102,7 @@ export default class Player {
             this._removeControl();
             this._controllingEntity = entity;
             const trueEntity = this.trueEntityFromEntity(entity);
-            trueEntity.controller = this;
+            trueEntity.controller = this._proxy;
             this._locked = false;
             return true;
         }

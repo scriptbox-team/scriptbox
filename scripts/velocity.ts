@@ -29,11 +29,6 @@ export default class Velocity extends Component {
         this.y.base += yOffset;
     }
 
-    public set(x: number, y: number) {
-        this.x.base = x;
-        this.y.base = y;
-    }
-
     public setX(value: number) {
         this.x.base = value;
     }

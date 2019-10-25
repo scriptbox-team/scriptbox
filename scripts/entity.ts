@@ -1,6 +1,7 @@
+import Aspect from "./aspect";
 import Component from "./component";
 import MetaInfo from "./meta-info";
-import Player, {PlayerProxy} from "./player";
+import Player, { PlayerProxy } from "./player";
 
 export interface EntityProxy {
     readonly delete: () => void;
@@ -11,8 +12,8 @@ export interface EntityProxy {
         ...params: any[]) => void;
     readonly remove: (component: Component) => void;
     readonly get: <T extends Component = any>(name: string) => T | undefined;
-    readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => void;
-    readonly withMany: <T extends Component[] = any[]>(names: string[], func: (t: T) => void) => void;
+    readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => any;
+    readonly withMany: <T extends Component[] = any[]>(names: string[], func: (t: T) => void) => any;
     readonly getComponentLocalID: (component: Component) => string;
     readonly setComponentLocalID: (component: Component, newID: string) => void;
     readonly componentIterator: () => IterableIterator<Component>;
@@ -81,6 +82,7 @@ export default class Entity {
     public static getByID(id: string) {
         return this.externalGetByID(id);
     }
+    public tags: Aspect<Set<string>>;
     private _delete!: (entityID: string) => void;
     private _add!: (
         entityID: string,
@@ -125,12 +127,13 @@ export default class Entity {
         this._delete = methods.delete;
         this._add = methods.add;
         this._remove = methods.remove;
+        this.tags = new Aspect(new Set<string>([]));
     }
     public delete() {
         this._delete(this._id);
     }
     public add(componentClassID: string, localID: string, owner?: PlayerProxy, ...params: any[]) {
-        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id: undefined, ...params);
+        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
     }
     public remove(component: Component) {
         this._remove(this._id, component);
@@ -161,14 +164,14 @@ export default class Entity {
         return this._components.values();
     }
 
-    public with<T extends Component = any>(name: string, func: (t: T) => void) {
+    public with<T extends Component = any>(name: string, func: (t: T) => any) {
         const component = this.get(name);
         if (component !== undefined) {
-            func(component as T);
+            return func(component as T);
         }
     }
 
-    public withMany<T extends Component[] = any[]>(names: string[], func: (t: T) => void) {
+    public withMany<T extends Component[] = any[]>(names: string[], func: (t: T) => any) {
         const components = [];
         for (const name of names) {
             const component = this.get(name);
@@ -177,7 +180,7 @@ export default class Entity {
             }
             components.push(component);
         }
-        func(components as T);
+        return func(components as T);
     }
     public clearComponents() {
         for (const [localID, component] of this._components) {

@@ -1,6 +1,8 @@
+import Aspect from "./aspect";
 import ComponentInfo from "./component-info";
 
 export default class Component {
+    public tags = new Aspect(new Set<string>([]));
     private _data: ComponentInfo;
     constructor(data: ComponentInfo) {
         this._data = data;

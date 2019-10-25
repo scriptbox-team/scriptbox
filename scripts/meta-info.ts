@@ -14,34 +14,19 @@ export default class MetaInfo {
     public owner?: PlayerProxy;
     public exists: boolean;
     private _enabled: boolean;
-    private _tags: Set<string>;
     private _forceDisabled: boolean;
     constructor(
             name: string,
             description: string,
             enabled: boolean,
             exists: boolean,
-            tags: string[],
             owner?: PlayerProxy) {
         this.name = name;
         this.description = description;
         this.owner = owner;
         this._enabled = enabled;
         this.exists = exists;
-        this._tags = new Set<string>(tags);
         this._forceDisabled = false;
-    }
-    public addTag(tag: string) {
-        this._tags.add(tag);
-    }
-    public removeTag(tag: string) {
-        this._tags.delete(tag);
-    }
-    public hasTag(tag: string) {
-        return this._tags.has(tag);
-    }
-    public getTags() {
-        return Array.from(this._tags.values());
     }
     public forceDisable() {
         this._forceDisabled = true;

@@ -27,8 +27,10 @@ export default class GameSystem extends System {
         this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
         const fileDirs = [
-            "./aspect-array",
             "./aspect",
+            "./aspect-modifier",
+            "./aspect-set",
+            "./aspect-set-modifier",
             "./collision-box",
             "./component-info",
             "./component",

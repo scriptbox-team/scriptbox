@@ -19,9 +19,8 @@ export default class ComponentInfo extends MetaInfo {
             description: string,
             enabled: boolean,
             exists: boolean,
-            tags: string[],
             owner?: PlayerProxy) {
-        super(name, description, enabled, exists, tags, owner);
+        super(name, description, enabled, exists, owner);
         this.id = id;
         this.entity = entity;
         this.lastFrameTime = 0;
