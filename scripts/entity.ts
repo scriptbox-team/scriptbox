@@ -1,4 +1,5 @@
 import Aspect from "./aspect";
+import AspectSet from "./aspect-set";
 import Component from "./component";
 import MetaInfo from "./meta-info";
 import Player, { PlayerProxy } from "./player";
@@ -82,7 +83,7 @@ export default class Entity {
     public static getByID(id: string) {
         return this.externalGetByID(id);
     }
-    public tags: Aspect<Set<string>>;
+    public tags: AspectSet<string>;
     private _delete!: (entityID: string) => void;
     private _add!: (
         entityID: string,
@@ -127,7 +128,7 @@ export default class Entity {
         this._delete = methods.delete;
         this._add = methods.add;
         this._remove = methods.remove;
-        this.tags = new Aspect(new Set<string>([]));
+        this.tags = new AspectSet<string>([]);
     }
     public delete() {
         this._delete(this._id);
