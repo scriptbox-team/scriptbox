@@ -5,6 +5,7 @@ import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
 import Entity, { EntityProxy } from "./entity";
+import EventComponent from "./event-component";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
@@ -200,14 +201,14 @@ function handleComponentError(component: Component, error: Error) {
     }
 }
 
-function runOnAll(funcName: string) {
+function runOnAll(funcName: string, ...args: any[]) {
     const componentIterator = componentManager.entries();
     for (const [key, component] of componentIterator) {
         const info = componentInfoMap.get(component);
         if (info !== undefined && info.enabled) {
             info.lastFrameTime = -1;
             try {
-                componentExecute(component, funcName);
+                componentExecute(component, funcName, ...args);
             }
             catch (err) {
                 handleComponentError(component, err);
@@ -224,8 +225,8 @@ export function initialize(initTickRate: number) {
 
 export function update() {
     // For each component, call update function if exists
-    runOnAll("update");
-    runOnAll("postUpdate");
+    runOnAll("update", 1 / tickRate);
+    runOnAll("postUpdate", 1 / tickRate);
     entityManager.deleteQueued();
     componentManager.deleteQueued();
     playerManager.deleteQueued();
@@ -636,3 +637,4 @@ classList.set("position", Position);
 classList.set("velocity", Velocity);
 classList.set("collision-box", CollisionBox);
 classList.set("default-control", DefaultControl);
+classList.set("event-component", EventComponent);

@@ -6,10 +6,10 @@ export default abstract class Control extends Component {
     public abstract commands: AspectSet<string>;
     public inputStates: {[key: string]: boolean} = {};
     public pastInputStates: {[key: string]: boolean} = {};
-    public update() {
+    public update(delta: number) {
         // Put "simple" input mapping here
     }
-    public postUpdate() {
+    public postUpdate(delta: number) {
         this.pastInputStates = Object.assign(this.inputStates, {});
     }
     public sendKeyPress(input: string) {

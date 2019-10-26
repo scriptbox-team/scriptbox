@@ -18,22 +18,14 @@ export default class Velocity extends Component {
         }
     }
 
-    public update() {
+    public update(delta: number) {
         this.entity.with<Position>("position", (position) => {
-            position.move(this.x.getValue(), this.y.getValue());
+            position.move(this.x.getValue() * delta, this.y.getValue() * delta);
         });
     }
 
     public move(xOffset: number, yOffset: number) {
         this.x.base += xOffset;
         this.y.base += yOffset;
-    }
-
-    public setX(value: number) {
-        this.x.base = value;
-    }
-
-    public setY(value: number) {
-        this.y.base = value;
     }
 }

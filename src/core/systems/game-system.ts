@@ -37,6 +37,7 @@ export default class GameSystem extends System {
             "./control",
             "./default-control",
             "./entity",
+            "./event-component",
             "./existable",
             "./export-values",
             "./group",
@@ -49,6 +50,7 @@ export default class GameSystem extends System {
             "./proxy-generator",
             "./resource",
             "./scripted-server-subsystem",
+            "./sub-event",
             "./velocity",
             "./exposed/component",
             "./exposed/default",
@@ -65,6 +67,7 @@ export default class GameSystem extends System {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", tickRate);
     }
     public update() {
+        const profile = process.hrtime();
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "update");
         const result = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
         `
@@ -76,6 +79,7 @@ export default class GameSystem extends System {
         }
         result.messages = result.messages.concat(this._messageQueue);
         this._messageQueue = [];
+        const totalTime = process.hrtime(profile);
 
         return result;
     }
@@ -100,8 +104,8 @@ export default class GameSystem extends System {
             "position",
             "position",
             client.id,
-            Math.random() * 150,
-            Math.random() * 150
+            150 + Math.random() * 150,
+            150 + Math.random() * 150
         );
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,

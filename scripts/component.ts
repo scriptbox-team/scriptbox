@@ -1,16 +1,17 @@
 import Aspect from "./aspect";
+import AspectSet from "./aspect-set";
 import ComponentInfo from "./component-info";
 
 export default class Component {
-    public tags = new Aspect(new Set<string>([]));
+    public tags = new AspectSet<string>([]);
     private _data: ComponentInfo;
     constructor(data: ComponentInfo) {
         this._data = data;
     }
-    public update() {
+    public update(delta: number) {
 
     }
-    public postUpdate() {
+    public postUpdate(delta: number) {
 
     }
     public get id() {

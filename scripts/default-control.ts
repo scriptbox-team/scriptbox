@@ -8,7 +8,7 @@ import Velocity from "./velocity";
 export default class DefaultControl extends Control {
     public commands: AspectSet<string>
         = new AspectSet(["up", "down", "left", "right"]);
-    public moveSpeed: Aspect<number> = new Aspect<number>(3);
+    public moveSpeed: Aspect<number> = new Aspect<number>(180);
     private _xMoveVelocity = 0;
     private _yMoveVelocity = 0;
     public create() {
@@ -17,8 +17,8 @@ export default class DefaultControl extends Control {
             velocity.y.addModifier((v) => v + this._yMoveVelocity);
         });
     }
-    public update() {
-        super.update();
+    public update(delta: number) {
+        super.update(delta);
         this.entity.withMany<[Velocity, Position]>(["velocity", "position"], ([velocity, position]) => {
             const up = this.commandDown("up");
             const down = this.commandDown("down");

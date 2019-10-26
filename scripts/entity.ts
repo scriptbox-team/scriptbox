@@ -97,6 +97,7 @@ export default class Entity {
     private _id: string;
     private _controller?: PlayerProxy;
     private _metaInfo: MetaInfo;
+    private _eventID: number = 0;
     /**
      * Creates an instance of Entity.
      * This should only be used by the EntityManager.
@@ -109,6 +110,7 @@ export default class Entity {
             "delete",
             "add",
             "remove",
+            "beginEvent",
             "get",
             "with",
             "withMany",
@@ -149,6 +151,11 @@ export default class Entity {
             this._components.delete(localID);
             this._componentsInverse.delete(component);
         }
+    }
+    public beginEvent(owner?: PlayerProxy) {
+        const id = "event-" + this._eventID++;
+        this._add(this._id, "event-component", id, owner !== undefined ? owner.id : undefined);
+        return this._components.get(id);
     }
     /**
      * Get a component belonging to this entity
