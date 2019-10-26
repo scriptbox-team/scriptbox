@@ -1,6 +1,4 @@
-import Client from "./client";
-
-interface ComponentExportInfo {
+export interface ComponentExportInfo {
     id: string;
     name: string;
     enabled: boolean;
@@ -8,7 +6,7 @@ interface ComponentExportInfo {
     lastFrameTime: number;
 }
 
-interface EntityExportInfo {
+export interface EntityExportInfo {
     id: string;
     name: string;
     controlledBy?: string;
@@ -16,7 +14,7 @@ interface EntityExportInfo {
 }
 export interface MessageExportInfo {
     message: string;
-    kind: "Chat" | "Announcement" | "Error";
+    kind: "chat" | "announcement" | "status" | "error" | "error-status";
     recipient: string[];
 }
 
@@ -26,6 +24,5 @@ export default interface Exports {
         collisionBox: {x1: number, y1: number, x2: number, y2: number}
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
-    players?: {[playerID: string]: Client};
     messages: MessageExportInfo[];
 }

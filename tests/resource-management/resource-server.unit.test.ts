@@ -1,16 +1,16 @@
+import _Client from "core/client";
 import _IDGenerator from "core/id-generator";
-import _Player from "core/player";
 import ResourceSystem from "core/systems/resource-system";
 import _ResourceServer from "networking/resource-server";
 import Resource, { ResourceType } from "resource-management/resource";
 
-jest.mock("core/player");
+jest.mock("core/client");
 jest.mock("core/id-generator");
 jest.mock("networking/resource-server");
 // tslint:disable-next-line: variable-name
 const ResourceServer = _ResourceServer as jest.Mock<_ResourceServer>;
 // tslint:disable-next-line: variable-name
-const Player = _Player as jest.Mock<_Player>;
+const Client = _Client as jest.Mock<_Client>;
 
 // tslint:disable-next-line: variable-name
 const IDGenerator = _IDGenerator as jest.Mock<_IDGenerator>;
@@ -33,7 +33,7 @@ const file = {
     mv: {} as any
 };
 
-Player.mockImplementation((...args: any) => {
+Client.mockImplementation((...args: any) => {
     return {
         id: 0,
         controllingEntity: null,
@@ -62,7 +62,7 @@ let token!: number;
 beforeEach(() => {
     ResourceServer.mockReset();
     resourceSystem = new ResourceSystem(new IDGenerator(), {serverPort: "7778", resourcePath: "."});
-    token = resourceSystem.makePlayerToken(new Player());
+    token = resourceSystem.makePlayerToken(new Client());
     (resourceSystem as any)._resourceManager._items.set("testID", new Resource(
         "testID",
         ResourceType.Script,

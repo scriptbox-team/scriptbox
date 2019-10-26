@@ -1,32 +1,24 @@
-import Entity from "./entity";
-import MetaInfo from "./meta-info";
-
-interface IProtectedComponentData {
-    id: string;
-    entity: Entity;
-    metaInfo: MetaInfo;
-}
-
-const dataWeakmap = new WeakMap<Component, IProtectedComponentData>();
+import Aspect from "./aspect";
+import AspectSet from "./aspect-set";
+import ComponentInfo from "./component-info";
 
 export default class Component {
-    constructor(id: string, entity: Entity, metaInfo: MetaInfo) {
-        dataWeakmap.set(this, {id, entity, metaInfo});
+    public tags = new AspectSet<string>([]);
+    private _data: ComponentInfo;
+    constructor(data: ComponentInfo) {
+        this._data = data;
     }
-    public update() {
+    public update(delta: number) {
 
     }
-    public postUpdate() {
+    public postUpdate(delta: number) {
 
     }
     public get id() {
-        return dataWeakmap.get(this)!.id;
+        return this._data.id;
     }
     public get localID() {
-        if (this.entity !== undefined) {
-            return this.entity.getComponentLocalID(this);
-        }
-        return undefined;
+        return this.entity.getComponentLocalID(this)!;
     }
     public set localID(newID: string) {
         if (this.entity !== undefined) {
@@ -34,30 +26,27 @@ export default class Component {
         }
     }
     public get entity() {
-        return dataWeakmap.get(this)!.entity!;
-    }
-    public set entity(newEntity: Entity) {
-        if (this.entity !== undefined) {
-            this.entity.remove(this.localID);
-        }
-        dataWeakmap.get(this)!.entity = newEntity;
+        return this._data.entity;
     }
     public get exists() {
-        return dataWeakmap.get(this)!.metaInfo.exists;
+        return this._data.exists;
     }
     public get enabled() {
-        return dataWeakmap.get(this)!.metaInfo.enabled;
+        return this._data.enabled;
     }
     public get name() {
-        return dataWeakmap.get(this)!.metaInfo.name;
+        return this._data.name;
     }
     public set name(newName: string) {
-        dataWeakmap.get(this)!.metaInfo.name = newName;
+        this._data.name = newName;
     }
     public get description() {
-        return dataWeakmap.get(this)!.metaInfo.description;
+        return this._data.description;
     }
     public set description(newDescription: string) {
-        dataWeakmap.get(this)!.metaInfo.description = newDescription;
+        this._data.description = newDescription;
+    }
+    public get displayData() {
+        return {id: this.id};
     }
 }

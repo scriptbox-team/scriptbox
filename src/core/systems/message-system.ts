@@ -1,5 +1,5 @@
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import Client from "core/client";
+import Group, { GroupType } from "core/group";
 import System from "core/systems/system";
 import ClientChatMessagePacket from "networking/packets/client-chat-message-packet";
 import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
@@ -15,14 +15,14 @@ import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
  * @extends {System}
  */
 export default class MessageSystem extends System {
-    private _messageSendCallback?: (message: string, group: PlayerGroup) => void;
-    private _scriptExecutionCallback?: (script: string, player: Player) => void;
+    private _messageSendCallback?: (message: string, group: Group<Client>) => void;
+    private _scriptExecutionCallback?: (script: string, player: Client) => void;
 
     constructor() {
         super();
         this.chatMessageDelegate = this.chatMessageDelegate.bind(this);
     }
-    public receiveChatMessage(message: string, owner: Player) {
+    public receiveChatMessage(message: string, owner: Client) {
         if (message.charAt(0) === "/") {
             // Chat command
             const cmd = message.substr(1, message.length - 1).split(/\s+/);
@@ -53,30 +53,30 @@ export default class MessageSystem extends System {
         }
     }
     public broadcastMessage(message: string) {
-        this._messageSendCallback!(message, new PlayerGroup(PlayerGroupType.All, []));
+        this._messageSendCallback!(message, new Group(GroupType.All, []));
     }
-    public sendMessageToPlayer(message: string, recipient: Player) {
-        this._messageSendCallback!(message, new PlayerGroup(PlayerGroupType.Only, [recipient]));
+    public sendMessageToPlayer(message: string, recipient: Client) {
+        this._messageSendCallback!(message, new Group(GroupType.Only, [recipient]));
     }
-    public outputErrorToPlayer(error: any, recipient: Player) {
+    public outputErrorToPlayer(error: any, recipient: Client) {
         this.sendMessageToPlayer(`Error: ${error}`, recipient);
         if (error.stack !== undefined) {
             this.sendMessageToPlayer(`Stack Trace: ${error.stack}`, recipient);
         }
     }
-    public onMessageSend(callback: (message: string, group: PlayerGroup) => void) {
+    public onMessageSend(callback: (message: string, group: Group<Client>) => void) {
         this._messageSendCallback = callback;
     }
-    public onScriptExecution(callback: (code: string, player: Player) => Promise<any>) {
+    public onScriptExecution(callback: (code: string, player: Client) => Promise<any>) {
         this._scriptExecutionCallback = callback;
     }
-    public chatMessageDelegate(packet: ClientChatMessagePacket, player: Player | undefined) {
+    public chatMessageDelegate(packet: ClientChatMessagePacket, player: Client | undefined) {
         this.receiveChatMessage(packet.message, player!);
     }
     public outputConsoleMessage(message: any) {
         console.log(message);
     }
-    public sendChatMessages(messages: Array<{recipient: PlayerGroup, message: string}>) {
+    public sendChatMessages(messages: Array<{recipient: Group<Client>, message: string, kind: string}>) {
         for (const message of messages) {
             this._messageSendCallback!(message.message, message.recipient);
         }

@@ -1,6 +1,6 @@
+import Client from "core/client";
+import { GroupType } from "core/group";
 import Manager from "core/manager";
-import Player from "core/player";
-import { PlayerGroupType } from "core/player-group";
 import ServerNetEvent from "networking/server-net-event";
 
 import ServerMessage from "./server-message";
@@ -14,13 +14,13 @@ import ServerMessage from "./server-message";
 export default class ServerMessageBroadcaster {
     private _packetCallback: ((client: number, event: ServerNetEvent) => void) | undefined;
     private _messageQueue: ServerMessage[];
-    private _playerManager: Manager<Player>;
+    private _playerManager: Manager<Client>;
     /**
      * Creates an instance of ServerMessageBroadcaster.
      * @param {PlayerNetworkManager} playerNetworkManager The PlayerNetworkManager to retrieve data from.
      * @memberof ServerMessageBroadcaster
      */
-    constructor(playerManager: Manager<Player>) {
+    constructor(playerManager: Manager<Client>) {
         this._playerManager = playerManager;
         this._messageQueue = [];
     }
@@ -32,35 +32,35 @@ export default class ServerMessageBroadcaster {
     public sendMessages() {
         for (const m of this._messageQueue) {
             switch (m.recipient.groupType) {
-                case PlayerGroupType.All: {
+                case GroupType.All: {
                     const pairs = this._playerManager.entries();
                     for (const [k, v] of pairs) {
-                        const connection = v.clientID;
+                        const connection = v.netClientID;
                         if (connection !== undefined) {
                             this._sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case PlayerGroupType.Except: {
+                case GroupType.Except: {
                     const pairs = this._playerManager.entries();
-                    const playersToSendTo: Player[] = [];
+                    const playersToSendTo: Client[] = [];
                     for (const [k, v] of pairs) {
-                        if (m.recipient.players.findIndex((p) => p.id === v.id) === -1) {
+                        if (m.recipient.list.findIndex((p) => p.id === v.id) === -1) {
                             playersToSendTo.push(v);
                         }
                     }
                     for (const c of playersToSendTo) {
-                        const connection = c.clientID;
+                        const connection = c.netClientID;
                         if (connection !== undefined) {
                             this._sendPacket(connection, m.message);
                         }
                     }
                     break;
                 }
-                case PlayerGroupType.Only: {
-                    for (const c of m.recipient.players) {
-                        const connection = c.clientID;
+                case GroupType.Only: {
+                    for (const c of m.recipient.list) {
+                        const connection = c.netClientID;
                         if (connection !== undefined) {
                             this._sendPacket(connection, m.message);
                         }

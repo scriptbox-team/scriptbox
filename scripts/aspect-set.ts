@@ -1,24 +1,25 @@
 import AspectModifier from "./aspect-modifier";
+import AspectSetModifier from "./aspect-set-modifier";
 
-export default class Aspect<T extends (string | number | boolean | symbol)> {
+export default class AspectSet<T extends (string | number | boolean | symbol)> {
     public tags: Set<string>;
-    private _baseValue: T;
-    private _modifiers: Map<number, AspectModifier<T>>;
-    private _permanentModifiers: Map<number, AspectModifier<T>>;
+    private _baseValue: Set<T>;
+    private _modifiers: Map<number, AspectSetModifier<T>>;
+    private _permanentModifiers: Map<number, AspectSetModifier<T>>;
     private _modifierIndex: number;
 
-    constructor(initialValue: T, tags: string[] = [], ...permanentModifiers: Array<(v: T) => T>) {
-        this._baseValue = initialValue;
-        this._modifiers = new Map<number, AspectModifier<T>>();
-        this._permanentModifiers = new Map<number, AspectModifier<T>>();
+    constructor(initialValue: Iterable<T>, tags: string[] = [], ...permanentModifiers: Array<(v: Set<T>) => Set<T>>) {
+        this._baseValue = new Set(initialValue);
+        this._modifiers = new Map<number, AspectSetModifier<T>>();
+        this._permanentModifiers = new Map<number, AspectSetModifier<T>>();
         this._modifierIndex = 0;
         this.tags = new Set(tags);
         for (const modifier of permanentModifiers) {
-            this._permanentModifiers.set(this._modifierIndex++, new AspectModifier(modifier));
+            this._permanentModifiers.set(this._modifierIndex++, new AspectSetModifier(modifier));
         }
     }
 
-    public getValue(): T {
+    public getValue(): Set<T> {
         return this._calcValue();
     }
 
@@ -34,7 +35,7 @@ export default class Aspect<T extends (string | number | boolean | symbol)> {
         return this._makeModifier();
     }
 
-    public addModifier(func: (v: T) => T) {
+    public addModifier(func: (v: Set<T>) => Set<T>) {
         return this._makeModifier(func);
     }
 
@@ -54,8 +55,8 @@ export default class Aspect<T extends (string | number | boolean | symbol)> {
         return {baseValue: this._baseValue, currentValue: this.getValue()};
     }
 
-    private _makeModifier(func?: (v: T) => T) {
-        const modifier = new AspectModifier<T>(func);
+    private _makeModifier(func?: (v: Set<T>) => Set<T>) {
+        const modifier = new AspectSetModifier<T>(func);
         this._modifiers.set(this._modifierIndex++, modifier);
         return modifier;
     }
@@ -68,9 +69,9 @@ export default class Aspect<T extends (string | number | boolean | symbol)> {
                 this._modifiers.delete(id);
             }
             else {
-                val = modifier.apply(val);
+                val = modifier.apply(new Set(val));
             }
         }
-        return val;
+        return new Set(val);
     }
 }

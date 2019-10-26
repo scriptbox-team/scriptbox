@@ -1,18 +1,18 @@
 import Manager from "core/manager";
 
-interface ITestObject {
+interface TestObject {
     id: string;
     info: string;
 }
 
 describe("Manager", () => {
     test("can retrieve items", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -23,12 +23,12 @@ describe("Manager", () => {
     });
 
     test("will return undefined if item to retrieve doesn't exist", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -39,12 +39,12 @@ describe("Manager", () => {
     });
 
     test("can check if an item exists", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -54,12 +54,12 @@ describe("Manager", () => {
     });
 
     test("can check if an item doesn't exist", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -69,12 +69,12 @@ describe("Manager", () => {
     });
 
     test("can get iterator of entries", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -84,7 +84,7 @@ describe("Manager", () => {
     });
 
     test("can create items", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
@@ -94,12 +94,12 @@ describe("Manager", () => {
     });
 
     test("can force delete items", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -107,7 +107,7 @@ describe("Manager", () => {
         );
         manager.forceDelete("test1");
         expect((manager as any)._items).toEqual(
-            new Map<string, ITestObject>(
+            new Map<string, TestObject>(
                 [
                     ["test2", {id: "test2", info: "Another test object"}]
                 ]
@@ -117,13 +117,13 @@ describe("Manager", () => {
 
     test("can run callback function on force delete", () => {
         const testDeleteCallback = jest.fn();
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             },
             testDeleteCallback
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -137,12 +137,12 @@ describe("Manager", () => {
     });
 
     test("can queue items for later deletion", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}]
@@ -150,7 +150,7 @@ describe("Manager", () => {
         );
         manager.queueForDeletion("test1");
         expect((manager as any)._items).toEqual(
-            new Map<string, ITestObject>(
+            new Map<string, TestObject>(
                 [
                     ["test1", {id: "test1", info: "A test object"}],
                     ["test2", {id: "test2", info: "Another test object"}]
@@ -161,12 +161,12 @@ describe("Manager", () => {
     });
 
     test("can delete items queued for deletion", () => {
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             }
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}],
@@ -176,7 +176,7 @@ describe("Manager", () => {
         (manager as any)._deletionQueue = [{id: "test1", args: []}, {id: "test3", args: []}];
         manager.deleteQueued();
         expect((manager as any)._items).toEqual(
-            new Map<string, ITestObject>(
+            new Map<string, TestObject>(
                 [
                     ["test2", {id: "test2", info: "Another test object"}]
                 ]
@@ -186,13 +186,13 @@ describe("Manager", () => {
 
     test("can run callback function on queued deletion", () => {
         const testDeleteCallback = jest.fn();
-        const manager = new Manager<ITestObject>(
+        const manager = new Manager<TestObject>(
             (id: string, info: string) => {
                 return {id, info};
             },
             testDeleteCallback
         );
-        (manager as any)._items = new Map<string, ITestObject>(
+        (manager as any)._items = new Map<string, TestObject>(
             [
                 ["test1", {id: "test1", info: "A test object"}],
                 ["test2", {id: "test2", info: "Another test object"}],

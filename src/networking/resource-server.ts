@@ -3,7 +3,7 @@ import fileUpload, { UploadedFile } from "express-fileupload";
 import fs from "fs-extra";
 import Resource from "resource-management/resource";
 
-interface IResourceServerOptions {
+interface ResourceServerOptions {
     port: string;
     resourcePath: string;
 }
@@ -15,7 +15,7 @@ export default class ResourceServer {
     private _port: string;
     private _resourcePath: string;
     private _resourceContentType: Map<string, string>;
-    constructor(options: IResourceServerOptions) {
+    constructor(options: ResourceServerOptions) {
         this._app = express();
         this._app.use(fileUpload());
         this._port = options.port;

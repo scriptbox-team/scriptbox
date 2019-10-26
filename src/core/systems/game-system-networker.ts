@@ -1,4 +1,4 @@
-import Player from "core/player";
+import Client from "core/client";
 import NetEventHandler from "networking/net-event-handler";
 import Networker from "networking/networker";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
@@ -9,6 +9,8 @@ import ClientEntityInspectionPacket from "networking/packets/client-entity-inspe
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
 import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
+import ClientSetComponentEnableStatePacket from "networking/packets/client-set-component-enable-state-packet";
+import ClientSetControlPacket from "networking/packets/client-set-control-packet";
 
 import GameSystem from "./game-system";
 
@@ -24,6 +26,8 @@ export default class GameSystemNetworker extends Networker {
         this.entityInspectionDelegate = this.entityInspectionDelegate.bind(this);
         this.removeComponentDelegate = this.removeComponentDelegate.bind(this);
         this.executeScriptDelegate = this.executeScriptDelegate.bind(this);
+        this.entitySetControlDelegate = this.entitySetControlDelegate.bind(this);
+        this.setComponentEnableState = this.setComponentEnableState.bind(this);
         this._gameSystem = gameSystem;
     }
     public hookupInput(netEventHandler: NetEventHandler) {
@@ -35,30 +39,38 @@ export default class GameSystemNetworker extends Networker {
         netEventHandler.addRemoveComponentDelegate(this.removeComponentDelegate);
         netEventHandler.addInputDelegate(this.playerInputDelegate);
         netEventHandler.addExecuteScriptDelegate(this.executeScriptDelegate);
+        netEventHandler.addSetControlDelegate(this.entitySetControlDelegate);
+        netEventHandler.addSetComponentEnableStateDelegate(this.setComponentEnableState);
     }
-    public playerConnectionDelegate(packet: ClientConnectionPacket, player: Player) {
-        this._gameSystem.createPlayer(player);
+    public playerConnectionDelegate(packet: ClientConnectionPacket, client: Client) {
+        this._gameSystem.createPlayer(client);
     }
-    public playerDisconnectDelegate(packet: ClientDisconnectPacket, player: Player) {
-        this._gameSystem.setPlayerEntityInspection(player, undefined);
+    public playerDisconnectDelegate(packet: ClientDisconnectPacket, client: Client) {
+        this._gameSystem.deletePlayer(client);
     }
-    public playerInputDelegate(packet: ClientKeyboardInputPacket, player: Player) {
-        this._gameSystem.handleKeyInput(packet.key, packet.state, player);
+    public playerInputDelegate(packet: ClientKeyboardInputPacket, client: Client) {
+        this._gameSystem.handleKeyInput(packet.key, packet.state, client);
     }
-    public entityCreationDelegate(packet: ClientEntityCreationPacket, player: Player) {
-        this._gameSystem.createEntityAt(packet.prefabID, packet.x, packet.y, player);
+    public entityCreationDelegate(packet: ClientEntityCreationPacket, client: Client) {
+        this._gameSystem.createEntityAt(packet.prefabID, packet.x, packet.y, client);
     }
-    public entityDeletionDelegate(packet: ClientEntityDeletionPacket, player: Player) {
+    public entityDeletionDelegate(packet: ClientEntityDeletionPacket, client: Client) {
         this._gameSystem.deleteEntity(packet.id);
     }
-    public entityInspectionDelegate(packet: ClientEntityInspectionPacket, player: Player) {
-        this._gameSystem.setPlayerEntityInspection(player, packet.entityID);
+    public entityInspectionDelegate(packet: ClientEntityInspectionPacket, client: Client) {
+        this._gameSystem.setPlayerEntityInspection(client, packet.entityID);
     }
-    public removeComponentDelegate(packet: ClientRemoveComponentPacket, player: Player) {
+    public removeComponentDelegate(packet: ClientRemoveComponentPacket, client: Client) {
         this._gameSystem.removeComponent(packet.componentID);
     }
+    public entitySetControlDelegate(packet: ClientSetControlPacket, client: Client) {
+        this._gameSystem.setPlayerControl(client, packet.entityID);
+    }
+    public setComponentEnableState(packet: ClientSetComponentEnableStatePacket, client: Client) {
+        this._gameSystem.setComponentEnableState(packet.componentID, packet.enableState);
+    }
     public executeScriptDelegate(
-            packet: ClientExecuteScriptPacket, player: Player) {
-        this._gameSystem.runResourcePlayerScript(packet.script, packet.args, player, packet.entityID);
+            packet: ClientExecuteScriptPacket, client: Client) {
+        this._gameSystem.runResourcePlayerScript(packet.script, packet.args, client, packet.entityID);
     }
 }

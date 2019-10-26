@@ -1,6 +1,8 @@
 import IVM from "isolated-vm";
 import _ from "lodash";
+import path from "path";
 import ts from "typescript";
+
 import Script from "./script";
 
 /**
@@ -17,7 +19,7 @@ export default class ScriptRunner {
      * @memberof ScriptRunner
      */
     constructor() {
-        this._isolate = new IVM.Isolate();
+        this._isolate = new IVM.Isolate({inspector: true});
     }
 
     /**
@@ -38,22 +40,27 @@ export default class ScriptRunner {
             modulePaths: {[path: string]: Script} = {}
     ): Promise<Script> {
         if (context === undefined) {
-            context = this.makeContext(addIns);
+            context = this.makeContext(false, addIns);
         }
         else {
             this._addToContext(context, addIns);
         }
         const transpiledCode = this._transpile(code);
         const module = await this._isolate.compileModule(transpiledCode);
+        const moduleList = _.reduce(modulePaths, (acc, value, key) => {
+            acc[key] = value.module;
+            return acc;
+        }, {} as {[path: string]: IVM.Module});
         if (moduleResolutionHandler !== undefined) {
             await module.instantiate(context, moduleResolutionHandler);
         }
         else {
-            await module.instantiate(context, (modulePath) => {
-                if (modulePaths[modulePath] === undefined) {
-                    throw new Error("No module of name \"" + modulePath + "\" is available.");
-                }
-                return modulePaths[modulePath].module;
+            await module.instantiate(context, async (modulePath) => {
+                return this._defaultModuleInstantiation(
+                    path.join(process.cwd(), "__scripted__", "code.ts"),
+                    modulePath,
+                    moduleList
+                );
             });
         }
         const opts = timeout !== undefined ? {timeout} : undefined;
@@ -69,7 +76,7 @@ export default class ScriptRunner {
             timeout?: number
     ): Script {
         if (context === undefined) {
-            context = this.makeContext(addIns);
+            context = this.makeContext(false, addIns);
         }
         else {
             this._addToContext(context, addIns);
@@ -97,12 +104,12 @@ export default class ScriptRunner {
         if (addIns === undefined) {
             addIns = {};
         }
-        const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, path) => {
+        const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, codePath) => {
             const transpiledCode = this._transpile(code);
-            acc[path] = this._isolate.compileModuleSync(transpiledCode);
+            acc[codePath] = this._isolate.compileModuleSync(transpiledCode);
         }, {} as {[s: string]: IVM.Module});
-        return _.transform(modules, (acc, module, path) => {
-            const context = this.makeContext(addIns![path]);
+        return _.transform(modules, (acc, module, codePath) => {
+            const context = this.makeContext(true, addIns![codePath]);
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
                 context.global.setSync("_log", new IVM.Reference(this._log));
@@ -117,14 +124,11 @@ export default class ScriptRunner {
                     };
                 `).runSync(context);
             }
-            module.instantiateSync(context, (requirePath) => {
-                if (modules[requirePath] === undefined) {
-                    throw new Error("No module of name \"" + requirePath + "\" is available.");
-                }
-                return modules[requirePath];
+            module.instantiateSync(context, (modulePath) => {
+                return this._defaultModuleInstantiation(codePath, modulePath, modules);
             });
             const result = module.evaluateSync();
-            acc[path] = new Script(module, context, result);
+            acc[codePath] = new Script(module, context, result);
         }, {} as {[s: string]: Script});
     }
 
@@ -136,8 +140,8 @@ export default class ScriptRunner {
      * @returns The context for script execution.
      * @memberof ScriptExecutor
      */
-    public makeContext(addIns: object = {}) {
-        const context = this._isolate.createContextSync();
+    public makeContext(inspector: boolean, addIns: object = {}) {
+        const context = this._isolate.createContextSync({inspector});
         this._addToContext(context, addIns);
         return context;
     }
@@ -172,5 +176,19 @@ export default class ScriptRunner {
 
     private _log(message: string) {
         console.log(message);
+    }
+
+    private _defaultModuleInstantiation(dir: string, requirePath: string, modules: {[path: string]: IVM.Module}) {
+        const extension = path.extname(requirePath);
+        if (![".ts", ".js", ""].includes(extension)) {
+            throw new Error("Modules with extension \"" + extension + "\" are not supported.");
+        }
+        const requireWithoutExtension = requirePath.substr(0, requirePath.length - extension.length);
+        const codeDir = path.dirname(dir);
+        const modulePath = path.join(codeDir, requireWithoutExtension);
+        if (modules[modulePath] === undefined) {
+            throw new Error("No module at \"" + modulePath + "\" is available.");
+        }
+        return modules[modulePath];
     }
 }

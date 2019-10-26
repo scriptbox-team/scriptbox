@@ -1,17 +1,24 @@
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import Component from "./component";
+import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
-import Entity from "./entity";
+import Entity, { EntityProxy } from "./entity";
+import EventComponent from "./event-component";
+import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import MetaInfo from "./meta-info";
+import Player, { PlayerProxy } from "./player";
+import PlayerSoul from "./player-soul";
 import Position from "./position";
+import ProxyGenerator from "./proxy-generator";
+import Resource from "./resource";
 import Velocity from "./velocity";
 
 //tslint:disable
-type IClassInterface = {new (...args: any[]): any};
+type ClassInterface = {new (...args: any[]): any};
 // tslint:enable
 
 const idGenerator = new IDGenerator(Math.random());
@@ -20,73 +27,119 @@ const makeID = (prefix: string) => {
     return idGenerator.makeFrom(prefix, Date.now(), Math.random());
 };
 
-interface IComponentInfo {
-    id: string;
-    name: string;
-    attributes: Array<{name: string, kind: string, value: string}>;
-}
-
-interface IEntityInfo {
-    id: string;
-    name: string;
-    componentInfo: {[localID: string]: IComponentInfo};
-}
-
-interface IExports {
-    entities: {[id: string]: {
-        position: {x: number, y: number},
-        collisionBox: {x1: number, y1: number, x2: number, y2: number}
-    }};
-    inspectedEntityInfo: {[playerID: string]: IEntityInfo};
-}
-
-const exportValues: IExports = {
+const exportValues: Exports = {
     entities: {},
-    inspectedEntityInfo: {}
+    inspectedEntityInfo: {},
+    messages: []
 };
 
 global.exportValues = exportValues;
 
-const classList = new Map<string, IClassInterface>();
-const entityMeta = new WeakMap<Entity, MetaInfo>();
-const entityManager = new Manager<Entity>((id: string) => {
+let messageQueue: MessageExportInfo[] = [];
+const playerResources = new Map<string, Map<string, Resource>>();
+
+let executingUser: PlayerProxy | undefined;
+
+const classList = new Map<string, ClassInterface>();
+let tickRate!: number;
+
+const playerSoulMap = new WeakMap<Player, PlayerSoul>();
+const playerUnproxiedMap = new WeakMap<PlayerProxy, Player>();
+const playerManager = new Manager<PlayerProxy>((
+        id: string,
+        username: string,
+        displayName: string,
+        controlSet: {[id: number]: string},
+        controllingEntity?: EntityProxy) => {
+    const soul = new PlayerSoul(0, 0);
+    const player = new Player(id, username, displayName, controlSet, soul, controllingEntity);
+    player.trueEntityFromEntity = (entity: EntityProxy) => entityUnproxiedMap.get(entity);
+    const proxy = ProxyGenerator.makeDeletable(
+        player,
+        Player.readOnlyProps,
+        Player.hiddenProps
+    );
+    player.proxy = proxy;
+    playerSoulMap.set(player, soul);
+    playerUnproxiedMap.set(proxy, player);
+    return proxy;
+},
+(player: PlayerProxy) => {
+    inspectEntity(player.id, undefined);
+    const truePlayer = playerUnproxiedMap.get(player);
+    truePlayer.release();
+    truePlayer.exists = false;
+});
+
+const entityUnproxiedMap = new WeakMap<EntityProxy, Entity>();
+const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => {
     const info = new MetaInfo(
         `Entity ${id}`,
         "",
-        "",
         true,
         true,
-    []);
-    const entity = new Entity(id, info);
-    entityMeta.set(entity, info);
-    return entity;
+        creator
+    );
+    const entity = new Entity(id, {
+        delete: deleteEntity.bind(this),
+        add: createComponent.bind(this),
+        remove: deleteComponent.bind(this),
+        fromID: getEntity.bind(this)
+    }, info);
+    const proxy = ProxyGenerator.makeDeletable<EntityProxy>(
+        entity as any as EntityProxy,
+        Entity.hiddenProps,
+        Entity.readOnlyProps
+    );
+    entityUnproxiedMap.set(proxy, entity);
+    return proxy;
 },
-(ent: Entity) => {
+(entity: EntityProxy) => {
+    const trueEntity = entityUnproxiedMap.get(entity);
+    if (trueEntity.controller) {
+        trueEntity.controller.release();
+    }
+    trueEntity.delete();
+    trueEntity.exists = false;
 });
-const componentMeta = new WeakMap<Component, MetaInfo>();
-const componentManager = new Manager<Component>(
-    (componentID: string, componentClass: IClassInterface, entity: Entity, localID: string, ...args: any[]) => {
-        const info = new MetaInfo(
+
+const componentInfoMap = new WeakMap<Component, ComponentInfo>();
+const componentManager = new Manager<Component>((
+            componentID: string,
+            componentClass: ClassInterface,
+            entity: EntityProxy,
+            localID: string,
+            creator?: Player,
+            ...args: any[]) => {
+        const info = new ComponentInfo(
+            componentID,
+            entity,
             localID,
             "",
-            "",
             true,
             true,
-        []);
+            creator
+        );
         // TODO: Throw an error if a component doesn't actually extend component
-        const component = new componentClass(componentID, entity, info);
-        componentMeta.set(component, info);
+        const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
+            info,
+            ["id", "entity", "exists"],
+            ["_enabled"]
+        );
+        const component = new componentClass(infoProxy);
+        componentInfoMap.set(component, info);
 
-        if (typeof component.create === "function") {
-            component.create(...args);
-        }
+        componentExecute(component, "create", ...args);
+        const trueEntity = entityUnproxiedMap.get(entity);
+        trueEntity.directAdd(localID, component);
 
         return component;
     },
     (component: Component) => {
-        if (typeof (component as any).delete === "function") {
-            (component as any).delete();
-        }
+        const info = componentInfoMap.get(component);
+        componentExecute(component, "delete");
+        const trueEntity = entityUnproxiedMap.get(info.entity);
+        trueEntity.directRemove(info.entity.getComponentLocalID(component));
     }
 );
 
@@ -94,30 +147,89 @@ const inspectedEntities: Map<string, string> = new Map<string, string>();
 
 // TODO: Reconsider all places that use Object.keys (can have undefined values)
 
-function runOnAll(funcName: string) {
-    const componentIterator = componentManager.entries();
-    for (const [id, component] of componentIterator) {
-        try {
-            if (funcName in component && typeof (component as any)[funcName] === "function") {
-                (component as any)[funcName]();
-            }
+function componentExecute(component: any, funcName: string, ...args: any[]) {
+    if (typeof component[funcName] === "function") {
+        const info = componentInfoMap.get(component);
+        return componentExecuteDirect(info, (...a) => component[funcName](...a), ...args);
+    }
+    return undefined;
+}
+
+function componentExecuteDirect<T>(info: ComponentInfo, func: (...a: any[]) => T, ...args: any[]): T {
+    executingUser = info.owner;
+    info.lastFrameTime = -1;
+    let result: any;
+    info.lastFrameTime = looseProfile(() => {result = func(...args); });
+    executingUser = undefined;
+    return result;
+}
+
+function outputUserError(owner: PlayerProxy, error: Error) {
+    // TODO: Error.prepareStackTrace to improve how user stack traces look
+    if (owner !== undefined) {
+        messageQueue.push({
+            message: `<${error.stack}>`,
+            kind: "error",
+            recipient: [owner.id]
+        });
+    }
+    else {
+        global.log(`<${error.stack}>`);
+    }
+}
+
+function handleComponentError(component: Component, error: Error) {
+    const info = componentInfoMap.get(component);
+    if (info !== undefined) {
+        const owner = info.owner;
+        if (owner !== undefined) {
+            outputUserError(owner, error);
+            info.forceDisable();
+            messageQueue.push({
+                // tslint:disable-next-line: max-line-length
+                message: `The affected component (${info.id}) has been disabled. Please re-enable the component after fixing the problem.`,
+                kind: "error-status",
+                recipient: [owner.id]
+            });
         }
-        catch (err) {
-            if (component instanceof Component) {
-                const owner = (component as Component).entity;
-                // TODO: Notify the entity owner if their code errors
+        else {
+            global.log(error);
+        }
+    }
+    else {
+        global.log(error);
+    }
+}
+
+function runOnAll(funcName: string, ...args: any[]) {
+    const componentIterator = componentManager.entries();
+    for (const [key, component] of componentIterator) {
+        const info = componentInfoMap.get(component);
+        if (info !== undefined && info.enabled) {
+            info.lastFrameTime = -1;
+            try {
+                componentExecute(component, funcName, ...args);
             }
-            global.log(`Error during ${funcName}: ${err}`);
+            catch (err) {
+                handleComponentError(component, err);
+            }
         }
     }
 }
 
+export function initialize(initTickRate: number) {
+    tickRate = initTickRate;
+    Entity.externalCreate = createEntity;
+    Entity.externalGetByID = getEntity;
+}
+
 export function update() {
     // For each component, call update function if exists
-    runOnAll("update");
-    runOnAll("postUpdate");
+    runOnAll("update", 1 / tickRate);
+    runOnAll("postUpdate", 1 / tickRate);
     entityManager.deleteQueued();
     componentManager.deleteQueued();
+    playerManager.deleteQueued();
     // After the update and postupdate are called we should let the exports know about important changes
     resetExports();
     // We need a new iterator since we reached the end of the last one
@@ -128,30 +240,33 @@ export function update() {
             collisionBox: {x1: 0, y1: 0, x2: 0, y2: 0}
         };
         // Retrieve position info
-        try {
-            const positionComponent = entity.get<Position>("position");
-            if (positionComponent !== undefined) {
+        // TODO: If position is disabled, default to the last known position if it exists
+        // Also do this with the rendering stuff
+        const positionComponent = entity.get<Position>("position");
+        const positionInfo = componentInfoMap.get(positionComponent);
+        if (positionComponent !== undefined && positionInfo.enabled) {
+            try {
                 if (typeof positionComponent.x === "object"
                 && typeof positionComponent.y === "object"
                 && typeof positionComponent.x.getValue === "function"
                 && typeof positionComponent.y.getValue === "function"
-                && positionComponent.entity instanceof Entity
                 ) {
-                    const x = positionComponent.x.getValue();
-                    const y = positionComponent.y.getValue();
+                    const x = componentExecuteDirect(positionInfo, () => positionComponent.x.getValue());
+                    const y = componentExecuteDirect(positionInfo, () => positionComponent.y.getValue());
                     if (typeof x === "number" && typeof y === "number" && typeof id === "string") {
                         exportValues.entities[id].position = {x, y};
                     }
                 }
             }
-        }
-        catch (err) {
-            global.log("Retrieval Error: " + err);
+            catch (err) {
+                handleComponentError(positionComponent, err);
+            }
         }
         // Retrieve collision box info
-        try {
-            const collisionComponent = entity.get<CollisionBox>("collision-box");
-            if (collisionComponent !== undefined) {
+        const collisionComponent = entity.get<CollisionBox>("collision-box");
+        const collisionInfo = componentInfoMap.get(collisionComponent);
+        if (collisionComponent !== undefined && collisionInfo.enabled) {
+            try {
                 if (typeof collisionComponent.x1 === "object"
                 && typeof collisionComponent.y1 === "object"
                 && typeof collisionComponent.x1.getValue === "function"
@@ -160,12 +275,11 @@ export function update() {
                 && typeof collisionComponent.y2 === "object"
                 && typeof collisionComponent.x2.getValue === "function"
                 && typeof collisionComponent.y2.getValue === "function"
-                && collisionComponent.entity instanceof Entity
                 ) {
-                    const x1 = collisionComponent.x1.getValue();
-                    const y1 = collisionComponent.y1.getValue();
-                    const x2 = collisionComponent.x2.getValue();
-                    const y2 = collisionComponent.y2.getValue();
+                    const x1 = componentExecuteDirect(collisionInfo, () => collisionComponent.x1.getValue());
+                    const y1 = componentExecuteDirect(collisionInfo, () => collisionComponent.y1.getValue());
+                    const x2 = componentExecuteDirect(collisionInfo, () => collisionComponent.x2.getValue());
+                    const y2 = componentExecuteDirect(collisionInfo, () => collisionComponent.y2.getValue());
                     if (typeof x1 === "number" && typeof y1 === "number"
                     && typeof x2 === "number" && typeof y2 === "number"
                     && typeof id === "string") {
@@ -178,9 +292,9 @@ export function update() {
                     }
                 }
             }
-        }
-        catch (err) {
-            global.log("Retrieval Error: " + err);
+            catch (err) {
+                handleComponentError(collisionComponent, err);
+            }
         }
         // A sanity check to prevent a collision box of width or height less than 1
         const box = exportValues.entities["" + id].collisionBox;
@@ -198,46 +312,58 @@ export function update() {
         }
         const entity = entityManager.get(entityID);
         const components = Array.from(entity.componentIterator());
-        const componentInfo = Array.from(components.values()).reduce((acc, component) => {
+        const componentInfo = components.reduce((acc, component) => {
             acc[component.localID] = getComponentInfo(component);
             return acc;
         }, {});
-        const entityInfo: IEntityInfo = {
+        const entityInfo: EntityExportInfo = {
             id: entityID,
             name: "Entity " + entityID, // temporary
-            componentInfo
+            componentInfo,
+            controlledBy: entity.controller !== undefined ? entity.controller.id : undefined
         };
         exportValues.inspectedEntityInfo[player] = entityInfo;
     }
+
+    const playerIterator = playerManager.entries();
+    for (const [playerID, player] of playerIterator) {
+        if (player.controllingEntity === undefined) {
+            const purePlayer = playerUnproxiedMap.get(player);
+            const playerSoul = playerSoulMap.get(purePlayer);
+        }
+    }
+    exportValues.messages = messageQueue;
+    messageQueue = [];
 }
 
-function getComponentInfo(component: Component): IComponentInfo {
+function getComponentInfo(component: Component): ComponentExportInfo {
     const keys = Object.keys(component);
-    const attributes = keys.map((key) => {
-        let value = component[key];
-        // If it's an aspect, we should use the base value
-        // TODO: Also export the result value of the aspect
-        if (value instanceof Aspect) {
-            value = value.base;
-        }
-        let kind: string = typeof value;
-        if (value instanceof Component) {
-            kind = "component";
-        }
-        return {
-            name: key,
-            kind,
-            value: JSON.stringify(value)
-        };
-    });
+    const info = componentInfoMap.get(component);
+    // TODO: Make it so that circular types can be serialized in some way
+    // Maybe use the prefab serialization method?
+    const attributes = keys
+        .filter(((key) => key.substr(0, 1) !== "_"))
+        .map((key) => {
+            let value = component[key];
+            if (typeof value === "object" && typeof value.displayData === "object") {
+                value = value.displayData;
+            }
+            return {
+                name: key,
+                kind: typeof value,
+                value: JSON.stringify(value)
+            };
+        });
     return {
-        id: component.id,
-        name: component.name,
+        id: info.id,
+        name: info.name,
+        enabled: info.enabled,
+        lastFrameTime: info.lastFrameTime,
         attributes
     };
 }
 
-export function call(entID: string, compLocalID: string, funcName: string, ...args: any[]) {
+export function call(entID: string, funcName: string, ...args: any[]) {
     // Call a function on a component if it exists
     const entity = entityManager.get(entID);
     if (entity !== undefined) {
@@ -248,7 +374,7 @@ export function call(entID: string, compLocalID: string, funcName: string, ...ar
     }
 }
 
-export function get(entID: string, compLocalID: string, propName: string) {
+export function get(entID: string, propName: string) {
     // Get a property from a component if it exists
     // Call a function on a component if it exists
     const entity = entityManager.get(entID);
@@ -261,14 +387,19 @@ export function get(entID: string, compLocalID: string, propName: string) {
     return undefined;
 }
 
-export function createEntity(): string {
-    const ent = entityManager.create(makeID("E"));
+export function createEntity(creatorID?: string): string {
+    const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
+    const ent = entityManager.create(makeID("E"), creator);
     global.log("Entity created (ID: " + ent.id + ")");
     return ent.id;
 }
 
-export function getEntity(id: string): Entity {
+const _getEntity = (id: string): EntityProxy => {
     return entityManager.get(id);
+};
+
+export function getEntity(id: string) {
+    return _getEntity(id);
 }
 
 export function deleteEntity(id: string) {
@@ -276,12 +407,18 @@ export function deleteEntity(id: string) {
     global.log("Entity queued for deletion (ID: " + id + ")");
 }
 
-export function createComponent(entID: string, className: string, localID: string, ...params: any[]) {
-    const classToCreate = classList.get(className);
+export function createComponent(
+        entID: string,
+        classID: string,
+        localID: string,
+        creatorID?: string,
+        ...params: any[]) {
+    const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
+    const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
+    global.log(classToCreate.name);
     if (entity !== undefined) {
-        const component = componentManager.create(makeID("C"), classToCreate, entity, localID, ...params);
-        entity.add(localID, component);
+        const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
         global.log(
             "Component created (Entity ID: "
             + entID
@@ -290,15 +427,18 @@ export function createComponent(entID: string, className: string, localID: strin
             + ", Params: "
             + JSON.stringify(params)
             +  ")");
+        return true;
     }
+    return false;
 }
 
 export function deleteComponent(componentID: string) {
-    entityManager.queueForDeletion(componentID);
+    componentManager.queueForDeletion(componentID);
+    global.log("Component queued for deletion (ID: " + componentID + ")");
 }
 
-export function create(classParam: string | IClassInterface, ...args: any[]) {
-    let classToCreate: IClassInterface;
+export function create(classParam: string | ClassInterface, ...args: any[]) {
+    let classToCreate: ClassInterface;
     if (typeof classParam === "string") {
         classToCreate = classList.get(classParam);
     }
@@ -310,37 +450,54 @@ export function create(classParam: string | IClassInterface, ...args: any[]) {
     }
 }
 
-export function handleInput(entityID: string, input: string, state: InputType) {
-    if (!entityManager.has(entityID)) {
-        return;
-    }
-    const entity = entityManager.get(entityID);
-    if (entity !== undefined) {
-        const component = entity.get("control");
-        if (component instanceof Control) {
-            switch (state) {
-                case InputType.Press: {
-                    if (typeof component.sendKeyPress === "function") {
-                        component.sendKeyPress(input);
+export function handleInput(playerID: string, input: number, state: InputType) {
+    const player = playerManager.get(playerID);
+    if (player !== undefined) {
+        const entity = player.controllingEntity;
+        if (entity !== undefined) {
+            const component = entity.get("control");
+            if (component !== undefined) {
+                switch (state) {
+                    case InputType.Press: {
+                        if (typeof component.sendKeyPress === "function") {
+                            component.sendKeyPress(player.controlSet["" + input]);
+                        }
+                        break;
                     }
-                    break;
-                }
-                case InputType.Release: {
-                    if (typeof component.sendKeyRelease === "function") {
-                        component.sendKeyRelease(input);
+                    case InputType.Release: {
+                        if (typeof component.sendKeyRelease === "function") {
+                            component.sendKeyRelease(player.controlSet["" + input]);
+                        }
+                        break;
                     }
-                    break;
                 }
+            }
+        }
+        else {
+            // Soul mode
+            const inputName = player.controlSet["" + input];
+            const truePlayer = playerUnproxiedMap.get(player);
+            const soul = playerSoulMap.get(truePlayer);
+            switch (inputName) {
+                case "up":
+                    soul.keyInput("up", state === InputType.Press);
+                    break;
+                case "down":
+                    soul.keyInput("down", state === InputType.Press);
+                    break;
+                case "left":
+                    soul.keyInput("left", state === InputType.Press);
+                    break;
+                case "right":
+                    soul.keyInput("right", state === InputType.Press);
+                    break;
             }
         }
     }
 }
 
-export function setComponentClass(classObj: IClassInterface, id: string) {
-    if (classObj.prototype instanceof Component) {
-        // TODO: If a component class already exists on upload, re-instantiate instances of it with the new version
-        classList.set(id, classObj);
-    }
+export function setComponentClass(classObj: ClassInterface, id: string) {
+    classList.set(id, classObj);
 }
 
 export function inspectEntity(playerID: string, entityID?: string) {
@@ -350,13 +507,117 @@ export function inspectEntity(playerID: string, entityID?: string) {
     else {
         inspectedEntities.set("" + playerID, entityID);
     }
-    // TODO: Replace all number IDs with strings
-    // TODO: Fix the compiler freaking out about things in __scripted__
+    // TODO: Fix the compiler freaking out about things in scripts
+}
+
+export function createPlayer(
+        id: string,
+        username: string,
+        displayName: string) {
+    const controlSet = {
+        38: "up",
+        40: "down",
+        37: "left",
+        39: "right"
+    };
+    playerManager.create(id, username, displayName, controlSet);
+    global.log(
+        "Player created (ID: "
+        + id
+        + ", Username: "
+        + username
+        + ", Display Name: "
+        + displayName
+        +  ")");
+}
+
+export function deletePlayer(id: string) {
+    playerManager.queueForDeletion(id);
+}
+
+export function getPlayer(id: string) {
+    return playerManager.get(id);
+}
+
+export function renamePlayer(id: string, displayName: string) {
+    const player = playerManager.get(id);
+    if (player !== undefined) {
+        player.displayName = displayName;
+    }
+}
+
+export function setPlayerControllingEntity(id: string, entityID?: string) {
+    const player = playerManager.get(id);
+    const entity = entityID !== undefined ? entityManager.get(entityID) : undefined;
+    if (player !== undefined) {
+        if (entityID !== undefined) {
+            player.control(entity);
+        }
+        else {
+            player.release();
+        }
+    }
+}
+
+export function getPlayerControllingEntity(id: string) {
+    const player = playerManager.get(id);
+    return player.controllingEntity !== undefined ? player.controllingEntity.id : undefined;
+}
+
+export function setComponentEnableState(componentID: string, state: boolean) {
+    const component = componentManager.get(componentID);
+    if (component !== undefined) {
+        const info = componentInfoMap.get(component);
+        if (state) {
+            info.manualEnable();
+        }
+        else {
+            info.enabled = false;
+        }
+    }
+}
+
+export function setResourceList(playerUsername: string, resources: {[filename: string]: Resource}) {
+    const keys = Object.keys(resources);
+    const resourceMap = new Map<string, Resource>();
+    for (const key of keys) {
+        resourceMap.set(key, resources[key]);
+    }
+    playerResources.set(playerUsername, resourceMap);
+}
+
+function looseProfile(func: () => void): number {
+    const time = Date.now();
+    func();
+    return Date.now() - time;
+}
+
+export function recoverFromTimeout() {
+    const expectedFrameTime = 1 / tickRate;
+    const cutoffTime = expectedFrameTime * 0.3;
+    let timeAccountedFor = 0;
+    const componentIterator = componentManager.entries();
+    for (const [componentID, component] of componentIterator) {
+        const info = componentInfoMap.get(component);
+        const time = info.lastFrameTime;
+        // Note: This naively decides to disable just a component that exceeded the frame time
+        // Or if it reaches the end, it does the last component that was executing when it timed out
+        if (info.enabled) {
+            if (time > cutoffTime || time === -1) {
+                // tslint:disable-next-line: max-line-length
+                const err = new Error(`During global error, max frame time was exceeded (${Math.round(cutoffTime * 1000)}ms)`);
+                handleComponentError(component, err);
+                return;
+            }
+            timeAccountedFor += time;
+        }
+    }
 }
 
 const resetExports = () => {
     exportValues.entities = {};
     exportValues.inspectedEntityInfo = {};
+    exportValues.messages = [];
 };
 
 /**
@@ -372,19 +633,8 @@ enum InputType {
     Move = 2
 }
 
-/**
- * The type of device an input came from
- *
- * @export
- * @enum {number}
- */
-enum DeviceType {
-    Keyboard = 0,
-    Mouse = 1,
-    Controller = 2
-}
-
 classList.set("position", Position);
 classList.set("velocity", Velocity);
 classList.set("collision-box", CollisionBox);
 classList.set("default-control", DefaultControl);
+classList.set("event-component", EventComponent);

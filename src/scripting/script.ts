@@ -15,7 +15,7 @@ export default class Script {
         if (funcRef.typeof !== "function") {
             throw new Error("Function \"" + name + "\" not found in script.");
         }
-        return funcRef.applySync(undefined, params);
+        return funcRef.applySync(undefined, params, {timeout: 500});
     }
     public get(name: string): any {
         const module = this.module;

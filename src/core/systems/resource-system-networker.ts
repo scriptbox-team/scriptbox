@@ -1,5 +1,5 @@
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import Client from "core/client";
+import Group, { GroupType } from "core/group";
 import NetEventHandler from "networking/net-event-handler";
 import Networker from "networking/networker";
 import ClientModifyMetadataPacket from "networking/packets/client-modify-metadata-packet";
@@ -22,23 +22,23 @@ export default class ResourceSystemNetworker extends Networker {
         this.onPlayerListing = this.onPlayerListing.bind(this);
 
         this._resourceSystem = resourceSystem;
-        this._resourceSystem.onPlayerListingUpdate = this.onPlayerListing;
+        this._resourceSystem.addPlayerListingDelegate(this.onPlayerListing);
     }
     public hookupInput(netEventHandler: NetEventHandler) {
         netEventHandler.addTokenRequestDelegate(this.addTokenRequestDelegate);
         netEventHandler.addModifyMetadataDelegate(this.modifyMetadataDelegate);
     }
-    public addTokenRequestDelegate(packet: ClientTokenRequestPacket, player: Player) {
+    public addTokenRequestDelegate(packet: ClientTokenRequestPacket, player: Client) {
         const token = this._resourceSystem.makePlayerToken(player);
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.Token, new ServerTokenPacket(packet.tokenType, token)),
-                new PlayerGroup(PlayerGroupType.Only, [player!])
+                new Group(GroupType.Only, [player!])
             )
         );
     }
 
-    public modifyMetadataDelegate(packet: ClientModifyMetadataPacket, player: Player) {
+    public modifyMetadataDelegate(packet: ClientModifyMetadataPacket, player: Client) {
         try {
             this._resourceSystem.updateResourceData(
                 player.username,
@@ -52,11 +52,12 @@ export default class ResourceSystemNetworker extends Networker {
         }
     }
 
-    public onPlayerListing(player: Player, resources: Resource[]) {
+    public onPlayerListing(player: Client, resources: {[filename: string]: Resource}) {
+        const resourceList = Object.values(resources);
         this.send(
             new ServerMessage(
-                new ServerNetEvent(ServerEventType.ResourceListing, new ServerResourceListingPacket(resources)),
-                new PlayerGroup(PlayerGroupType.Only, [player])
+                new ServerNetEvent(ServerEventType.ResourceListing, new ServerResourceListingPacket(resourceList)),
+                new Group(GroupType.Only, [player])
             )
         );
     }

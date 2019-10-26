@@ -1,6 +1,6 @@
 
+import Client from "core/client";
 import Manager from "core/manager";
-import Player from "core/player";
 import NetHost from "networking/net-host";
 import Networker from "networking/networker";
 
@@ -8,7 +8,7 @@ import NetworkReceivingSubsystem from "./network-receiving-subsystem";
 import NetworkSendingSubsystem from "./network-sending-subsystem";
 import ServerMessage from "./server-messages/server-message";
 
-interface INetworkSystemConstructorOptions {
+interface NetworkSystemConstructorOptions {
     port?: number;
     maxPlayers?: number;
 }
@@ -29,10 +29,10 @@ export default class NetworkSystem {
     /**
      * Creates an instance of NetworkSystem.
      * This does not open the network system to new connections.
-     * @param {INetworkSystemConstructorOptions} options
+     * @param {NetworkSystemConstructorOptions} options
      * @memberof NetworkSystem
      */
-    constructor(options: INetworkSystemConstructorOptions, playerManager: Manager<Player>) {
+    constructor(options: NetworkSystemConstructorOptions, playerManager: Manager<Client>) {
         this._maxPlayers = 8;
         this._port = 7777;
 

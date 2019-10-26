@@ -1,5 +1,5 @@
-import Player from "core/player";
-import PlayerGroup, { PlayerGroupType } from "core/player-group";
+import Client from "core/client";
+import Group, { GroupType } from "core/group";
 import MessageSystem from "core/systems/message-system";
 import NetEventHandler from "networking/net-event-handler";
 import Networker from "networking/networker";
@@ -28,20 +28,20 @@ export default class MessageSystemNetworker extends Networker {
         netEventHandler.addDisconnectionDelegate(this.disconnectionDelegate);
         netEventHandler.addChatMessageDelegate(this.clientChatMessageDelegate);
     }
-    public connectionDelegate(packet: ClientConnectionPacket, player: Player) {
+    public connectionDelegate(packet: ClientConnectionPacket, player: Client) {
         this._messageSystem.broadcastMessage(`${player.displayName} connected.`);
         this._messageSystem.outputConsoleMessage(`${player.displayName} connected.`);
     }
     public disconnectionDelegate(
             packet: ClientDisconnectPacket,
-            player: Player) {
+            player: Client) {
         this._messageSystem.broadcastMessage(`${player.displayName} disconnected.`);
         this._messageSystem.outputConsoleMessage(`${player.displayName} disconnected.`);
     }
-    public clientChatMessageDelegate(packet: ClientChatMessagePacket, player: Player) {
+    public clientChatMessageDelegate(packet: ClientChatMessagePacket, player: Client) {
         this._messageSystem.chatMessageDelegate(packet, player);
     }
-    public chatMessageSend(message: string, players: PlayerGroup) {
+    public chatMessageSend(message: string, players: Group<Client>) {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.ChatMessage, new ServerChatMessagePacket(message)),

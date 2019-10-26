@@ -1,26 +1,26 @@
 import Aspect from "./aspect";
-import AspectArray from "./aspect-array";
+import AspectSet from "./aspect-set";
 import Component from "./component";
 
 export default abstract class Control extends Component {
-    public abstract commands: AspectArray<string>;
+    public abstract commands: AspectSet<string>;
     public inputStates: {[key: string]: boolean} = {};
     public pastInputStates: {[key: string]: boolean} = {};
-    public update() {
+    public update(delta: number) {
         // Put "simple" input mapping here
     }
-    public postUpdate() {
+    public postUpdate(delta: number) {
         this.pastInputStates = Object.assign(this.inputStates, {});
     }
     public sendKeyPress(input: string) {
         const commands = this.commands.getValue();
-        if (commands.includes(input)) {
+        if (commands.has(input)) {
             this.inputStates[input] = true;
         }
     }
     public sendKeyRelease(input: string) {
         const commands = this.commands.getValue();
-        if (commands.includes(input)) {
+        if (commands.has(input)) {
             this.inputStates[input] = false;
         }
     }

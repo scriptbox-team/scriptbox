@@ -11,9 +11,9 @@ const CONNECTION_INFO_TIMEOUT = 10000; // milliseconds
 /**
  * The constructor options for the NetHost
  *
- * @interface INetHostConstructionOptions
+ * @interface NetHostConstructionOptions
  */
-interface INetHostConstructionOptions {
+interface NetHostConstructionOptions {
     /**
      * The port to open the NetHost on
      *
@@ -49,10 +49,10 @@ export default class NetHost {
     /**
      * Creates an instance of NetHost.
      * This does not open the server for connections.
-     * @param {INetHostConstructionOptions} options The options to construct the NetHost with
+     * @param {NetHostConstructionOptions} options The options to construct the NetHost with
      * @memberof NetHost
      */
-    constructor(options: INetHostConstructionOptions) {
+    constructor(options: NetHostConstructionOptions) {
         this._port = options.port;
         this._webSocketServer = null;
         this._nextID = 0;

@@ -3,14 +3,14 @@ import Networker from "networking/networker";
 import ClientConnectionPacket from "networking/packets/client-connection-packet";
 import ClientDisconnectPacket from "networking/packets/client-disconnect-packet";
 
+import Client from "./client";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
-import Player from "./player";
 
-export default class PlayerManagerNetworker extends Networker {
-    private _playerManager: Manager<Player>;
+export default class ClientManagerNetworker extends Networker {
+    private _playerManager: Manager<Client>;
     private _idGenerator: IDGenerator;
-    constructor(playerManager: Manager<Player>, idGenerator: IDGenerator) {
+    constructor(playerManager: Manager<Client>, idGenerator: IDGenerator) {
         super();
         this.playerCreate = this.playerCreate.bind(this);
         this.playerDelete = this.playerDelete.bind(this);
@@ -31,7 +31,7 @@ export default class PlayerManagerNetworker extends Networker {
     }
     public playerDelete(
             packet: ClientDisconnectPacket,
-            player: Player) {
+            player: Client) {
         this._playerManager.queueForDeletion(player.id);
     }
 }

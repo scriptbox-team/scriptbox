@@ -1,11 +1,13 @@
 import _ from "lodash";
 import NetworkSystem from "networking/network-system";
 
+import Client from "./client";
+import ClientManagerNetworker from "./client-manager-networker";
+import { MessageExportInfo } from "./export-values";
 import GameLoop from "./game-loop";
+import Group, { GroupType } from "./group";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
-import Player from "./player";
-import PlayerManagerNetworker from "./player-manager-networker";
 import DisplaySystem from "./systems/display-system";
 import DisplaySystemNetworker from "./systems/display-system-networker";
 import GameSystem from "./systems/game-system";
@@ -57,10 +59,10 @@ interface IServerConstructorOptions {
  */
 export default class Server {
     private _tickRate: number;
-    private _playerManager: Manager<Player>;
-    private _playerManagerNetworker: PlayerManagerNetworker;
+    private _clientManager: Manager<Client>;
+    private _clientManagerNetworker: ClientManagerNetworker;
 
-    private _usernameToPlayer: Map<string, Player>;
+    private _usernameToPlayer: Map<string, Client>;
 
     private _networkSystem: NetworkSystem;
     private _messageSystem: MessageSystem;
@@ -90,13 +92,13 @@ export default class Server {
         if (options.tickRate !== undefined) {
             this._tickRate = options.tickRate;
         }
-        this._playerManager = new Manager<Player>(this._createPlayer, this._deletePlayer);
-        this._playerManagerNetworker = new PlayerManagerNetworker(this._playerManager, this._idGenerator);
-        this._usernameToPlayer = new Map<string, Player>();
+        this._clientManager = new Manager<Client>(this._createPlayer, this._deletePlayer);
+        this._clientManagerNetworker = new ClientManagerNetworker(this._clientManager, this._idGenerator);
+        this._usernameToPlayer = new Map<string, Client>();
 
         this._networkSystem = new NetworkSystem(
             {maxPlayers: options.maxPlayers, port: options.port},
-            this._playerManager
+            this._clientManager
         );
         this._messageSystem = new MessageSystem();
         this._messageSystemNetworker = new MessageSystemNetworker(this._messageSystem);
@@ -111,23 +113,24 @@ export default class Server {
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
-        this._gameSystem = new GameSystem();
+        this._gameSystem = new GameSystem(this._tickRate);
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
         this._gameSystem.loadScriptResource = (resource) => this._resourceSystem.loadTextResource(resource);
 
         this._networkSystem.hookup([
-            this._playerManagerNetworker,
+            this._clientManagerNetworker,
             this._gameSystemNetworker,
             this._resourceSystemNetworker,
             this._displaySystemNetworker,
             this._messageSystemNetworker
         ]);
 
-        this._messageSystem.onScriptExecution(async (code: string, player: Player) => {
+        this._messageSystem.onScriptExecution(async (code: string, player: Client) => {
             return await this._gameSystem.runGenericPlayerScript(code, player);
         });
 
-        this._resourceSystem.onPlayerListingUpdate = this._resourceSystemNetworker.onPlayerListing;
+        this._resourceSystem.addPlayerListingDelegate(this._gameSystem.updateResources);
+
         this._loop = new GameLoop(this._tick, this._tickRate);
     }
 
@@ -153,31 +156,44 @@ export default class Server {
         try {
             const exportValues = this._gameSystem.update();
             exportValues.players = {};
-            const playerEntries = this._playerManager.entries();
-            for (const [id, player] of playerEntries) {
+            const clientEntries = this._clientManager.entries();
+            for (const [id, player] of clientEntries) {
                 exportValues.players[id] = player;
             }
             this._displaySystem.broadcastDisplay(exportValues);
             this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {
-                this._messageSystem.sendChatMessages(exportValues.messages);
+                const messages = exportValues.messages.map((msg: MessageExportInfo) => {
+                    return {
+                        message: msg.message,
+                        kind: msg.kind,
+                        recipient: new Group<Client>(
+                            GroupType.Only,
+                            msg.recipient.map((pID) => exportValues.players[pID])
+                        )
+                    };
+                });
+                this._messageSystem.sendChatMessages(messages);
             }
-
-            this._networkSystem.sendMessages();
             this._resourceSystem.deleteQueued();
-            this._playerManager.deleteQueued();
+            this._clientManager.deleteQueued();
         }
         catch (error) {
-            console.log(error);
+            this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
+            console.log(`[GLOBAL] ${error.stack}`);
+            this._gameSystem.recover();
+        }
+        finally {
+            this._networkSystem.sendMessages();
         }
     }
     private _createPlayer(id: string, clientID: number, username: string, displayName: string) {
-        const player = new Player(id, clientID, username, displayName);
+        const player = new Client(id, clientID, username, displayName);
         this._usernameToPlayer.set(username, player);
         return player;
     }
-    private _deletePlayer(player: Player) {
+    private _deletePlayer(player: Client) {
         this._usernameToPlayer.delete(player.username);
     }
 }

@@ -1,25 +1,47 @@
+import { PlayerProxy } from "./player";
+
+export interface MetaInfoProxy {
+    name: string;
+    description: string;
+    owner?: PlayerProxy;
+    enabled: boolean;
+    readonly exists: boolean;
+}
+
 export default class MetaInfo {
     public name: string;
     public description: string;
-    public owner: string;
-    public enabled: boolean;
+    public owner?: PlayerProxy;
     public exists: boolean;
-    private _tags: Set<string>;
-    constructor(name: string, description: string, owner: string, enabled: boolean, exists: boolean, tags: string[]) {
+    private _enabled: boolean;
+    private _forceDisabled: boolean;
+    constructor(
+            name: string,
+            description: string,
+            enabled: boolean,
+            exists: boolean,
+            owner?: PlayerProxy) {
         this.name = name;
         this.description = description;
         this.owner = owner;
-        this.enabled = enabled;
+        this._enabled = enabled;
         this.exists = exists;
-        this._tags = new Set<string>(tags);
+        this._forceDisabled = false;
     }
-    public addTag(tag: string) {
-        this._tags.add(tag);
+    public forceDisable() {
+        this._forceDisabled = true;
+        this._enabled = false;
     }
-    public removeTag(tag: string) {
-        this._tags.delete(tag);
+    public manualEnable() {
+        this._forceDisabled = false;
+        this._enabled = true;
     }
-    public hasTag(tag: string) {
-        return this._tags.has(tag);
+    get enabled() {
+        return this._enabled;
+    }
+    set enabled(value: boolean) {
+        if (!this._forceDisabled || this._enabled) {
+            this._enabled = value;
+        }
     }
 }
