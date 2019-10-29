@@ -163,12 +163,23 @@ export default class GameSystem extends System {
             componentID
         );
     }
-    public async runResourcePlayerScript(resourceID: string, args: string, player: Client, entityID?: string) {
+    public async runResourcePlayerScript(
+            resourceID: string,
+            args: string,
+            player: Client,
+            entityID?: string) {
         try {
             // TODO: Change async functions to be more careful about using things that may be deleted
             const resource = this.getResourceByID!(resourceID);
             const code = await this._loadScriptResource(resourceID);
-            const scripts = await this.runPlayerScript(resource!.filename, code, args, player, entityID, resourceID);
+            const scripts = await this.runPlayerScript(
+                resource!.filename,
+                code,
+                args,
+                player,
+                entityID,
+                resourceID
+            );
             _.each(scripts, (script, scriptPath) => {
                 const scriptResource = this.getResourceByFilename!(player.username, scriptPath);
                 this._cachedPlayerScripts.set(scriptResource!.id, {time: Date.now(), script});
@@ -207,8 +218,12 @@ export default class GameSystem extends System {
             client: Client,
             entityID?: string,
             className?: string) {
+        let apply = true;
         let entityValue: IVM.Reference<any> | undefined;
         if (entityID === undefined) {
+            // Provide the player's controlling entity automatically
+            // But don't apply to it
+            apply = false;
             entityID = this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "getPlayerControllingEntity",
@@ -246,7 +261,7 @@ export default class GameSystem extends System {
                 defaultExport.derefInto(),
                 className
             );
-            if (entityID !== undefined) {
+            if (apply) {
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
