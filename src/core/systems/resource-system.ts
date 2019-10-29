@@ -189,8 +189,11 @@ export default class ResourceSystem extends System {
     public getPlayerFromToken(token: number) {
         return this._playerTokens.get(token);
     }
-    public loadTextResource(resourceID: string) {
-        return this._resourceServer.loadTextResource(resourceID);
+    public loadResource(resourceID: string, encoding: string) {
+        return this._resourceServer.loadResource(resourceID, encoding);
+    }
+    public loadResourceSync(resourceID: string, encoding: string) {
+        return this._resourceServer.loadResourceSync(resourceID, encoding);
     }
     public getResourceByID(resourceID: string) {
         return this._resourceManager.get(resourceID);
@@ -206,7 +209,11 @@ export default class ResourceSystem extends System {
         if (playerResourceData === undefined) {
             return undefined;
         }
-        return playerResourceData.resourcesByFilename.get(filename);
+        const id = playerResourceData.resourcesByFilename.get(filename);
+        if (id === undefined) {
+            return id;
+        }
+        return this._resourceManager.get(id);
     }
     private _updateResourceListing(owner: string, resourceMap: Map<string, string>) {
         if (this.playerByUsername !== undefined) {

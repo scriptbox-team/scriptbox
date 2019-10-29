@@ -1,5 +1,6 @@
 import _ from "lodash";
 import NetworkSystem from "networking/network-system";
+import path from "path";
 
 import Client from "./client";
 import ClientManagerNetworker from "./client-manager-networker";
@@ -113,9 +114,16 @@ export default class Server {
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
-        this._gameSystem = new GameSystem(this._tickRate);
+        this._gameSystem = new GameSystem(
+            this._tickRate,
+            path.join(process.cwd(), "__scripted__"),
+            path.join(process.cwd(), "__scripted__", "exposed")
+        );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
-        this._gameSystem.loadScriptResource = (resource) => this._resourceSystem.loadTextResource(resource);
+        this._gameSystem.getResourceByID = (id) => this._resourceSystem.getResourceByID(id);
+        this._gameSystem.getResourceByFilename = (user, file) => this._resourceSystem.getResourceByFilename(file, user);
+        this._gameSystem.loadResource = (resource, enc) => this._resourceSystem.loadResource(resource, enc);
+        this._gameSystem.loadResourceSync = (resource, enc) => this._resourceSystem.loadResourceSync(resource, enc);
 
         this._networkSystem.hookup([
             this._clientManagerNetworker,
@@ -180,6 +188,7 @@ export default class Server {
             this._clientManager.deleteQueued();
         }
         catch (error) {
+            // TODO: Suppress repeated errors
             this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
             console.log(`[GLOBAL] ${error.stack}`);
             this._gameSystem.recover();

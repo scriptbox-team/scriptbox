@@ -134,8 +134,11 @@ export default class ResourceServer {
         this._resourceContentType.delete(resource.id);
         await fs.unlink(this._resourcePath + resource.id);
     }
-    public async loadTextResource(resourceID: string) {
-        return fs.readFile(this._resourcePath + resourceID, "utf8");
+    public async loadResource(resourceID: string, encoding: string) {
+        return fs.readFile(this._resourcePath + resourceID, encoding);
+    }
+    public loadResourceSync(resourceID: string, encoding: string) {
+        return fs.readFileSync(this._resourcePath + resourceID, encoding);
     }
     // TODO: Change all functions with promises to async functions'
     // TODO: Refactor ResourceServer into multiple classes; one to handle file system management and the other for API
