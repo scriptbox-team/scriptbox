@@ -5,6 +5,7 @@ import IVM from "isolated-vm";
 import _ from "lodash";
 import path from "path";
 import Resource from "resource-management/resource";
+import Script from "scripting/script";
 import ScriptCollection from "scripting/script-collection";
 
 import System from "./system";
@@ -17,9 +18,13 @@ export default class GameSystem extends System {
         "./__scripted__/",
         "./scripted-server-subsystem.ts"
     );
-    public loadScriptResource?: (resourceID: string) => Promise<string>;
+    public getResourceByID?: (id: string) => Resource | undefined;
+    public getResourceByFilename?: (username: string, filename: string) => Resource | undefined;
+    public loadResource?: (resourceID: string, encoding: string) => Promise<string>;
+    public loadResourceSync?: (resourceID: string, encoding: string) => string;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
+    private _cachedPlayerScripts: Map<string, {time: number, script: Script}>;
     private _scriptDir: string;
     private _playerScriptDir: string;
     private _validPlayerModules: {[name: string]: string};
@@ -30,6 +35,7 @@ export default class GameSystem extends System {
         this._messageQueue = [];
         this._scriptDir = systemScriptDirectory;
         this._playerScriptDir = playerScriptDirectory;
+        this._cachedPlayerScripts = new Map<string, {time: number, script: Script}>();
 
         const playerFileDirs = this._getDirsRecursive(this._playerScriptDir);
         const fileDirs = playerFileDirs.concat(
@@ -159,13 +165,17 @@ export default class GameSystem extends System {
     }
     public async runResourcePlayerScript(resourceID: string, args: string, player: Client, entityID?: string) {
         try {
-            if (this.loadScriptResource !== undefined) {
-                const script = await this.loadScriptResource(resourceID);
-                const result = await this.runPlayerScript(script, args, player, entityID, resourceID);
-                if (result !== undefined) {
-                    this.addMessageToQueue([player.id], `Script result: ${result}`);
+            // TODO: Change async functions to be more careful about using things that may be deleted
+            const resource = this.getResourceByID!(resourceID);
+            const code = await this._loadScriptResource(resourceID);
+            const scripts = await this.runPlayerScript(resource!.filename, code, args, player, entityID, resourceID);
+            _.each(scripts, (script, scriptPath) => {
+                const scriptResource = this.getResourceByFilename!(player.username, scriptPath);
+                this._cachedPlayerScripts.set(scriptResource!.id, {time: Date.now(), script});
+                if (script.result !== undefined) {
+                    this.addMessageToQueue([player.id], `Script ${scriptPath} result: ${script.result}`);
                 }
-            }
+            });
         }
         catch (err) {
             this.addMessageToQueue([player.id],
@@ -175,7 +185,7 @@ export default class GameSystem extends System {
     }
     public async runGenericPlayerScript(script: string, client: Client) {
         try {
-            const result = await this.runPlayerScript(script, "", client);
+            const result = (await this.runPlayerScript("", script, "", client))[""].result;
             if (result !== undefined) {
                 this.addMessageToQueue(
                     [client.id],
@@ -190,7 +200,13 @@ export default class GameSystem extends System {
             console.log(err);
         }
     }
-    public async runPlayerScript(code: string, args: string, client: Client, entityID?: string, className?: string) {
+    public async runPlayerScript(
+            filename: string,
+            code: string,
+            args: string,
+            client: Client,
+            entityID?: string,
+            className?: string) {
         let entityValue: IVM.Reference<any> | undefined;
         if (entityID === undefined) {
             entityID = this._scriptCollection.execute(
@@ -211,14 +227,18 @@ export default class GameSystem extends System {
             "getPlayer",
             client.id
         );
-        const script = await this._scriptCollection.runScript(
-            code,
+        const builtScripts = await this._scriptCollection.buildScripts(
+            {[filename]: code},
+            (module) => this._preresolveModule(client, module)
+        );
+        const scripts = await this._scriptCollection.runScripts(
+            builtScripts,
             args,
             entityValue,
             playerValue,
-            this._resolveModule
+            (module) => this._resolveModule(builtScripts, client, module),
         );
-        const defaultExport = script.getReference("default");
+        const defaultExport = scripts[filename].getReference("default");
         if (defaultExport.typeof !== "undefined" && className !== undefined) {
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
@@ -237,10 +257,7 @@ export default class GameSystem extends System {
                 );
             }
         }
-        if (script.result !== undefined) {
-            return script.result;
-        }
-        return undefined;
+        return scripts;
     }
 
     public addMessageToQueue(clients: string[], message: string) {
@@ -274,7 +291,35 @@ export default class GameSystem extends System {
         );
     }
 
-    private _resolveModule(modulePath: string) {
+    private _preresolveModule(user: Client, modulePath: string) {
+        let pathsToTry = [modulePath];
+        const extension = path.extname(modulePath);
+        if (extension === "") {
+            const assumedFiletypes = [".ts", ".js"];
+            pathsToTry = pathsToTry.concat(assumedFiletypes.map((ext) => modulePath + ext));
+        }
+        for (const tryPath of pathsToTry) {
+            if (this._validPlayerModules[tryPath] !== undefined) {
+                return;
+            }
+        }
+        // Trying to resolve to a default module failed
+        // Now we should see if it's a user module instead
+        for (const tryPath of pathsToTry) {
+            const res = this.getResourceByFilename!(user.username, path.relative(".", tryPath));
+            if (res !== undefined) {
+                const cachedScript = this._cachedPlayerScripts.get(res.id);
+                if (cachedScript !== undefined && cachedScript.time >= res.time) {
+                    return;
+                }
+                else {
+                    return [path.relative(".", tryPath), this._loadScriptResourceSync(res.id)] as [string, string];
+                }
+            }
+        }
+    }
+
+    private _resolveModule(buildingScripts: {[path: string]: IVM.Module}, user: Client, modulePath: string) {
         let pathsToTry = [modulePath];
         const extension = path.extname(modulePath);
         if (extension === "") {
@@ -287,6 +332,27 @@ export default class GameSystem extends System {
         for (const tryPath of pathsToTry) {
             if (this._validPlayerModules[tryPath] !== undefined) {
                 return this._scriptCollection.getScript(this._validPlayerModules[tryPath]).module;
+            }
+        }
+        // Trying to resolve to a default module failed
+        // Now we should see if it's a user module instead
+        for (const tryPath of pathsToTry) {
+            const res = this.getResourceByFilename!(user.username, path.relative(".", tryPath));
+            if (res !== undefined) {
+                const cachedScript = this._cachedPlayerScripts.get(res.id);
+                if (cachedScript !== undefined) {
+                    return cachedScript.script.module;
+                }
+            }
+        }
+        // Finally we check if it's a module that's being built alongside this one
+        for (const tryPath of pathsToTry) {
+            const res = this.getResourceByFilename!(user.username, path.relative(".", tryPath));
+            if (res !== undefined) {
+                const buildingScript = buildingScripts[path.relative(".", tryPath)];
+                if (buildingScript !== undefined) {
+                    return buildingScript;
+                }
             }
         }
         throw new Error("No module \"" + modulePath + "\" is available.");
@@ -304,5 +370,13 @@ export default class GameSystem extends System {
             }
             return result;
         }, [] as string[]);
+    }
+
+    private async _loadScriptResource(id: string) {
+        return this.loadResource!(id, "utf8");
+    }
+
+    private _loadScriptResourceSync(id: string) {
+        return this.loadResourceSync!(id, "utf8");
     }
 }

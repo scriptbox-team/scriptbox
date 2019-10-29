@@ -12,8 +12,14 @@ export default class ScriptCollection {
     private _prebuiltScripts: {[name: string]: Script};
     constructor(prebuiltScripts: {[name: string]: string}, addIns?: {[s: string]: object}) {
         this.scriptRunner = new ScriptRunner();
-        this._prebuiltScripts = this.scriptRunner.buildManySync(prebuiltScripts, addIns);
+        this._prebuiltScripts = this.scriptRunner.runManySync(
+            this.scriptRunner.buildManySync(prebuiltScripts),
+            {},
+            addIns
+        );
     }
+    // TODO: Consider having the prebuilt modules in runScript use something other than just the collection's
+    // prebuilt scripts, it may be a good idea to only include what's absolutely necessary
     public async runScript(
             code: string,
             args: string,
@@ -25,13 +31,41 @@ export default class ScriptCollection {
             code,
             {
                 args: argsArray,
-                entity: entityValue === undefined ? undefined : entityValue.derefInto(),
-                me: playerValue === undefined ? undefined : playerValue.derefInto()
+                entity: entityValue,
+                me: playerValue
             },
             moduleResolutionHandler,
             undefined,
             500,
             this._prebuiltScripts
+        );
+    }
+    public async buildScripts(
+            pathsWithCode: {[s: string]: string},
+            moduleDependencyHandler?: (specifier: string, referrer: IVM.Module) => [string, string] | undefined) {
+        return this.scriptRunner.buildManySync(
+            pathsWithCode,
+            moduleDependencyHandler
+        );
+    }
+    public async runScripts(
+            modulePaths: {[s: string]: IVM.Module},
+            args: string,
+            entityValue?: IVM.Reference<any>,
+            playerValue?: IVM.Reference<any>,
+            moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module) {
+        const argsArray = ArgumentParser.parse(args);
+        return this.scriptRunner.runManySync(
+            modulePaths,
+            {},
+            {
+                args: argsArray,
+                entity: entityValue,
+                me: playerValue
+            },
+            500,
+            false,
+            moduleResolutionHandler
         );
     }
     public convert(obj: any) {

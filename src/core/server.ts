@@ -120,7 +120,10 @@ export default class Server {
             path.join(process.cwd(), "__scripted__", "exposed")
         );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
-        this._gameSystem.loadScriptResource = (resource) => this._resourceSystem.loadTextResource(resource);
+        this._gameSystem.getResourceByID = (id) => this._resourceSystem.getResourceByID(id);
+        this._gameSystem.getResourceByFilename = (user, file) => this._resourceSystem.getResourceByFilename(file, user);
+        this._gameSystem.loadResource = (resource, enc) => this._resourceSystem.loadResource(resource, enc);
+        this._gameSystem.loadResourceSync = (resource, enc) => this._resourceSystem.loadResourceSync(resource, enc);
 
         this._networkSystem.hookup([
             this._clientManagerNetworker,
@@ -185,6 +188,7 @@ export default class Server {
             this._clientManager.deleteQueued();
         }
         catch (error) {
+            // TODO: Suppress repeated errors
             this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
             console.log(`[GLOBAL] ${error.stack}`);
             this._gameSystem.recover();

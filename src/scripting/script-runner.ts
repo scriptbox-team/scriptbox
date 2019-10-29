@@ -98,20 +98,58 @@ export default class ScriptRunner {
 
     public buildManySync(
         pathsWithCode: {[s: string]: string},
-        addIns?: {[s: string]: object},
-        globalAccess: boolean = true
-    ): {[s: string]: Script} {
-        if (addIns === undefined) {
-            addIns = {};
-        }
+        moduleDependencyHandler?: (specifier: string, referrer: IVM.Module) => [string, string] | undefined,
+    ): {[s: string]: IVM.Module} {
         const modulesInverse = new WeakMap<IVM.Module, string>();
         const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, codePath) => {
             const transpiledCode = this._transpile(code);
             acc[codePath] = this._isolate.compileModuleSync(transpiledCode);
             modulesInverse.set(acc[codePath], codePath);
         }, {} as {[s: string]: IVM.Module});
+
+        // This will look at already checked modules multiple times
+        // So it's very efficient but it'll do
+        // This shouldn't be that big of a performance problem unless somebody goes nuts with dependencies or something
+        let check = true;
+        while (check) {
+            _.each(modules, (module, modulePath) => {
+                check = false;
+                for (const res of module.dependencySpecifiers) {
+                    if (moduleDependencyHandler !== undefined) {
+                        const entry = moduleDependencyHandler(res, module);
+                        if (entry !== undefined) {
+                            const transpiledCode = this._transpile(entry[1]);
+                            modules[entry[0]] = this._isolate.compileModuleSync(transpiledCode);
+                            modulesInverse.set(modules[entry[0]], entry[0]);
+                            check = true;
+                        }
+                    }
+                }
+            });
+        }
+
+        return modules;
+    }
+
+    public runManySync(
+        modules: {[s: string]: IVM.Module},
+        modulePaths: {[s: string]: Script} = {},
+        addIns: object = {},
+        timeout?: number,
+        globalAccess: boolean = true,
+        moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module
+    ) {
+        const moduleList = _.reduce(modulePaths, (acc, value, key) => {
+            acc[key] = value.module;
+            return acc;
+        }, {} as {[path: string]: IVM.Module});
+        _.merge(moduleList, modules);
+        const modulesInverse = new WeakMap<IVM.Module, string>();
+        _.each(modules, (module, modulePath) => {
+            modulesInverse.set(module, modulePath);
+        });
         return _.transform(modules, (acc, module, codePath) => {
-            const context = this.makeContext(true, addIns![codePath]);
+            const context = this.makeContext(true, addIns);
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
                 context.global.setSync("_log", new IVM.Reference(this._log));
@@ -127,9 +165,19 @@ export default class ScriptRunner {
                 `).runSync(context);
             }
             module.instantiateSync(context, (modulePath, referringModule) => {
-                return this._defaultModuleInstantiation(modulesInverse.get(referringModule)!, modulePath, modules);
+                if (moduleResolutionHandler !== undefined) {
+                    return moduleResolutionHandler(modulePath, referringModule);
+                }
+                else {
+                    return this._defaultModuleInstantiation(
+                        modulesInverse.get(referringModule)!,
+                        modulePath,
+                        moduleList
+                    );
+                }
             });
-            const result = module.evaluateSync();
+            const opts = timeout !== undefined ? {timeout} : undefined;
+            const result = module.evaluateSync(opts);
             acc[codePath] = new Script(module, context, result);
         }, {} as {[s: string]: Script});
     }
@@ -151,7 +199,10 @@ export default class ScriptRunner {
     private _addToContext(context: IVM.Context, addIns: object = {}) {
         for (const [key, value] of Object.entries(addIns)) {
             let valueToCopy = value;
-            if (Array.isArray(value) || typeof value === "object" && value !== null) {
+            if (value instanceof IVM.Reference) {
+                valueToCopy = value.derefInto();
+            }
+            else if (Array.isArray(value) || typeof value === "object" && value !== null) {
                 valueToCopy = new IVM.ExternalCopy(value).copyInto();
             }
             context.global.setSync(key, valueToCopy);
