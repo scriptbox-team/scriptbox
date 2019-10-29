@@ -1,5 +1,6 @@
 import _ from "lodash";
 import NetworkSystem from "networking/network-system";
+import path from "path";
 
 import Client from "./client";
 import ClientManagerNetworker from "./client-manager-networker";
@@ -113,7 +114,11 @@ export default class Server {
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
-        this._gameSystem = new GameSystem(this._tickRate);
+        this._gameSystem = new GameSystem(
+            this._tickRate,
+            path.join(process.cwd(), "__scripted__"),
+            path.join(process.cwd(), "__scripted__", "exposed")
+        );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
         this._gameSystem.loadScriptResource = (resource) => this._resourceSystem.loadTextResource(resource);
 

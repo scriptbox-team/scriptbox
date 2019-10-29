@@ -104,9 +104,11 @@ export default class ScriptRunner {
         if (addIns === undefined) {
             addIns = {};
         }
+        const modulesInverse = new WeakMap<IVM.Module, string>();
         const modules: {[s: string]: IVM.Module} = _.transform(pathsWithCode, (acc, code, codePath) => {
             const transpiledCode = this._transpile(code);
             acc[codePath] = this._isolate.compileModuleSync(transpiledCode);
+            modulesInverse.set(acc[codePath], codePath);
         }, {} as {[s: string]: IVM.Module});
         return _.transform(modules, (acc, module, codePath) => {
             const context = this.makeContext(true, addIns![codePath]);
@@ -124,8 +126,8 @@ export default class ScriptRunner {
                     };
                 `).runSync(context);
             }
-            module.instantiateSync(context, (modulePath) => {
-                return this._defaultModuleInstantiation(codePath, modulePath, modules);
+            module.instantiateSync(context, (modulePath, referringModule) => {
+                return this._defaultModuleInstantiation(modulesInverse.get(referringModule)!, modulePath, modules);
             });
             const result = module.evaluateSync();
             acc[codePath] = new Script(module, context, result);
@@ -179,16 +181,22 @@ export default class ScriptRunner {
     }
 
     private _defaultModuleInstantiation(dir: string, requirePath: string, modules: {[path: string]: IVM.Module}) {
+        let pathsToTry = [requirePath];
         const extension = path.extname(requirePath);
-        if (![".ts", ".js", ""].includes(extension)) {
-            throw new Error("Modules with extension \"" + extension + "\" are not supported.");
+        if (extension === "") {
+            const assumedFiletypes = [".ts", ".js"];
+            pathsToTry = pathsToTry.concat(assumedFiletypes.map((ext) => requirePath + ext));
         }
-        const requireWithoutExtension = requirePath.substr(0, requirePath.length - extension.length);
-        const codeDir = path.dirname(dir);
-        const modulePath = path.join(codeDir, requireWithoutExtension);
-        if (modules[modulePath] === undefined) {
-            throw new Error("No module at \"" + modulePath + "\" is available.");
+        else if (![".ts", ".js"].includes(extension)) {
+            throw new Error("Modules with extension \"" + extension + "\" are not supported using require.");
         }
-        return modules[modulePath];
+        for (const tryPath of pathsToTry) {
+            const codeDir = path.dirname(dir);
+            const modulePath = path.join(codeDir, tryPath);
+            if (modules[modulePath] !== undefined) {
+                return modules[modulePath];
+            }
+        }
+        throw new Error("No module \"" + requirePath + "\" is available.");
     }
 }

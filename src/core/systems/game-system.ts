@@ -15,53 +15,36 @@ export default class GameSystem extends System {
     public static readonly scriptedServerSubsystemDir = path.join(
         process.cwd(),
         "./__scripted__/",
-        "./scripted-server-subsystem"
+        "./scripted-server-subsystem.ts"
     );
     public loadScriptResource?: (resourceID: string) => Promise<string>;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
     private _scriptDir: string;
-    constructor(tickRate: number) {
+    private _playerScriptDir: string;
+    private _validPlayerModules: {[name: string]: string};
+    constructor(tickRate: number, systemScriptDirectory: string, playerScriptDirectory: string) {
         super();
         this._resolveModule = this._resolveModule.bind(this);
         this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
-        const fileDirs = [
-            "./aspect",
-            "./aspect-modifier",
-            "./aspect-set",
-            "./aspect-set-modifier",
-            "./collision-box",
-            "./component-info",
-            "./component",
-            "./control",
-            "./default-control",
-            "./entity",
-            "./event-component",
-            "./existable",
-            "./export-values",
-            "./group",
-            "./id-generator",
-            "./manager",
-            "./meta-info",
-            "./player-soul",
-            "./player",
-            "./position",
-            "./proxy-generator",
-            "./resource",
-            "./scripted-server-subsystem",
-            "./sub-event",
-            "./velocity",
-            "./exposed/component",
-            "./exposed/default",
-            "./exposed/entity"
-        ];
-        this._scriptDir = path.join(process.cwd(), "./__scripted__/");
+        this._scriptDir = systemScriptDirectory;
+        this._playerScriptDir = playerScriptDirectory;
 
-        const scripts: any = _.transform(fileDirs, (result, value) => {
-            const dir = path.join(this._scriptDir, value);
-            result[dir] = fs.readFileSync(dir + ".ts", {encoding: "utf8"});
+        const playerFileDirs = this._getDirsRecursive(this._playerScriptDir);
+        const fileDirs = playerFileDirs.concat(
+            this._getDirsRecursive(this._scriptDir, [this._playerScriptDir])
+        );
+
+        const scripts: any = _.transform(fileDirs, (result, dir) => {
+            result[dir] = fs.readFileSync(dir, {encoding: "utf8"});
         }, {} as {[s: string]: string});
+
+        this._validPlayerModules = playerFileDirs.reduce((result, dir) => {
+            const relativePath = path.relative(this._playerScriptDir, dir);
+            result[relativePath] = dir;
+            return result;
+        }, {} as {[name: string]: string});
 
         this._scriptCollection = new ScriptCollection(scripts);
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", tickRate);
@@ -292,14 +275,34 @@ export default class GameSystem extends System {
     }
 
     private _resolveModule(modulePath: string) {
-        const validModules: {[id: string]: string} = {
-            component: "./exposed/component",
-            entity: "./exposed/entity",
-            default: "./exposed/default"
-        };
-        if (validModules[modulePath] === undefined) {
-            throw new Error("No module of name \"" + modulePath + "\" is available.");
+        let pathsToTry = [modulePath];
+        const extension = path.extname(modulePath);
+        if (extension === "") {
+            const assumedFiletypes = [".ts", ".js"];
+            pathsToTry = pathsToTry.concat(assumedFiletypes.map((ext) => modulePath + ext));
         }
-        return this._scriptCollection.getScript(path.join(this._scriptDir, validModules[modulePath])).module;
+        else if (![".ts", ".js"].includes(extension)) {
+            throw new Error("Modules with extension \"" + extension + "\" are not supported using require.");
+        }
+        for (const tryPath of pathsToTry) {
+            if (this._validPlayerModules[tryPath] !== undefined) {
+                return this._scriptCollection.getScript(this._validPlayerModules[tryPath]).module;
+            }
+        }
+        throw new Error("No module \"" + modulePath + "\" is available.");
+    }
+
+    private _getDirsRecursive(dir: string, exclude: string[] = []) {
+        return fs.readdirSync(dir).reduce((result, elemPath) => {
+            const fullPath = path.join(dir, elemPath);
+            const stats = fs.statSync(fullPath);
+            if (stats.isFile()) {
+                result.push(fullPath);
+            }
+            else if (stats.isDirectory() && !exclude.includes(fullPath)) {
+                result.concat(this._getDirsRecursive(fullPath, exclude));
+            }
+            return result;
+        }, [] as string[]);
     }
 }
