@@ -7,7 +7,8 @@ export default abstract class Control extends Component {
     public inputStates: {[key: string]: boolean} = {};
     public pastInputStates: {[key: string]: boolean} = {};
     public update(delta: number) {
-        // Put "simple" input mapping here
+        super.update(delta);
+        // TODO: Put "simple" input mapping here
     }
     public postUpdate(delta: number) {
         this.pastInputStates = Object.assign(this.inputStates, {});

@@ -5,7 +5,7 @@ export default class Position extends Component {
     public x: Aspect<number> = new Aspect(0);
     public y: Aspect<number> = new Aspect(0);
 
-    public create(x?: number, y?: number) {
+    public onCreate(x?: number, y?: number) {
         if (typeof x === "number") {
             this.x.base = x;
         }

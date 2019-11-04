@@ -17,6 +17,14 @@ export default class Script {
         }
         return funcRef.applySync(undefined, params, {timeout: 500});
     }
+    public async executeNoReturn(name: string, ...params: any) {
+        const module = this.module;
+        const funcRef = module.namespace.getSync(name);
+        if (funcRef.typeof !== "function") {
+            throw new Error("Function \"" + name + "\" not found in script.");
+        }
+        return funcRef.applyIgnored(undefined, params, {timeout: 500});
+    }
     public get(name: string): any {
         const module = this.module;
         const funcRef = module.namespace.getSync(name);

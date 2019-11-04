@@ -10,7 +10,7 @@ export interface EntityProxy {
         componentClassID: string,
         localID: string,
         owner?: PlayerProxy | undefined,
-        ...params: any[]) => void;
+        ...params: any[]) => any;
     readonly remove: (component: Component) => void;
     readonly get: <T extends Component = any>(name: string) => T | undefined;
     readonly with: <T extends Component = any>(name: string, func: (t: T) => void) => any;
@@ -22,6 +22,7 @@ export interface EntityProxy {
     readonly exists: boolean;
     readonly controller?: Player;
     readonly id: string;
+    readonly reload: () => void;
 }
 
 interface EntityManagementMethods {
@@ -31,7 +32,7 @@ interface EntityManagementMethods {
         componentClassID: string,
         localID: string,
         owner?: string | undefined,
-        ...params: any[]) => boolean;
+        ...params: any[]) => any;
     remove: (entityID: string, component: Component) => void;
     fromID: (entityID: string) => EntityProxy;
 }
@@ -90,7 +91,7 @@ export default class Entity {
         componentClassID: string,
         localID: string,
         owner?: string | undefined,
-        ...params: any[]) => boolean;
+        ...params: any[]) => any;
     private _remove!: (entityID: string, component: Component) => void;
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;
@@ -136,7 +137,7 @@ export default class Entity {
         this._delete(this._id);
     }
     public add(componentClassID: string, localID: string, owner?: PlayerProxy, ...params: any[]) {
-        this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
+        return this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
     }
     public remove(component: Component) {
         this._remove(this._id, component);
@@ -247,5 +248,14 @@ export default class Entity {
 
     public get displayData() {
         return {id: this.id};
+    }
+
+    public reload() {
+        for (const [localID, component] of this._components) {
+            component.onUnload();
+        }
+        for (const [localID, component] of this._components) {
+            component.onLoad();
+        }
     }
 }

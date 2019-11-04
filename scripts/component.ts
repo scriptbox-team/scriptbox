@@ -8,11 +8,26 @@ export default class Component {
     constructor(data: ComponentInfo) {
         this._data = data;
     }
+    public onCreate() {
+
+    }
+    public onLoad() {
+
+    }
     public update(delta: number) {
 
     }
     public postUpdate(delta: number) {
 
+    }
+    public onUnload() {
+
+    }
+    public onDestroy() {
+
+    }
+    public destroy() {
+        this.entity.remove(this);
     }
     public get id() {
         return this._data.id;
@@ -24,6 +39,9 @@ export default class Component {
         if (this.entity !== undefined) {
             this.entity.setComponentLocalID(this, newID);
         }
+    }
+    public get owner() {
+        return this._data.owner;
     }
     public get entity() {
         return this._data.entity;
@@ -48,5 +66,8 @@ export default class Component {
     }
     public get displayData() {
         return {id: this.id};
+    }
+    public get with() {
+        return this.entity.with;
     }
 }

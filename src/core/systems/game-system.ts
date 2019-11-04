@@ -75,7 +75,7 @@ export default class GameSystem extends System {
     public recover() {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "recoverFromTimeout");
     }
-    public createPlayer(client: Client) {
+    public async createPlayer(client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createPlayer",
@@ -86,7 +86,7 @@ export default class GameSystem extends System {
         const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", client.id);
         // Creating the entity is temporary
         // Until players can add default modules on their own
-        this._scriptCollection.execute(
+        await this._scriptCollection.executeNoReturn(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
@@ -96,7 +96,7 @@ export default class GameSystem extends System {
             150 + Math.random() * 150,
             150 + Math.random() * 150
         );
-        this._scriptCollection.execute(
+        await this._scriptCollection.executeNoReturn(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
@@ -106,12 +106,20 @@ export default class GameSystem extends System {
             0,
             0
         );
-        this._scriptCollection.execute(
+        await this._scriptCollection.executeNoReturn(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
             "default-control",
             "control",
+            client.id
+        );
+        await this._scriptCollection.executeNoReturn(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            entID,
+            "display",
+            "display",
             client.id
         );
         this._scriptCollection.execute(
@@ -137,9 +145,9 @@ export default class GameSystem extends System {
             state
         );
     }
-    public createEntityAt(prefabID: string, x: number, y: number, player: Client) {
+    public async createEntityAt(prefabID: string, x: number, y: number, player: Client) {
         const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", player.id);
-        this._scriptCollection.execute(
+        await this._scriptCollection.executeNoReturn(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
             entID,
@@ -262,7 +270,7 @@ export default class GameSystem extends System {
                 className
             );
             if (apply) {
-                this._scriptCollection.execute(
+                this._scriptCollection.executeNoReturn(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
                     entityID,

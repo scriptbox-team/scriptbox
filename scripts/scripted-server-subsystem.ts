@@ -16,6 +16,7 @@ import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
 import Velocity from "./velocity";
+import Display from "./display";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -29,6 +30,7 @@ const makeID = (prefix: string) => {
 
 const exportValues: Exports = {
     entities: {},
+    sprites: {},
     inspectedEntityInfo: {},
     messages: []
 };
@@ -129,15 +131,17 @@ const componentManager = new Manager<Component>((
         const component = new componentClass(infoProxy);
         componentInfoMap.set(component, info);
 
-        componentExecute(component, "create", ...args);
         const trueEntity = entityUnproxiedMap.get(entity);
         trueEntity.directAdd(localID, component);
+        componentExecute(component, "onCreate", ...args);
+        componentExecute(component, "onLoad", ...args);
 
         return component;
     },
     (component: Component) => {
         const info = componentInfoMap.get(component);
-        componentExecute(component, "delete");
+        componentExecute(component, "onDestroy");
+        componentExecute(component, "onUnload");
         const trueEntity = entityUnproxiedMap.get(info.entity);
         trueEntity.directRemove(info.entity.getComponentLocalID(component));
     }
@@ -262,34 +266,56 @@ export function update() {
                 handleComponentError(positionComponent, err);
             }
         }
+        // TODO: Make it so entities can have multiple displays
+        const displayComponent = entity.get<Display>("display");
+        const displayInfo = componentInfoMap.get(displayComponent);
+        if (displayComponent !== undefined && displayInfo.enabled) {
+            try {
+                const componentID = displayInfo.id;
+                const texture = componentExecuteDirect(displayInfo, () => displayComponent.textureID.getValue());
+                const x = componentExecuteDirect(displayInfo, () => displayComponent.textureX.getValue());
+                const y = componentExecuteDirect(displayInfo, () => displayComponent.textureY.getValue());
+                const width = componentExecuteDirect(displayInfo, () => displayComponent.textureWidth.getValue());
+                const height = componentExecuteDirect(displayInfo, () => displayComponent.textureHeight.getValue());
+                const depth = componentExecuteDirect(displayInfo, () => displayComponent.depth.getValue());
+                const xOffset = componentExecuteDirect(displayInfo, () => displayComponent.xOffset.getValue());
+                const yOffset = componentExecuteDirect(displayInfo, () => displayComponent.yOffset.getValue());
+                if (typeof x === "number" && typeof y === "number"
+                    && typeof width === "number" && typeof height === "number"
+                    && typeof depth === "number" && typeof xOffset === "number"
+                    && typeof yOffset === "number" && typeof texture === "string"
+                    && typeof id === "string") {
+                    exportValues.sprites[componentID] = {
+                        ownerID: id,
+                        texture,
+                        depth,
+                        textureSubregion: {x, y, width, height},
+                        offset: {x: xOffset, y: yOffset}
+                    };
+                }
+            }
+            catch (err) {
+                handleComponentError(positionComponent, err);
+            }
+        }
         // Retrieve collision box info
         const collisionComponent = entity.get<CollisionBox>("collision-box");
         const collisionInfo = componentInfoMap.get(collisionComponent);
         if (collisionComponent !== undefined && collisionInfo.enabled) {
             try {
-                if (typeof collisionComponent.x1 === "object"
-                && typeof collisionComponent.y1 === "object"
-                && typeof collisionComponent.x1.getValue === "function"
-                && typeof collisionComponent.y1.getValue === "function"
-                && typeof collisionComponent.x2 === "object"
-                && typeof collisionComponent.y2 === "object"
-                && typeof collisionComponent.x2.getValue === "function"
-                && typeof collisionComponent.y2.getValue === "function"
-                ) {
-                    const x1 = componentExecuteDirect(collisionInfo, () => collisionComponent.x1.getValue());
-                    const y1 = componentExecuteDirect(collisionInfo, () => collisionComponent.y1.getValue());
-                    const x2 = componentExecuteDirect(collisionInfo, () => collisionComponent.x2.getValue());
-                    const y2 = componentExecuteDirect(collisionInfo, () => collisionComponent.y2.getValue());
-                    if (typeof x1 === "number" && typeof y1 === "number"
-                    && typeof x2 === "number" && typeof y2 === "number"
-                    && typeof id === "string") {
-                        exportValues.entities[id].collisionBox = {
-                            x1: Math.min(x1, x2),
-                            x2: Math.min(y1, y2),
-                            y1: Math.max(x1, x2),
-                            y2: Math.max(y1, y2)
-                        };
-                    }
+                const x1 = componentExecuteDirect(collisionInfo, () => collisionComponent.x1.getValue());
+                const y1 = componentExecuteDirect(collisionInfo, () => collisionComponent.y1.getValue());
+                const x2 = componentExecuteDirect(collisionInfo, () => collisionComponent.x2.getValue());
+                const y2 = componentExecuteDirect(collisionInfo, () => collisionComponent.y2.getValue());
+                if (typeof x1 === "number" && typeof y1 === "number"
+                && typeof x2 === "number" && typeof y2 === "number"
+                && typeof id === "string") {
+                    exportValues.entities[id].collisionBox = {
+                        x1: Math.min(x1, x2),
+                        x2: Math.min(y1, y2),
+                        y1: Math.max(x1, x2),
+                        y2: Math.max(y1, y2)
+                    };
                 }
             }
             catch (err) {
@@ -427,9 +453,9 @@ export function createComponent(
             + ", Params: "
             + JSON.stringify(params)
             +  ")");
-        return true;
+        return component;
     }
-    return false;
+    return undefined;
 }
 
 export function deleteComponent(componentID: string) {
@@ -638,3 +664,4 @@ classList.set("velocity", Velocity);
 classList.set("collision-box", CollisionBox);
 classList.set("default-control", DefaultControl);
 classList.set("event-component", EventComponent);
+classList.set("display", Display);

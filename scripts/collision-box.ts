@@ -7,7 +7,7 @@ export default class CollisionBox extends Component {
     public x2: Aspect<number> = new Aspect(0);
     public y2: Aspect<number> = new Aspect(0);
 
-    public create(x1?: number, y1?: number, x2?: number, y2?: number) {
+    public onCreate(x1?: number, y1?: number, x2?: number, y2?: number) {
         if (typeof x1 === "number") {
             this.x1.base = x1;
         }

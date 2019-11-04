@@ -1,34 +1,64 @@
+import Aspect from "./aspect";
 import Component from "./component";
 import SubEvent from "./sub-event";
 
 export default class EventComponent extends Component {
+    public loopAtEnd: Aspect<boolean>;
+    private _startSubEvent: SubEvent;
     private _subEvent: SubEvent;
-    public create() {
+    private _endSubEvent: SubEvent;
+    private _always?: Array<() => void> = [];
+    public onCreate() {
+        this.loopAtEnd = new Aspect<boolean>(false);
+        this._startSubEvent = new SubEvent({});
+        this._subEvent = this._startSubEvent;
+        this._endSubEvent = this._startSubEvent;
     }
     public postUpdate(delta: number) {
         super.postUpdate(delta);
         this._subEvent = this._subEvent.proceed(delta);
         if (this._subEvent === undefined) {
-            this.entity.remove(this);
+            if (this.loopAtEnd) {
+                this._subEvent = this._startSubEvent;
+            }
+            else {
+                this._end();
+            }
         }
     }
     public wait(time: number) {
-        return this._subEvent.wait(time);
+        this._endSubEvent = this._endSubEvent.wait(time);
+        return this;
     }
     public do(func: () => void) {
-        return this._subEvent.do(func);
+        this._endSubEvent = this._endSubEvent.do(func);
+        return this;
     }
     public repeat(repeat: (delta: number) => boolean) {
-        return this._subEvent.repeat(repeat);
+        this._endSubEvent = this._endSubEvent.repeat(repeat);
+        return this;
     }
     public hold() {
-        return this._subEvent.hold();
+        this._endSubEvent = this._endSubEvent.hold();
+        return this;
+    }
+    public always(func: () => void) {
+        this._always.push(func);
     }
     public holdRepeat(repeat: (delta: number) => boolean) {
-        return this._subEvent.holdRepeat(repeat);
+        this._endSubEvent = this._endSubEvent.holdRepeat(repeat);
+        return this;
     }
     public cancel() {
-        this._subEvent = undefined;
-        this.entity.remove(this);
+        this._end();
+    }
+    public loop() {
+        this.loopAtEnd.base = true;
+    }
+    private _end() {
+        for (const func of this._always) {
+            func();
+        }
+        this.destroy();
     }
 }
