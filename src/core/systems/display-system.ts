@@ -10,10 +10,10 @@ import RenderObject from "resource-management/render-object";
 import System from "./system";
 
 interface Sprite {
-    ownerID: string;
+    ownerID: string | undefined;
     texture: string;
     textureSubregion: {x: number, y: number, width: number, height: number};
-    offset: {x: number, y: number};
+    position: {x: number, y: number};
     depth: number;
 }
 
@@ -40,7 +40,6 @@ export default class DisplaySystem extends System {
         diff.added = _.transform(this._lastExportValues.sprites, (acc, sprite, key) => {
             acc[key] = this._convertToRenderObject(
                 key,
-                this._lastExportValues.entities[sprite.ownerID].position,
                 sprite
             );
         }, {} as any as {[id: string]: RenderObject});
@@ -128,21 +127,17 @@ export default class DisplaySystem extends System {
         // Lodash type annotations are really restrictive
         // So please ignore the following casting shenanigans
         const diffs = _.transform(exportValues.sprites, (acc, sprite, key) => {
-            const entity = exportValues.entities[sprite.ownerID];
             const result = acc;
-            const prevEntity = lastExportValues.entities[sprite.ownerID];
             const prevSprite = lastExportValues.sprites[key];
-            if (prevEntity === undefined || prevSprite === undefined) {
+            if (prevSprite === undefined) {
                 result.added[key] = this._convertToRenderObject(
                     key,
-                    exportValues.entities[sprite.ownerID].position,
                     sprite
                 );
             }
-            else if (!this._same(entity.position, sprite, prevEntity.position, prevSprite)) {
+            else if (!this._same(sprite, prevSprite)) {
                 result.updated[key] = this._convertToRenderObject(
                     key,
-                    exportValues.entities[sprite.ownerID].position,
                     sprite
                 );
             }
@@ -152,35 +147,31 @@ export default class DisplaySystem extends System {
             removed: {} as {[id: string]: RenderObject}}) as Difference<RenderObject>;
         _.each(lastExportValues.sprites, (sprite, key) => {
             if (exportValues.sprites[key] === undefined) {
-                const position = lastExportValues.entities[key].position;
-                diffs.removed[key] = this._convertToRenderObject(key, position, sprite);
+                diffs.removed[key] = this._convertToRenderObject(key, sprite);
             }
         });
+        // console.log(exportValues.sprites);
+        // console.log(diffs);
         return diffs;
     }
 
-    private _convertToRenderObject(key: string, position: {x: number, y: number}, sprite: Sprite) {
+    private _convertToRenderObject(key: string, sprite: Sprite) {
         return new RenderObject(
             sprite.ownerID,
             key,
             sprite.texture,
             sprite.textureSubregion,
-            {
-                x: position.x + sprite.offset.x,
-                y: position.y + sprite.offset.y
-            },
+            sprite.position,
             sprite.depth,
             false
         );
     }
 
     private _same(
-            currPosition: {x: number, y: number},
             currSprite: Sprite,
-            prevPosition: {x: number, y: number},
             prevSprite: Sprite) {
-        return currPosition.x + currSprite.offset.x === prevPosition.x + prevSprite.offset.x
-            && currPosition.y + currSprite.offset.y === prevPosition.y + prevSprite.offset.y
+        return currSprite.position.x === prevSprite.position.x
+            && currSprite.position.y === prevSprite.position.y
             && currSprite.depth === prevSprite.depth
             && currSprite.ownerID === prevSprite.ownerID
             && currSprite.texture === prevSprite.texture

@@ -4,6 +4,7 @@ import Component from "./component";
 import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
+import Display from "./display";
 import Entity, { EntityProxy } from "./entity";
 import EventComponent from "./event-component";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
@@ -16,7 +17,6 @@ import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
 import Velocity from "./velocity";
-import Display from "./display";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -83,10 +83,14 @@ const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => 
         creator
     );
     const entity = new Entity(id, {
-        delete: deleteEntity.bind(this),
-        add: createComponent.bind(this),
-        remove: deleteComponent.bind(this),
-        fromID: getEntity.bind(this)
+        delete: deleteEntity,
+        add: createComponent,
+        remove: (entID: string, component: Component) => {
+            const componentInfo = componentInfoMap.get(component);
+            if (componentInfo.entity === entityManager.get(entID)) {
+                deleteComponent(componentInfo.id);
+            }
+        }
     }, info);
     const proxy = ProxyGenerator.makeDeletable<EntityProxy>(
         entity as any as EntityProxy,
@@ -101,7 +105,7 @@ const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => 
     if (trueEntity.controller) {
         trueEntity.controller.release();
     }
-    trueEntity.delete();
+    trueEntity.onDelete();
     trueEntity.exists = false;
 });
 
@@ -143,7 +147,7 @@ const componentManager = new Manager<Component>((
         componentExecute(component, "onDestroy");
         componentExecute(component, "onUnload");
         const trueEntity = entityUnproxiedMap.get(info.entity);
-        trueEntity.directRemove(info.entity.getComponentLocalID(component));
+        trueEntity.directRemove(trueEntity.getComponentLocalID(component));
     }
 );
 
@@ -224,16 +228,19 @@ function runOnAll(funcName: string, ...args: any[]) {
 export function initialize(initTickRate: number) {
     tickRate = initTickRate;
     Entity.externalCreate = createEntity;
-    Entity.externalGetByID = getEntity;
+    Entity.externalFromID = getEntity;
+    Component.externalFromID = (id: string) => {
+        return componentManager.get(id);
+    };
 }
 
 export function update() {
     // For each component, call update function if exists
-    runOnAll("update", 1 / tickRate);
-    runOnAll("postUpdate", 1 / tickRate);
+    runOnAll("onUpdate", 1 / tickRate);
+    runOnAll("onPostUpdate", 1 / tickRate);
+    playerManager.deleteQueued();
     entityManager.deleteQueued();
     componentManager.deleteQueued();
-    playerManager.deleteQueued();
     // After the update and postupdate are called we should let the exports know about important changes
     resetExports();
     // We need a new iterator since we reached the end of the last one
@@ -273,24 +280,26 @@ export function update() {
             try {
                 const componentID = displayInfo.id;
                 const texture = componentExecuteDirect(displayInfo, () => displayComponent.textureID.getValue());
-                const x = componentExecuteDirect(displayInfo, () => displayComponent.textureX.getValue());
-                const y = componentExecuteDirect(displayInfo, () => displayComponent.textureY.getValue());
-                const width = componentExecuteDirect(displayInfo, () => displayComponent.textureWidth.getValue());
-                const height = componentExecuteDirect(displayInfo, () => displayComponent.textureHeight.getValue());
+                const texX = componentExecuteDirect(displayInfo, () => displayComponent.textureX.getValue());
+                const texY = componentExecuteDirect(displayInfo, () => displayComponent.textureY.getValue());
+                const texWidth = componentExecuteDirect(displayInfo, () => displayComponent.textureWidth.getValue());
+                const texHeight = componentExecuteDirect(displayInfo, () => displayComponent.textureHeight.getValue());
                 const depth = componentExecuteDirect(displayInfo, () => displayComponent.depth.getValue());
                 const xOffset = componentExecuteDirect(displayInfo, () => displayComponent.xOffset.getValue());
                 const yOffset = componentExecuteDirect(displayInfo, () => displayComponent.yOffset.getValue());
-                if (typeof x === "number" && typeof y === "number"
-                    && typeof width === "number" && typeof height === "number"
+                const entPosition = exportValues.entities[id].position;
+                if (typeof texX === "number" && typeof texY === "number"
+                    && typeof texWidth === "number" && typeof texHeight === "number"
                     && typeof depth === "number" && typeof xOffset === "number"
                     && typeof yOffset === "number" && typeof texture === "string"
-                    && typeof id === "string") {
+                    && typeof id === "string"
+                    && entPosition !== undefined) {
                     exportValues.sprites[componentID] = {
                         ownerID: id,
                         texture,
                         depth,
-                        textureSubregion: {x, y, width, height},
-                        offset: {x: xOffset, y: yOffset}
+                        textureSubregion: {x: texX, y: texY, width: texWidth, height: texHeight},
+                        position: {x: entPosition.x + xOffset, y: entPosition.y + yOffset}
                     };
                 }
             }
@@ -334,6 +343,11 @@ export function update() {
     for (const player of playersInspecting) {
         const entityID = inspectedEntities.get(player);
         if (!entityManager.has(entityID)) {
+            exportValues.inspectedEntityInfo[player] = {
+                id: entityID,
+                name: "<UNKNOWN>",
+                componentInfo: {}
+            };
             continue;
         }
         const entity = entityManager.get(entityID);
@@ -428,17 +442,21 @@ export function getEntity(id: string) {
     return _getEntity(id);
 }
 
-export function deleteEntity(id: string) {
+const _deleteEntity = (id: string) => {
     entityManager.queueForDeletion(id);
     global.log("Entity queued for deletion (ID: " + id + ")");
+};
+
+export function deleteEntity(id: string) {
+    return _deleteEntity(id);
 }
 
-export function createComponent(
-        entID: string,
-        classID: string,
-        localID: string,
-        creatorID?: string,
-        ...params: any[]) {
+const _createComponent = (
+    entID: string,
+    classID: string,
+    localID: string,
+    creatorID?: string,
+    ...params: any[]) => {
     const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
@@ -453,14 +471,27 @@ export function createComponent(
             + ", Params: "
             + JSON.stringify(params)
             +  ")");
-        return component;
+        return component.id;
     }
     return undefined;
+};
+
+export function createComponent(
+    entID: string,
+    classID: string,
+    localID: string,
+    creatorID?: string,
+    ...params: any[]) {
+    return _createComponent(entID, classID, localID, creatorID, ...params);
 }
 
-export function deleteComponent(componentID: string) {
+const _deleteComponent = (componentID: string) => {
     componentManager.queueForDeletion(componentID);
     global.log("Component queued for deletion (ID: " + componentID + ")");
+};
+
+export function deleteComponent(componentID: string) {
+    return _deleteComponent(componentID);
 }
 
 export function create(classParam: string | ClassInterface, ...args: any[]) {
@@ -643,6 +674,7 @@ export function recoverFromTimeout() {
 const resetExports = () => {
     exportValues.entities = {};
     exportValues.inspectedEntityInfo = {};
+    exportValues.sprites = {};
     exportValues.messages = [];
 };
 

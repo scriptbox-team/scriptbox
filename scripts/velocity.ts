@@ -18,7 +18,7 @@ export default class Velocity extends Component {
         }
     }
 
-    public update(delta: number) {
+    public onUpdate(delta: number) {
         this.with<Position>("position", (position) => {
             position.move(this.x.getValue() * delta, this.y.getValue() * delta);
         });

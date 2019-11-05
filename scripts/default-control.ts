@@ -19,8 +19,8 @@ export default class DefaultControl extends Control {
             this._yModifier = velocity.y.addModifier((v) => v + this._yMoveVelocity);
         });
     }
-    public update(delta: number) {
-        super.update(delta);
+    public onUpdate(delta: number) {
+        super.onUpdate(delta);
         const up = this.commandDown("up");
         const down = this.commandDown("down");
         const left = this.commandDown("left");

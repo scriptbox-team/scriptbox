@@ -18,7 +18,7 @@ interface TextureRegion {
 export default class AnimationController extends Component {
     private _animations: SimpleAnimation[] = [];
     private _frames: {[name: string]: TextureRegion} = {};
-    public update() {
+    public onUpdate() {
         while (this._animations.length > 0 && !this._animations[this._animations.length - 1].exists) {
             this._animations.pop();
         }

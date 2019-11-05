@@ -19,7 +19,7 @@ export default class SimpleAnimation extends EventComponent {
                 .wait(frameData.duration);
         }
     }
-    public update(delta: number) {
-        super.update(delta);
+    public onUpdate(delta: number) {
+        super.onUpdate(delta);
     }
 }

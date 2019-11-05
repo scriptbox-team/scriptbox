@@ -24,10 +24,10 @@ export default interface Exports {
         collisionBox: {x1: number, y1: number, x2: number, y2: number},
     }};
     sprites: {[id: string]: {
-        ownerID: string,
+        ownerID: string | undefined,
         texture: string,
         textureSubregion: {x: number, y: number, width: number, height: number};
-        offset: {x: number, y: number};
+        position: {x: number, y: number};
         depth: number;
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};

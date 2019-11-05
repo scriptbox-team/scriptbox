@@ -9,7 +9,7 @@ export default class RenderObject {
         deleted: boolean
     ) {
         if (
-                typeof ownerID === "string"
+                typeof ownerID === "string" || ownerID === undefined
                 && typeof id === "string"
                 && typeof texture === "string"
                 && typeof textureSubregion === "object"
@@ -26,7 +26,7 @@ export default class RenderObject {
             return new RenderObject(ownerID, id, texture, textureSubregion, position, depth, deleted);
         }
     }
-    public ownerID: string;
+    public ownerID: string | undefined;
     public id: string;
     public texture: string;
     public textureSubregion: {x: number, y: number, width: number, height: number};
@@ -34,7 +34,7 @@ export default class RenderObject {
     public depth: number;
     public deleted: boolean;
     constructor(
-        ownerID: string,
+        ownerID: string | undefined,
         id: string,
         texture: string,
         subregion: {x: number, y: number, width: number, height: number},

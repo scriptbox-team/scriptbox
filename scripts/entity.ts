@@ -34,7 +34,6 @@ interface EntityManagementMethods {
         owner?: string | undefined,
         ...params: any[]) => any;
     remove: (entityID: string, component: Component) => void;
-    fromID: (entityID: string) => EntityProxy;
 }
 
 /**
@@ -77,12 +76,12 @@ export default class Entity {
         "_create"
     ]);
     public static externalCreate: (creatorID: string | undefined) => string;
-    public static externalGetByID: (id: string) => EntityProxy;
+    public static externalFromID: (id: string) => EntityProxy;
     public static create(prefabID: string, owner?: PlayerProxy) {
-        return this.getByID(this.externalCreate(owner !== undefined ? owner.id : owner));
+        return this.fromID(this.externalCreate(owner !== undefined ? owner.id : owner));
     }
-    public static getByID(id: string) {
-        return this.externalGetByID(id);
+    public static fromID(id: string) {
+        return this.externalFromID(id);
     }
     public tags: AspectSet<string>;
     private _delete!: (entityID: string) => void;
@@ -136,8 +135,20 @@ export default class Entity {
     public delete() {
         this._delete(this._id);
     }
+    public onDelete() {
+        for (const [id, component] of this._components) {
+            this.remove(component);
+        }
+    }
     public add(componentClassID: string, localID: string, owner?: PlayerProxy, ...params: any[]) {
-        return this._add(this._id, componentClassID, localID, owner !== undefined ? owner.id : undefined, ...params);
+        const componentID = this._add(
+            this._id,
+            componentClassID,
+            localID,
+            owner !== undefined ? owner.id : undefined,
+            ...params
+        );
+        return Component.fromID(componentID);
     }
     public remove(component: Component) {
         this._remove(this._id, component);

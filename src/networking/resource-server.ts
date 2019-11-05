@@ -1,5 +1,5 @@
 import express from "express";
-import fileUpload, { UploadedFile } from "express-fileupload";
+import fileUpload from "express-fileupload";
 import fs from "fs-extra";
 import Resource from "resource-management/resource";
 
@@ -8,8 +8,14 @@ interface ResourceServerOptions {
     resourcePath: string;
 }
 
+interface ResourceFile {
+    name: string;
+    data: Buffer;
+    mimetype: string;
+}
+
 export default class ResourceServer {
-    public onFileUpload?: (token: number, file: UploadedFile, resource?: string) => void;
+    public onFileUpload?: (token: number, file: ResourceFile, resource?: string) => void;
     public onFileDelete?: (token: number, resource: string) => void;
     private _app: express.Application;
     private _port: string;
@@ -117,15 +123,15 @@ export default class ResourceServer {
     }
     public host() {
         this._app.listen(this._port, () => {
-            console.log("Resource server started.");
+            console.log(`Resource server started on port ${this._port}`);
         });
     }
-    public async add(resource: Resource, file: UploadedFile): Promise<Resource> {
+    public async add(resource: Resource, file: ResourceFile): Promise<Resource> {
         await fs.outputFile(this._resourcePath + resource.id, file.data);
         this._resourceContentType.set(resource.id, file.mimetype);
         return resource;
     }
-    public async update(resource: Resource, file: UploadedFile): Promise<Resource> {
+    public async update(resource: Resource, file: ResourceFile): Promise<Resource> {
         await fs.outputFile(this._resourcePath + resource.id, file.data);
         this._resourceContentType.set(resource.id, file.mimetype);
         return resource;

@@ -3,6 +3,10 @@ import AspectSet from "./aspect-set";
 import ComponentInfo from "./component-info";
 
 export default class Component {
+    public static externalFromID: (id: string) => Component | undefined;
+    public static fromID(id: string) {
+        this.externalFromID(id);
+    }
     public tags = new AspectSet<string>([]);
     private _data: ComponentInfo;
     constructor(data: ComponentInfo) {
@@ -14,10 +18,10 @@ export default class Component {
     public onLoad() {
 
     }
-    public update(delta: number) {
+    public onUpdate(delta: number) {
 
     }
-    public postUpdate(delta: number) {
+    public onPostUpdate(delta: number) {
 
     }
     public onUnload() {

@@ -11,7 +11,7 @@ export default class Display extends Component {
     public textureWidth = new Aspect<number>(32);
     public textureHeight = new Aspect<number>(32);
     public onCreate(
-            textureID: string = "testCombined.png",
+            textureID: string = "R000000000000000000000000",
             textureX: number = 0,
             textureY: number = 0,
             textureWidth: number = 32,

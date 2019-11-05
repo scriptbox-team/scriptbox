@@ -75,10 +75,6 @@ export default class ScriptCollection {
         const script = this.getScript(scriptPath);
         return script.execute(name, ...params);
     }
-    public async executeNoReturn(scriptPath: string, name: string, ...params: any) {
-        const script = this.getScript(scriptPath);
-        return await script.executeNoReturn(name, ...params);
-    }
     public executeReturnRef(scriptPath: string, name: string, ...params: any) {
         const funcRef = this.getScript(scriptPath).getReference(name);
         const context = this.getScript(scriptPath).context;

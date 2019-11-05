@@ -112,7 +112,8 @@ export default class Server {
             this._idGenerator,
             {
                 serverPort: "" + options.resourcePort,
-                resourcePath: "./data/res/"
+                resourcePath: "./data/res/",
+                initialResourcePath: path.join(process.cwd(), "./data-default")
             }
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);

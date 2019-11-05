@@ -76,7 +76,7 @@ export default class ProxyGenerator {
             },
             get: (target: T, p: string | number | symbol, receiver: any) => {
                 if (!exists(target) && p !== "exists") {
-                    throw new Error(`Cannot get property from deleted object ${target.constructor.name}`);
+                    throw new Error(`Cannot get property ${String(p)} from deleted object ${target.constructor.name}`);
                 }
                 else if (p === "prototype") {
                     throw new Error(`Cannot get prototype of ${target.constructor.name} in this context`);
