@@ -14,8 +14,9 @@ export default class ClientConnectionPacket extends Packet {
             if (
                 typeof obj.clientID === "number"
                 && typeof obj.ip === "string"
+                && typeof obj.token === "string"
             ) {
-                return new ClientConnectionPacket(obj.clientID, obj.ip);
+                return new ClientConnectionPacket(obj.clientID, obj.ip, obj.token);
             }
             return undefined;
         }
@@ -23,10 +24,12 @@ export default class ClientConnectionPacket extends Packet {
 
     public clientID: number;
     public ip: string;
-    constructor(clientID: number, ip: string) {
+    public token: string;
+    constructor(clientID: number, ip: string, token: string) {
         super();
         this.clientID = clientID;
         this.ip = ip;
+        this.token = token;
     }
     public serialize() {
         return this;

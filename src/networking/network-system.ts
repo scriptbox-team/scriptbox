@@ -80,4 +80,8 @@ export default class NetworkSystem {
         this._networkReceivingSubsystem.hookupNetworkers(networkers);
         this._networkSendingSubsystem.setNetworkerSenders(networkers);
     }
+
+    get port() {
+        return this._port;
+    }
 }

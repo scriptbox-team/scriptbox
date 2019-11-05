@@ -24,8 +24,8 @@ export default class ClientManagerNetworker extends Networker {
     public playerCreate(connectionID: number, packet: ClientConnectionPacket) {
         const playerNum = connectionID;
         const playerID = this._idGenerator.makeFrom("P", Date.now(), Math.random());
-        const username = "EpicGamer" + playerNum;
-        const displayName = "Epic Gamer " + playerNum;
+        const username = packet.token;
+        const displayName = packet.token;
         const player = this._playerManager.create(playerID, connectionID, username, displayName);
         return player;
     }

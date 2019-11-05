@@ -151,7 +151,7 @@ export default class Server {
         this._networkSystem.host();
         this._resourceSystem.host();
         this._loop.start();
-        console.log("Server started.");
+        console.log(`Server started on port ${this._networkSystem.port}`);
     }
 
     /**

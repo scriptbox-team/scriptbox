@@ -1,8 +1,11 @@
-import {EventEmitter} from "events";
+import { EventEmitter } from "events";
 import * as http from "http";
 import * as WebSocket from "ws";
+
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetClient from "./net-client";
+import ClientConnectionPacket from "./packets/client-connection-packet";
+import ClientDisconnectPacket from "./packets/client-disconnect-packet";
 import ServerConnectionInfoRequestPacket from "./packets/server-connection-info-request-packet";
 import ServerNetEvent, { ServerEventType } from "./server-net-event";
 
@@ -176,11 +179,14 @@ export default class NetHost {
         });
 
         client.on("disconnect", (data) => {
-            this._emitter.emit("disconnect", id, new ClientNetEvent(ClientEventType.Disconnect, data));
+            this._emitter.emit("disconnect", id, new ClientNetEvent(
+                ClientEventType.Disconnect,
+                new ClientDisconnectPacket(data.code))
+            );
         });
-        // Necessary for now
-        dataEvent.data.clientID = id;
-        dataEvent.data.ip = ip;
-        this._emitter.emit("connection", id, new ClientNetEvent(ClientEventType.Connection, dataEvent.data));
+        this._emitter.emit("connection", id, new ClientNetEvent(
+            ClientEventType.Connection,
+            new ClientConnectionPacket(id, ip, dataEvent.data.token))
+        );
     }
 }

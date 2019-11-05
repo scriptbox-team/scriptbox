@@ -51,7 +51,6 @@ export default class DisplaySystem extends System {
     public broadcastDisplay(exportValues: Exports) {
         const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
         const updatesToSend = this._dataToDisplayObjects(changes);
-        console.log(updatesToSend);
         this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
