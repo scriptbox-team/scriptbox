@@ -215,6 +215,9 @@ export default class ResourceSystem extends System {
         }
         return this._resourceManager.get(id);
     }
+    get port() {
+        return this._resourceServer.port;
+    }
     private _updateResourceListing(owner: string, resourceMap: Map<string, string>) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);

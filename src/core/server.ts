@@ -35,6 +35,7 @@ interface IServerConstructorOptions {
      * @memberof IServerConstructorOptions
      */
     port: number;
+    resourcePort: number;
     /**
      * The maximum number of players that can connect to the server.
      *
@@ -87,6 +88,8 @@ export default class Server {
         this._tick = this._tick.bind(this);
         this._createPlayer = this._createPlayer.bind(this);
         this._deletePlayer = this._deletePlayer.bind(this);
+        this._getResourceServerIP = this._getResourceServerIP.bind(this);
+
         this._idGenerator = new IDGenerator(Math.random());
 
         this._tickRate = 60;
@@ -98,7 +101,7 @@ export default class Server {
         this._usernameToPlayer = new Map<string, Client>();
 
         this._networkSystem = new NetworkSystem(
-            {maxPlayers: options.maxPlayers, port: options.port},
+            {maxPlayers: options.maxPlayers, port: options.port, resourceServerIPGetter: this._getResourceServerIP},
             this._clientManager
         );
         this._messageSystem = new MessageSystem();
@@ -108,7 +111,7 @@ export default class Server {
         this._resourceSystem = new ResourceSystem(
             this._idGenerator,
             {
-                serverPort: "7778",
+                serverPort: "" + options.resourcePort,
                 resourcePath: "./data/res/"
             }
         );
@@ -204,5 +207,8 @@ export default class Server {
     }
     private _deletePlayer(player: Client) {
         this._usernameToPlayer.delete(player.username);
+    }
+    private _getResourceServerIP(serverIP: string) {
+        return `${serverIP}:${this._resourceSystem.port}`;
     }
 }

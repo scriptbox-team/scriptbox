@@ -140,6 +140,9 @@ export default class ResourceServer {
     public loadResourceSync(resourceID: string, encoding: string) {
         return fs.readFileSync(this._resourcePath + resourceID, encoding);
     }
+    get port() {
+        return this._port;
+    }
     // TODO: Change all functions with promises to async functions'
     // TODO: Refactor ResourceServer into multiple classes; one to handle file system management and the other for API
 }

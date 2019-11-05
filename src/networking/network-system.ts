@@ -11,6 +11,7 @@ import ServerMessage from "./server-messages/server-message";
 interface NetworkSystemConstructorOptions {
     port?: number;
     maxPlayers?: number;
+    resourceServerIPGetter: (localAddress: string) => string;
 }
 
 /**
@@ -44,6 +45,7 @@ export default class NetworkSystem {
         }
 
         this._netHost = new NetHost({port: this._port, maxClients: this._maxPlayers});
+        this._netHost.resourceServerIPGetter = options.resourceServerIPGetter;
 
         this._networkReceivingSubsystem = new NetworkReceivingSubsystem(this._netHost);
         this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, playerManager);

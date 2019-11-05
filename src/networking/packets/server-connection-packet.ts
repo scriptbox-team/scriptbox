@@ -9,11 +9,17 @@ import Packet from "./packet";
  */
 export default class ServerConnectionPacket extends Packet {
     public static deserialize(obj: any): ServerConnectionPacket | undefined {
-        return new ServerConnectionPacket();
+        if (typeof obj === "object" && obj !== null
+            && typeof obj.resourceServerIP === "string") {
+            return new ServerConnectionPacket(obj.resourceServerIP);
+        }
     }
-    constructor() {
+    public resourceServerIP: string;
+    constructor(resourceServerIP: string) {
         super();
+        this.resourceServerIP = resourceServerIP;
     }
+
     public serialize() {
         return this;
     }
