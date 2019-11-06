@@ -181,7 +181,7 @@ export default class Server {
                         kind: msg.kind,
                         recipient: new Group<Client>(
                             GroupType.Only,
-                            msg.recipient.map((pID) => exportValues.players[pID])
+                            msg.recipient.map((pID) => exportValues.players[pID].client)
                         )
                     };
                 });
