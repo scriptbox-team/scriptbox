@@ -1,4 +1,5 @@
-import Entity, {EntityProxy} from "./entity";
+import Aspect from "./aspect";
+import Entity, { EntityProxy } from "./entity";
 import PlayerSoul from "./player-soul";
 
 export interface PlayerProxy {
@@ -20,7 +21,8 @@ export default class Player {
         "locked",
         "control",
         "release",
-        "exists"
+        "exists",
+        "camera"
     ]);
     public static hiddenProps = Object.freeze([
         "_displayName",
@@ -35,6 +37,11 @@ export default class Player {
         "proxy"
     ]);
     public trueEntityFromEntity!: (entity: EntityProxy) => Entity;
+    public camera: {
+        x: Aspect<number>,
+        y: Aspect<number>,
+        scale: Aspect<number>
+    };
     private _displayName: string;
     private _controllingEntity?: EntityProxy;
     private _controlSet: {[input: string]: string};
@@ -59,6 +66,11 @@ export default class Player {
         this._soulData = soulData;
         this._locked = true;
         this._exists = true;
+        this.camera = {
+            x: new Aspect<number>(0),
+            y: new Aspect<number>(0),
+            scale: new Aspect<number>(2)
+        };
     }
     public set proxy(value: PlayerProxy) {
         this._proxy = value;
@@ -121,6 +133,19 @@ export default class Player {
     private _removeControl() {
         if (this._controllingEntity !== undefined) {
             const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);
+            trueControllingEntity.with("position", (position) => {
+                this._soulData.setPosition(position.x.getValue(), position.y.getValue());
+            });
+            if (typeof this._soulData.position.x !== "number" || typeof this._soulData.position.y !== "number") {
+                this._soulData.position = {x: 0, y: 0};
+            }
+            this._soulData.setVelocity(-10, -10);
+            this.camera = {
+                x: new Aspect<number>(this._soulData.position.x),
+                y: new Aspect<number>(this._soulData.position.y),
+                scale: new Aspect<number>(2)
+            };
+            this._soulData.facing = 1;
             trueControllingEntity.controller = undefined;
         }
         this._locked = true;

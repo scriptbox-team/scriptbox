@@ -367,10 +367,37 @@ export function update() {
 
     const playerIterator = playerManager.entries();
     for (const [playerID, player] of playerIterator) {
+        const purePlayer = playerUnproxiedMap.get(player);
         if (player.controllingEntity === undefined) {
-            const purePlayer = playerUnproxiedMap.get(player);
             const playerSoul = playerSoulMap.get(purePlayer);
+            playerSoul.move(1 / tickRate);
+            const soulAnimFrame = Math.floor(Date.now() / 100) % 4;
+            const soulAnimSet = playerSoul.getAnimFrame();
+            exportValues.sprites[playerID] = {
+                ownerID: undefined,
+                texture: "R000000000000000000000001",
+                depth: 10,
+                textureSubregion: {
+                    x: soulAnimFrame * 32 + soulAnimSet * 128,
+                    y: 0,
+                    width: 32,
+                    height: 32
+                },
+                position: {x: playerSoul.position.x - 16, y: playerSoul.position.y - 16}
+            };
+            purePlayer.camera.x.base = playerSoul.position.x + 16;
+            purePlayer.camera.y.base = playerSoul.position.y + 16;
         }
+        else {
+            const id = player.controllingEntity.id;
+            purePlayer.camera.x.base = exportValues.entities[id].position.x + 16;
+            purePlayer.camera.y.base = exportValues.entities[id].position.y + 16;
+        }
+        exportValues.players[playerID] = {camera: {
+            x: purePlayer.camera.x.getValue(),
+            y: purePlayer.camera.y.getValue(),
+            scale: purePlayer.camera.scale.getValue()
+        }};
     }
     exportValues.messages = messageQueue;
     messageQueue = [];
@@ -675,6 +702,7 @@ const resetExports = () => {
     exportValues.entities = {};
     exportValues.inspectedEntityInfo = {};
     exportValues.sprites = {};
+    exportValues.players = {};
     exportValues.messages = [];
 };
 

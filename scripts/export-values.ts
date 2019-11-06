@@ -30,6 +30,9 @@ export default interface Exports {
         position: {x: number, y: number};
         depth: number;
     }};
+    players: {[id: string]: {
+        camera: {x: number, y: number, scale: number}
+    }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
     messages: MessageExportInfo[];
 }

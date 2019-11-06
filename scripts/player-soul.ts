@@ -18,8 +18,8 @@ export default class PlayerSoul {
         }
         // no x bounds for now
     };
-    public moveStrength: number = 13;
-    public friction: number = 0.7;
+    public moveStrength: number = 310;
+    public friction: number = 1.4;
     public color: number = 0xFFFFFF;
     public facing: 1 | -1; // Right | Left
     private _inputs: {
@@ -52,10 +52,10 @@ export default class PlayerSoul {
             x: this.force.x - this.velocity.x * this.friction,
             y: this.force.y - this.velocity.y * this.friction
         };
-        this.position.x += delta * this.velocity.x
-            + 0.5 * delta * acceleration.x * acceleration.x;
-        this.position.y += delta * this.velocity.y
-            + 0.5 * delta * acceleration.y * acceleration.y;
+        this.position.x += this.velocity.x * delta
+            + 0.5 * acceleration.x * delta * delta;
+        this.position.y += this.velocity.y * delta
+            + 0.5 * acceleration.y * delta * delta;
         this.velocity.x += delta * acceleration.x;
         this.velocity.y += delta * acceleration.y;
         // Clamp the Y position to the y bounds
@@ -91,8 +91,8 @@ export default class PlayerSoul {
         }
         if (xDir !== 0 && yDir !== 0) {
             this.force = {
-                x: xDir * this.moveStrength * Math.SQRT2,
-                y: yDir * this.moveStrength * Math.SQRT2
+                x: xDir * this.moveStrength * Math.SQRT1_2,
+                y: yDir * this.moveStrength * Math.SQRT1_2
             };
         }
         else {
@@ -115,5 +115,8 @@ export default class PlayerSoul {
     public setVelocity(x: number, y: number) {
         this.velocity.x = x;
         this.velocity.y = y;
+    }
+    public getAnimFrame() {
+        return this.facing === 1 ? 0 : 3;
     }
 }

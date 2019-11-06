@@ -34,5 +34,8 @@ export default interface Exports {
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
     messages: MessageExportInfo[];
-    players: {[id: string]: Client};
+    players: {[id: string]: {
+        client: Client,
+        camera: {x: number, y: number, scale: number}
+    }};
 }

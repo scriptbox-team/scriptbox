@@ -20,6 +20,7 @@ interface Sprite {
 export default class DisplaySystem extends System {
     private _lastExportValues: Exports;
     private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
+    private _cameraDataCallback?: (player: Client, cameraData: {x: number, y: number, scale: number}) => void;
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
@@ -53,8 +54,18 @@ export default class DisplaySystem extends System {
         this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
+    public sendCameraData(exportValues: Exports) {
+        _.each(exportValues.players, (playerData, id) => {
+            if (this._cameraDataCallback !== undefined) {
+                this._cameraDataCallback(playerData.client, playerData.camera);
+            }
+        });
+    }
     public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: Group<Client>) => void) {
         this._renderDisplayObjectCallback = callback;
+    }
+    public onCameraData(callback: (player: Client, cameraData: {x: number, y: number, scale: number}) => void) {
+        this._cameraDataCallback = callback;
     }
     public onEntityInspection(callback: (
             entityID: string,
@@ -95,7 +106,7 @@ export default class DisplaySystem extends System {
                     entityInfo.id,
                     components,
                     entityInfo.controlledBy === playerID,
-                    new Group(GroupType.Only, [player])
+                    new Group(GroupType.Only, [player.client])
                 );
             }
         }

@@ -167,12 +167,11 @@ export default class Server {
     private _tick() {
         try {
             const exportValues = this._gameSystem.update();
-            exportValues.players = {};
-            const clientEntries = this._clientManager.entries();
-            for (const [id, player] of clientEntries) {
-                exportValues.players[id] = player;
-            }
+            _.each(exportValues.players, (playerDataObj, id) => {
+                playerDataObj.client = this._clientManager.get(id);
+            });
             this._displaySystem.broadcastDisplay(exportValues);
+            this._displaySystem.sendCameraData(exportValues);
             this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {
@@ -193,8 +192,8 @@ export default class Server {
         }
         catch (error) {
             // TODO: Suppress repeated errors
-            this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
-            console.log(`[GLOBAL] ${error.stack}`);
+            this._messageSystem.broadcastMessage(`[GLOBAL] <${error.stack}>`);
+            console.log(`[GLOBAL] <${error.stack}>`);
             this._gameSystem.recover();
         }
         finally {

@@ -14,7 +14,8 @@ export enum ServerEventType {
     Token = 1006,
     ResourceListing = 1007,
     EntityInspectListing = 1008,
-    SoundPlay = 1009
+    SoundPlay = 1009,
+    CameraInfo = 1010
 }
 
 /**
