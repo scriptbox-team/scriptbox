@@ -9,13 +9,16 @@ import Packet from "./packet";
  */
 export default class ServerConnectionAcknowledgementPacket extends Packet {
     public static deserialize(obj: any): ServerConnectionAcknowledgementPacket | undefined {
-        if (typeof obj === "object" && obj !== null) {
-            return new ServerConnectionAcknowledgementPacket();
+        if (typeof obj === "object" && obj !== null
+            && typeof obj.resourceServerIP === "string") {
+            return new ServerConnectionAcknowledgementPacket(obj.resourceServerIP);
         }
     }
 
-    constructor() {
+    public resourceServerIP: string;
+    constructor(resourceServerIP: string) {
         super();
+        this.resourceServerIP = resourceServerIP;
     }
     public serialize() {
         return this;

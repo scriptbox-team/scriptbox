@@ -21,7 +21,17 @@ export interface MessageExportInfo {
 export default interface Exports {
     entities: {[id: string]: {
         position: {x: number, y: number},
-        collisionBox: {x1: number, y1: number, x2: number, y2: number}
+        collisionBox: {x1: number, y1: number, x2: number, y2: number},
+    }};
+    sprites: {[id: string]: {
+        ownerID: string | undefined,
+        texture: string,
+        textureSubregion: {x: number, y: number, width: number, height: number};
+        position: {x: number, y: number};
+        depth: number;
+    }};
+    players: {[id: string]: {
+        camera: {x: number, y: number, scale: number}
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
     messages: MessageExportInfo[];

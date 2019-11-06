@@ -35,6 +35,7 @@ interface IServerConstructorOptions {
      * @memberof IServerConstructorOptions
      */
     port: number;
+    resourcePort: number;
     /**
      * The maximum number of players that can connect to the server.
      *
@@ -87,6 +88,8 @@ export default class Server {
         this._tick = this._tick.bind(this);
         this._createPlayer = this._createPlayer.bind(this);
         this._deletePlayer = this._deletePlayer.bind(this);
+        this._getResourceServerIP = this._getResourceServerIP.bind(this);
+
         this._idGenerator = new IDGenerator(Math.random());
 
         this._tickRate = 60;
@@ -98,7 +101,7 @@ export default class Server {
         this._usernameToPlayer = new Map<string, Client>();
 
         this._networkSystem = new NetworkSystem(
-            {maxPlayers: options.maxPlayers, port: options.port},
+            {maxPlayers: options.maxPlayers, port: options.port, resourceServerIPGetter: this._getResourceServerIP},
             this._clientManager
         );
         this._messageSystem = new MessageSystem();
@@ -108,8 +111,9 @@ export default class Server {
         this._resourceSystem = new ResourceSystem(
             this._idGenerator,
             {
-                serverPort: "7778",
-                resourcePath: "./data/res/"
+                serverPort: "" + options.resourcePort,
+                resourcePath: "./data/res/",
+                initialResourcePath: path.join(process.cwd(), "./data-default")
             }
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
@@ -151,7 +155,7 @@ export default class Server {
         this._networkSystem.host();
         this._resourceSystem.host();
         this._loop.start();
-        console.log("Server started.");
+        console.log(`Server started on port ${this._networkSystem.port}`);
     }
 
     /**
@@ -163,12 +167,11 @@ export default class Server {
     private _tick() {
         try {
             const exportValues = this._gameSystem.update();
-            exportValues.players = {};
-            const clientEntries = this._clientManager.entries();
-            for (const [id, player] of clientEntries) {
-                exportValues.players[id] = player;
-            }
+            _.each(exportValues.players, (playerDataObj, id) => {
+                playerDataObj.client = this._clientManager.get(id);
+            });
             this._displaySystem.broadcastDisplay(exportValues);
+            this._displaySystem.sendCameraData(exportValues);
             this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {
@@ -178,7 +181,7 @@ export default class Server {
                         kind: msg.kind,
                         recipient: new Group<Client>(
                             GroupType.Only,
-                            msg.recipient.map((pID) => exportValues.players[pID])
+                            msg.recipient.map((pID) => exportValues.players[pID].client)
                         )
                     };
                 });
@@ -189,8 +192,8 @@ export default class Server {
         }
         catch (error) {
             // TODO: Suppress repeated errors
-            this._messageSystem.broadcastMessage(`[GLOBAL] ${error.stack}`);
-            console.log(`[GLOBAL] ${error.stack}`);
+            this._messageSystem.broadcastMessage(`[GLOBAL] <${error.stack}>`);
+            console.log(`[GLOBAL] <${error.stack}>`);
             this._gameSystem.recover();
         }
         finally {
@@ -204,5 +207,8 @@ export default class Server {
     }
     private _deletePlayer(player: Client) {
         this._usernameToPlayer.delete(player.username);
+    }
+    private _getResourceServerIP(serverIP: string) {
+        return `${serverIP}:${this._resourceSystem.port}`;
     }
 }

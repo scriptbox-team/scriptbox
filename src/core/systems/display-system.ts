@@ -9,9 +9,18 @@ import RenderObject from "resource-management/render-object";
 
 import System from "./system";
 
+interface Sprite {
+    ownerID: string | undefined;
+    texture: string;
+    textureSubregion: {x: number, y: number, width: number, height: number};
+    position: {x: number, y: number};
+    depth: number;
+}
+
 export default class DisplaySystem extends System {
     private _lastExportValues: Exports;
     private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
+    private _cameraDataCallback?: (player: Client, cameraData: {x: number, y: number, scale: number}) => void;
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
@@ -21,15 +30,20 @@ export default class DisplaySystem extends System {
         super();
         this._lastExportValues = {
             entities: {},
+            sprites: {},
             inspectedEntityInfo: {},
-            messages: []
+            messages: [],
+            players: {}
         };
     }
     public sendFullDisplayToPlayer(player: Client) {
-        const diff = new Difference<{x: number, y: number}>();
-        diff.added = _.transform(this._lastExportValues.entities, (acc, entity, key) => {
-            acc[key] = entity.position;
-        }, {} as any as {[id: string]: {x: number, y: number}});
+        const diff = new Difference<RenderObject>();
+        diff.added = _.transform(this._lastExportValues.sprites, (acc, sprite, key) => {
+            acc[key] = this._convertToRenderObject(
+                key,
+                sprite
+            );
+        }, {} as any as {[id: string]: RenderObject});
         const updatesToSend = this._dataToDisplayObjects(diff);
         this._sendDisplayObjectsToPlayer(updatesToSend, player);
     }
@@ -40,8 +54,18 @@ export default class DisplaySystem extends System {
         this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
+    public sendCameraData(exportValues: Exports) {
+        _.each(exportValues.players, (playerData, id) => {
+            if (this._cameraDataCallback !== undefined) {
+                this._cameraDataCallback(playerData.client, playerData.camera);
+            }
+        });
+    }
     public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: Group<Client>) => void) {
         this._renderDisplayObjectCallback = callback;
+    }
+    public onCameraData(callback: (player: Client, cameraData: {x: number, y: number, scale: number}) => void) {
+        this._cameraDataCallback = callback;
     }
     public onEntityInspection(callback: (
             entityID: string,
@@ -82,24 +106,18 @@ export default class DisplaySystem extends System {
                     entityInfo.id,
                     components,
                     entityInfo.controlledBy === playerID,
-                    new Group(GroupType.Only, [player])
+                    new Group(GroupType.Only, [player.client])
                 );
             }
         }
     }
-    private _dataToDisplayObjects(data: Difference<{x: number, y: number}>) {
+    private _dataToDisplayObjects(data: Difference<RenderObject>) {
         let arr: RenderObject[] = [];
         for (const datum of [data.added, data.updated, data.removed]) {
-            arr = _.transform(datum, (acc, position, id) => {
-                acc.push(new RenderObject(
-                    id, // For now these will be the same
-                    id,
-                    "testCombined.png",
-                    {x: 0, y: 0, width: 32, height: 32},
-                    position,
-                    0,
-                    datum === data.removed));
-            }, arr);
+            arr = arr.concat(_.transform(datum, (acc, obj, id) => {
+                obj.deleted = (datum === data.removed);
+                acc.push(obj);
+            }, [] as RenderObject[]));
         }
         return arr;
     }
@@ -119,22 +137,58 @@ export default class DisplaySystem extends System {
     private _getDisplayDifferences(lastExportValues: Exports, exportValues: Exports) {
         // Lodash type annotations are really restrictive
         // So please ignore the following casting shenanigans
-        const diffs = _.transform(exportValues.entities, (acc, entity, key) => {
-            const currentPosition = entity.position;
-            const result = acc as any;
-            const prevState = lastExportValues.entities[key];
-            if (prevState === undefined || prevState.position === undefined) {
-                result.added[key] = currentPosition;
+        const diffs = _.transform(exportValues.sprites, (acc, sprite, key) => {
+            const result = acc;
+            const prevSprite = lastExportValues.sprites[key];
+            if (prevSprite === undefined) {
+                result.added[key] = this._convertToRenderObject(
+                    key,
+                    sprite
+                );
             }
-            else if (prevState.position.x !== currentPosition.x || prevState.position.y !== currentPosition.y) {
-                result.updated[key] = currentPosition;
+            else if (!this._same(sprite, prevSprite)) {
+                result.updated[key] = this._convertToRenderObject(
+                    key,
+                    sprite
+                );
             }
-        }, {added: {}, updated: {}, removed: {}}) as any as Difference<{x: number, y: number}>;
-        _.each(lastExportValues.entities, (value, key) => {
-            if (exportValues.entities[key] === undefined) {
-                diffs.removed[key] = value.position;
+        }, {
+            added: {} as {[id: string]: RenderObject},
+            updated: {} as {[id: string]: RenderObject},
+            removed: {} as {[id: string]: RenderObject}}) as Difference<RenderObject>;
+        _.each(lastExportValues.sprites, (sprite, key) => {
+            if (exportValues.sprites[key] === undefined) {
+                diffs.removed[key] = this._convertToRenderObject(key, sprite);
             }
         });
+        // console.log(exportValues.sprites);
+        // console.log(diffs);
         return diffs;
+    }
+
+    private _convertToRenderObject(key: string, sprite: Sprite) {
+        return new RenderObject(
+            sprite.ownerID,
+            key,
+            sprite.texture,
+            sprite.textureSubregion,
+            sprite.position,
+            sprite.depth,
+            false
+        );
+    }
+
+    private _same(
+            currSprite: Sprite,
+            prevSprite: Sprite) {
+        return currSprite.position.x === prevSprite.position.x
+            && currSprite.position.y === prevSprite.position.y
+            && currSprite.depth === prevSprite.depth
+            && currSprite.ownerID === prevSprite.ownerID
+            && currSprite.texture === prevSprite.texture
+            && currSprite.textureSubregion.x === prevSprite.textureSubregion.x
+            && currSprite.textureSubregion.y === prevSprite.textureSubregion.y
+            && currSprite.textureSubregion.width === prevSprite.textureSubregion.width
+            && currSprite.textureSubregion.height === prevSprite.textureSubregion.height;
     }
 }

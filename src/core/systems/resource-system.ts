@@ -1,7 +1,8 @@
 import Client from "core/client";
 import IDGenerator from "core/id-generator";
 import Manager from "core/manager";
-import { UploadedFile } from "express-fileupload";
+import fileType from "file-type";
+import fs from "fs-extra";
 import ResourceServer from "networking/resource-server";
 import TokenGenerator from "networking/token-generator";
 import path from "path";
@@ -12,10 +13,17 @@ import System from "./system";
 interface ResourceSystemOptions {
     serverPort: string;
     resourcePath: string;
+    initialResourcePath?: string;
 }
 
 interface PlayerResourceData {
     resourcesByFilename: Map<string, string>;
+}
+
+interface ResourceFile {
+    name: string;
+    data: Buffer;
+    mimetype: string;
 }
 
 export default class ResourceSystem extends System {
@@ -38,8 +46,26 @@ export default class ResourceSystem extends System {
         this._resourceServer.onFileUpload = this.handleFileUpload;
         this._resourceServer.onFileDelete = this.handleFileDelete;
         this._idGenerator = idGenerator;
+
+        if (options.initialResourcePath !== undefined) {
+            const defaultResources = this._getDirsRecursive(options.initialResourcePath);
+            for (const res of defaultResources) {
+                const name = path.basename(res);
+                const file = fs.readFileSync(res);
+                this.addOrUpdateFile(
+                    "",
+                    {
+                        name,
+                        mimetype: fileType(file)!.mime,
+                        data: file
+                    },
+                    name,
+                    true
+                );
+            }
+        }
     }
-    public addResource(user: string, type: ResourceType, file: UploadedFile): Promise<Resource> {
+    public addResource(user: string, type: ResourceType, file: ResourceFile, id?: string): Promise<Resource> {
         let playerResourceData = this._playerResourceData.get(user);
         if (playerResourceData === undefined) {
             playerResourceData = {resourcesByFilename: new Map<string, string>()};
@@ -47,7 +73,7 @@ export default class ResourceSystem extends System {
         }
         const filename = this._getAvailableFilename(file.name, playerResourceData.resourcesByFilename);
         const resource = this._resourceManager.create(
-            this._idGenerator.makeFrom("R", Date.now(), Math.random()),
+            id !== undefined ? id : this._idGenerator.makeFrom("R", Date.now(), Math.random()),
             type,
             this._filenameToName(filename),
             filename,
@@ -65,7 +91,7 @@ export default class ResourceSystem extends System {
             user: string,
             type: ResourceType,
             resourceID: string,
-            file: UploadedFile): Promise<Resource> {
+            file: ResourceFile): Promise<Resource> {
         const resource = this._resourceManager.get(resourceID);
         if (resource === undefined) {
             return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
@@ -98,11 +124,7 @@ export default class ResourceSystem extends System {
         }
         this._resourceManager.queueForDeletion(resourceID);
     }
-    public handleFileUpload = (token: number, file: UploadedFile, resourceID?: string) => {
-        const player = this.getPlayerFromToken(token);
-        if (player === undefined) {
-            throw new Error("Invalid token");
-        }
+    public addOrUpdateFile(username: string, file: ResourceFile, resourceID?: string, alwaysCreate: boolean = false) {
         let resourceType: ResourceType | undefined;
         switch (file.mimetype) {
             case "image/bmp":
@@ -134,15 +156,22 @@ export default class ResourceSystem extends System {
             }
         }
         if (resourceType !== undefined) {
-            if (resourceID === undefined) {
+            if (resourceID === undefined || alwaysCreate) {
                 // Upload new resource
-                this.addResource(player.username, resourceType, file);
+                this.addResource(username, resourceType, file, resourceID);
             }
             else {
                 // Update resource (overwrite)
-                this.updateResource(player.username, resourceType, resourceID, file);
+                this.updateResource(username, resourceType, resourceID, file);
             }
         }
+    }
+    public handleFileUpload = (token: number, file: ResourceFile, resourceID?: string) => {
+        const player = this.getPlayerFromToken(token);
+        if (player === undefined) {
+            throw new Error("Invalid token");
+        }
+        return this.addOrUpdateFile(player.username, file, resourceID);
     }
     public updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
         const resource = this.getResourceByID(resourceID);
@@ -215,6 +244,9 @@ export default class ResourceSystem extends System {
         }
         return this._resourceManager.get(id);
     }
+    get port() {
+        return this._resourceServer.port;
+    }
     private _updateResourceListing(owner: string, resourceMap: Map<string, string>) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);
@@ -272,5 +304,18 @@ export default class ResourceSystem extends System {
             }
         }
         return tryFilename;
+    }
+    private _getDirsRecursive(dir: string) {
+        return fs.readdirSync(dir).reduce((result, elemPath) => {
+            const fullPath = path.join(dir, elemPath);
+            const stats = fs.statSync(fullPath);
+            if (stats.isFile()) {
+                result.push(fullPath);
+            }
+            else if (stats.isDirectory()) {
+                result = result.concat(this._getDirsRecursive(fullPath));
+            }
+            return result;
+        }, [] as string[]);
     }
 }

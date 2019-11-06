@@ -1,8 +1,12 @@
-import {EventEmitter} from "events";
+import { EventEmitter } from "events";
 import * as http from "http";
 import * as WebSocket from "ws";
+
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetClient from "./net-client";
+import ClientConnectionPacket from "./packets/client-connection-packet";
+import ClientDisconnectPacket from "./packets/client-disconnect-packet";
+import ServerConnectionAcknowledgementPacket from "./packets/server-connection-acknowledgement-packet";
 import ServerConnectionInfoRequestPacket from "./packets/server-connection-info-request-packet";
 import ServerNetEvent, { ServerEventType } from "./server-net-event";
 
@@ -38,6 +42,7 @@ interface NetHostConstructionOptions {
  * @class NetHost
  */
 export default class NetHost {
+    public resourceServerIPGetter!: (localAddress: string) => string;
     private _emitter: EventEmitter;
     private _port: number;
     private _webSocketServer: WebSocket.Server | null;
@@ -127,7 +132,12 @@ export default class NetHost {
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
                         clearTimeout(this._timeoutMap.get(socket.url)!);
-                        this._addClient(socket, request.connection.remoteAddress, packetData);
+                        this._addClient(
+                            socket,
+                            request.connection.remoteAddress,
+                            request.connection.localAddress,
+                            packetData
+                        );
                         socket.removeListener("message", cb);
                     }
                 }
@@ -148,12 +158,12 @@ export default class NetHost {
      * @param {ClientNetEvent} dataEvent the NetEvent containing client connection information
      * @memberof NetHost
      */
-    private _addClient(socket: WebSocket, ip: string | undefined, dataEvent: ClientNetEvent) {
+    private _addClient(socket: WebSocket, clientIP: string | undefined, serverIP: string, dataEvent: ClientNetEvent) {
         const id = this._nextID;
-        if (ip === undefined) {
-            ip = "undefined";
+        if (clientIP === undefined) {
+            clientIP = "undefined";
         }
-        const client = new NetClient({id, ip, socket});
+        const client = new NetClient({id, ip: clientIP, socket});
         this._nextID++;
         this._clients.set(id, client);
 
@@ -176,11 +186,18 @@ export default class NetHost {
         });
 
         client.on("disconnect", (data) => {
-            this._emitter.emit("disconnect", id, new ClientNetEvent(ClientEventType.Disconnect, data));
+            this._emitter.emit("disconnect", id, new ClientNetEvent(
+                ClientEventType.Disconnect,
+                new ClientDisconnectPacket(data.code))
+            );
         });
-        // Necessary for now
-        dataEvent.data.clientID = id;
-        dataEvent.data.ip = ip;
-        this._emitter.emit("connection", id, new ClientNetEvent(ClientEventType.Connection, dataEvent.data));
+        client.send(new ServerNetEvent(
+            ServerEventType.ConnectionAcknowledgement,
+            new ServerConnectionAcknowledgementPacket(this.resourceServerIPGetter(serverIP)))
+        );
+        this._emitter.emit("connection", id, new ClientNetEvent(
+            ClientEventType.Connection,
+            new ClientConnectionPacket(id, clientIP, dataEvent.data.token))
+        );
     }
 }

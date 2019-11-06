@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe("NetEventHandler", () => {
     test("handles connection packets", () => {
-        const packet = new ClientConnectionPacket(0, "192.168.0.1");
+        const packet = new ClientConnectionPacket(0, "192.168.0.1", "test");
         const fn = jest.fn();
         netEventHandler.addConnectionDelegate(fn);
         netEventHandler.handle(0, new ClientNetEvent(ClientEventType.Connection, packet.serialize()));

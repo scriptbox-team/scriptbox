@@ -16,5 +16,5 @@ import Server from "core/server";
 /* tslint:enable */
 
 // Create and start the server
-const serv = new Server({port: 7777});
+const serv = new Server({port: 7777, resourcePort: 7778});
 serv.start();

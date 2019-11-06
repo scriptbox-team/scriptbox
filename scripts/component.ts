@@ -3,16 +3,35 @@ import AspectSet from "./aspect-set";
 import ComponentInfo from "./component-info";
 
 export default class Component {
+    public static externalFromID: (id: string) => Component | undefined;
+    public static fromID(id: string) {
+        this.externalFromID(id);
+    }
     public tags = new AspectSet<string>([]);
     private _data: ComponentInfo;
     constructor(data: ComponentInfo) {
         this._data = data;
     }
-    public update(delta: number) {
+    public onCreate() {
 
     }
-    public postUpdate(delta: number) {
+    public onLoad() {
 
+    }
+    public onUpdate(delta: number) {
+
+    }
+    public onPostUpdate(delta: number) {
+
+    }
+    public onUnload() {
+
+    }
+    public onDestroy() {
+
+    }
+    public destroy() {
+        this.entity.remove(this);
     }
     public get id() {
         return this._data.id;
@@ -24,6 +43,9 @@ export default class Component {
         if (this.entity !== undefined) {
             this.entity.setComponentLocalID(this, newID);
         }
+    }
+    public get owner() {
+        return this._data.owner;
     }
     public get entity() {
         return this._data.entity;
@@ -48,5 +70,8 @@ export default class Component {
     }
     public get displayData() {
         return {id: this.id};
+    }
+    public get with() {
+        return this.entity.with;
     }
 }
