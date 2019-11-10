@@ -7,6 +7,7 @@ export default class CollisionBox extends Component {
     public x2: Aspect<number> = new Aspect(0);
     public y2: Aspect<number> = new Aspect(0);
     public static: Aspect<boolean> = new Aspect(false);
+    public dense: Aspect<boolean> = new Aspect(true);
 
     public onCreate(x1?: number, y1?: number, x2?: number, y2?: number, isStatic?: boolean) {
         if (typeof x1 === "number") {

@@ -90,7 +90,7 @@ export default class Quadtree<T extends BoundingBox> {
     private _testNode<R>(
             node: TreeNode<T> | undefined,
             box: BoundingBox,
-            testFunc: (box2: T) => R | undefined): Array<{box: T, value: R}> {
+            testFunc: (box2: T) => R | undefined): Array<{box: T, result: R}> {
         if (node === undefined) {
             return [];
         }
@@ -101,19 +101,19 @@ export default class Quadtree<T extends BoundingBox> {
             return boxes.reduce((acc, box2) => {
                 const res = testFunc(box2);
                 if (res !== undefined) {
-                    acc.push({box: box2, value: res});
+                    acc.push({box: box2, result: res});
                 }
                 return acc;
-            }, [] as Array<{box: T, value: R}>);
+            }, [] as Array<{box: T, result: R}>);
         }
         // Otherwise take everything from the current node and go to the next branch down
         const currentNodeChecks = node.data.reduce((acc, box2) => {
             const res = testFunc(box2);
             if (res !== undefined) {
-                acc.push({box: box2, value: res});
+                acc.push({box: box2, result: res});
             }
             return acc;
-        }, [] as Array<{box: T, value: R}>);
+        }, [] as Array<{box: T, result: R}>);
         if (left && above) {
             return this._testNode(node.branches.topLeft, box, testFunc).concat(currentNodeChecks);
         }

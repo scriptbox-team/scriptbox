@@ -294,9 +294,11 @@ export function update() {
                 const x2 = componentExecuteDirect(collisionBox, () => collisionComponent.x2.getValue());
                 const y2 = componentExecuteDirect(collisionBox, () => collisionComponent.y2.getValue());
                 const isStatic = componentExecuteDirect(collisionBox, () => collisionComponent.static.getValue());
+                const dense = componentExecuteDirect(collisionBox, () => collisionComponent.dense.getValue());
                 if (typeof x1 === "number" && typeof y1 === "number"
                 && typeof x2 === "number" && typeof y2 === "number"
                 && typeof isStatic === "boolean"
+                && typeof dense === "boolean"
                 && typeof id === "string") {
                     exportValues.entities[id].collisionBox = {
                         x1: Math.min(x1, x2),
@@ -309,7 +311,7 @@ export function update() {
                         {
                             id,
                             static: isStatic,
-                            teleport: false,
+                            dense,
                             bounds: {
                                 x1: entPos.x + x1,
                                 y1: entPos.y + y1,
@@ -444,7 +446,7 @@ export function update() {
             exportValues.sprites[playerID] = {
                 ownerID: undefined,
                 texture: "R000000000000000000000001",
-                depth: 10,
+                depth: 99,
                 textureSubregion: {
                     x: soulAnimFrame * 32 + soulAnimSet * 128,
                     y: 0,

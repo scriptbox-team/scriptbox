@@ -49,7 +49,7 @@ export default class QuadtreeGrid<T extends BoundingBox> {
         const cellX2 = this._getCellCoordinate(box.x2);
         const cellY2 = this._getCellCoordinate(box.y2);
         const checkedSet = new Set<T>();
-        let collisions = [] as Array<{box: T, value: R}>;
+        let collisions = [] as Array<{box: T, result: R}>;
         for (let i = cellX1; i <= cellX2; i++) {
             if (this._cells[i] !== undefined) {
                 for (let j = cellY1; j <= cellY2; j++) {

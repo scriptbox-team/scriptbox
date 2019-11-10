@@ -10,7 +10,7 @@ interface BoundingBox {
 interface CollisionBoxInfo {
     id: string;
     static: boolean;
-    teleport: boolean;
+    dense: boolean;
     bounds: BoundingBox;
 }
 
@@ -33,7 +33,9 @@ interface QuadtreeTestResult {
         x2: number;
         y2: number;
     };
-    value: Vector[];
+    result: {
+        penetration: Vector[];
+    };
 }
 
 interface Collision {
@@ -46,82 +48,95 @@ interface Collision {
 export default class CollisionDetector {
     private _lastHitboxes: {[id: string]: CollisionBoxInfo};
     public check(boxes: CollisionBoxInfo[]) {
+        // TODO: Make it so that non-dense collisions properly account for changing position due to correction
+        // This probably doesn't really matter that much but it's still something that's incorrect
+        // And may lead to these kinds of collisions occurring a frame later than they're supposed to in specific cases
+
+        // How it should ACTUALLY work:
+        // - Completely separate tree for non-dense objects.
+        // - For non-static non-dense objects, just do what is currently done to compare them against the dense objects
+        // - AFTER collision correction, all non-static objects perform collision checking against the non-dense objects
         const collisionResults: Collision[] = [];
         const boxesByID: {[id: string]: CollisionBoxInfo} = {};
-        const boundingBoxes = boxes.map((box) => {
-            return {
-                id: box.id,
-                x1: box.bounds.x1,
-                y1: box.bounds.y1,
-                x2: box.bounds.x2,
-                y2: box.bounds.y2
-            };
-        });
+        const [denseBoxes, undenseBoxes] = boxes
+            .reduce((acc, box) => {
+                acc[box.dense ? 0 : 1].push(box);
+                return acc;
+            }, [[], []] as [CollisionBoxInfo[], CollisionBoxInfo[]]);
+        const denseCollisionBoxes = denseBoxes.map((box) => {
+                return {
+                    id: box.id,
+                    x1: box.bounds.x1,
+                    y1: box.bounds.y1,
+                    x2: box.bounds.x2,
+                    y2: box.bounds.y2
+                };
+            });
         for (const box of boxes) {
             boxesByID[box.id] = box;
         }
-        const grid = new QuadtreeGrid(boundingBoxes, 400, 5);
+        const denseGrid = new QuadtreeGrid(denseCollisionBoxes, 400, 5);
+        const skip = new Map<string, Set<string>>();
         for (const box of boxes) {
             if (!box.static) {
-                const collisions = grid.test(box.bounds, (storedBox) => {
+                skip.set(box.id, new Set<string>());
+                const collisions = denseGrid.test(box.bounds, (storedBox) => {
                     const box2 = boxesByID[storedBox.id];
-                    const lastBounds = this._lastHitboxes[box.id] !== undefined
-                        ? this._lastHitboxes[box.id].bounds : undefined;
                     return this._testCollision(
-                        box.teleport ? lastBounds : undefined,
                         box.bounds,
-                        box2.teleport ? this._lastHitboxes[box2.id] : undefined,
                         box2,
                         [box.id]
                     );
                 });
                 if (collisions.length > 0) {
-                    const c = collisions.reduce((a, b) => this._maxMinPenetration(a, b));
-                    if (c.value !== undefined) {
-                        const box2 = boxesByID[c.box.id];
-                        if (box2.static) {
-                            collisionResults.push(
-                                {
-                                    obj1: box.id,
-                                    obj1NewPos: this._findFinalBoxOffset(
-                                        boxesByID,
-                                        grid,
-                                        box,
-                                        box2,
-                                        c.value
-                                    ),
-                                    obj2: box2.id,
-                                    obj2NewPos: {x: 0, y: 0}
-                                }
-                            );
-                        }
-                        else {
-                            const splitOffsets = c.value.reduce((arr, offset) => {
-                                arr[0].push({x: offset.x / 2, y: offset.x / 2});
-                                arr[1].push({x: offset.x / -2, y: offset.x / -2});
-                                return arr;
-                            }, [[], []] as [Array<{x: number, y: number}>, Array<{x: number, y: number}>]);
-                            collisionResults.push(
-                                {
-                                    obj1: box.id,
-                                    obj1NewPos: this._findFinalBoxOffset(
-                                        boxesByID,
-                                        grid,
-                                        box,
-                                        box2,
-                                        splitOffsets[0]
-                                    ),
-                                    obj2: box2.id,
-                                    obj2NewPos: this._findFinalBoxOffset(
-                                        boxesByID,
-                                        grid,
-                                        box2,
-                                        box,
-                                        splitOffsets[1]
-                                    )
-                                }
-                            );
-                        }
+                    const c = collisions
+                        .reduce((a, b) => this._maxMinPenetration(a, b));
+                    const collidedBox = boxesByID[c.box.id];
+                    if (collidedBox.static) {
+                        collisionResults.push(
+                            {
+                                obj1: box.id,
+                                obj1NewPos: this._findFinalBoxOffset(
+                                    boxesByID,
+                                    denseGrid,
+                                    box,
+                                    collidedBox,
+                                    c.result.penetration
+                                ),
+                                obj2: collidedBox.id,
+                                obj2NewPos: {x: 0, y: 0}
+                            }
+                        );
+                    }
+                    else if (skip.get(collidedBox.id) === undefined || !skip.get(collidedBox.id).has(box.id)) {
+                        const [box1Offsets, box2Offsets] = c.result.penetration.reduce((arr, offset) => {
+                            arr[0].push({x: offset.x * 0.45, y: offset.y * 0.45});
+                            arr[1].push({x: offset.x * -0.45, y: offset.y * -0.45});
+                            return arr;
+                        }, [[], []] as [Array<{x: number, y: number}>, Array<{x: number, y: number}>]);
+                        collisionResults.push(
+                            {
+                                obj1: box.id,
+                                obj1NewPos: this._findFinalBoxOffset(
+                                    boxesByID,
+                                    denseGrid,
+                                    box,
+                                    collidedBox,
+                                    box1Offsets,
+                                    [collidedBox.id]
+                                ),
+                                obj2: collidedBox.id,
+                                obj2NewPos: this._findFinalBoxOffset(
+                                    boxesByID,
+                                    denseGrid,
+                                    collidedBox,
+                                    box,
+                                    box2Offsets,
+                                    [box.id]
+                                )
+                            }
+                        );
+                        skip.get(box.id).add(collidedBox.id);
                     }
                 }
             }
@@ -148,12 +163,8 @@ export default class CollisionDetector {
             };
             const secondaryCollisions = grid.test(newBox, (storedBox) => {
                 const box3 = boxesByID[storedBox.id];
-                const lastBounds = this._lastHitboxes[box.id] !== undefined
-                    ? this._lastHitboxes[box.id].bounds : undefined;
                 return this._testCollision(
-                    box.teleport ? lastBounds : undefined,
                     newBox,
-                    box3.teleport ? this._lastHitboxes[box3.id] : undefined,
                     box3,
                     [box.id, box2.id].concat(ignore)
                 );
@@ -168,7 +179,7 @@ export default class CollisionDetector {
             }
             else {
                 const c = secondaryCollisions.reduce((a, b) => this._maxMinPenetration(a, b));
-                const orderedSecondaryOffsets = c.value;
+                const orderedSecondaryOffsets = c.result.penetration;
                 for (const secondaryOffset of [orderedSecondaryOffsets[0], orderedSecondaryOffsets[1]]) {
                     const newNewBox = {
                         x1: newBox.x1 + secondaryOffset.x * offsetExtra,
@@ -178,12 +189,8 @@ export default class CollisionDetector {
                     };
                     const tertiaryCollisions = grid.test(newNewBox, (storedBox) => {
                         const box3 = boxesByID[storedBox.id];
-                        const lastBounds = this._lastHitboxes[box.id] !== undefined
-                            ? this._lastHitboxes[box.id].bounds : undefined;
                         return this._testCollision(
-                            box.teleport ? lastBounds : undefined,
                             newNewBox,
-                            box3.teleport ? this._lastHitboxes[box3.id] : undefined,
                             box3,
                             [box.id, c.box.id].concat(ignore)
                         );
@@ -220,9 +227,7 @@ export default class CollisionDetector {
     }
 
     private _testCollision(
-            box1Prev: BoundingBox | undefined,
             box1: BoundingBox,
-            box2Prev: CollisionBoxInfo | undefined,
             box2: CollisionBoxInfo,
             skip: string[]) {
         // Collision detection using minkowski difference
@@ -232,9 +237,11 @@ export default class CollisionDetector {
         }
         const diff = this._minkowskiDifference(box1, box2.bounds);
         if (diff.x1 < 0 && diff.y1 < 0 && diff.x2 > 0 && diff.y2 > 0) {
-            return this._getPenetrationVectors(diff, {x: 0, y: 0}).sort((a, b) => {
-                return (a.x * a.x + a.y * a.y) - (b.x * b.x + b.y * b.y);
-            });
+            return {
+                penetration: this._getPenetrationVectors(diff, {x: 0, y: 0}).sort((a, b) => {
+                    return (a.x * a.x + a.y * a.y) - (b.x * b.x + b.y * b.y);
+                })
+            };
         }
         return undefined;
     }
@@ -252,7 +259,7 @@ export default class CollisionDetector {
         return {
             x: box2Mid.x - box1Mid.x,
             y: box2Mid.y - box1Mid.y
-        }
+        };
     }
 
     private _minkowskiDifference(box1: BoundingBox, box2: BoundingBox) {
@@ -330,12 +337,12 @@ export default class CollisionDetector {
     private _maxMinPenetration(a: QuadtreeTestResult, b: QuadtreeTestResult) {
         let aValue = -1;
         let bValue = -1;
-        if (a.value.length !== 0) {
-            const minPen = a.value[0];
+        if (a.result.penetration.length !== 0) {
+            const minPen = a.result.penetration[0];
             aValue = minPen.x * minPen.x + minPen.y * minPen.y;
         }
-        if (b.value.length !== 0) {
-            const minPen = b.value[0];
+        if (b.result.penetration.length !== 0) {
+            const minPen = b.result.penetration[0];
             bValue = minPen.x * minPen.x + minPen.y * minPen.y;
         }
         return aValue > bValue ? a : b;
