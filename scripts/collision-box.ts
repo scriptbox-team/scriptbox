@@ -6,8 +6,9 @@ export default class CollisionBox extends Component {
     public y1: Aspect<number> = new Aspect(0);
     public x2: Aspect<number> = new Aspect(0);
     public y2: Aspect<number> = new Aspect(0);
+    public static: Aspect<boolean> = new Aspect(false);
 
-    public onCreate(x1?: number, y1?: number, x2?: number, y2?: number) {
+    public onCreate(x1?: number, y1?: number, x2?: number, y2?: number, isStatic?: boolean) {
         if (typeof x1 === "number") {
             this.x1.base = x1;
         }
@@ -19,6 +20,9 @@ export default class CollisionBox extends Component {
         }
         if (typeof y2 === "number") {
             this.y2.base = y2;
+        }
+        if (typeof isStatic === "boolean") {
+            this.static.base = isStatic;
         }
     }
 
