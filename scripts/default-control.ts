@@ -8,7 +8,7 @@ import Velocity from "./velocity";
 export default class DefaultControl extends Control {
     public commands: AspectSet<string>
         = new AspectSet(["up", "down", "left", "right"]);
-    public moveSpeed: Aspect<number> = new Aspect<number>(180);
+    public moveSpeed: Aspect<number> = new Aspect<number>(500);
     private _xMoveVelocity = 0;
     private _yMoveVelocity = 0;
     private _xModifier?: AspectModifier<number>;

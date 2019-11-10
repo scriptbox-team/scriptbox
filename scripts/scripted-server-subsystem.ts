@@ -17,6 +17,7 @@ import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
 import Velocity from "./velocity";
+import CollisionDetector from "./collision-detector";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -44,6 +45,8 @@ let executingUser: PlayerProxy | undefined;
 
 const classList = new Map<string, ClassInterface>();
 let tickRate!: number;
+
+const collisionDetector = new CollisionDetector();
 
 const playerSoulMap = new WeakMap<Player, PlayerSoul>();
 const playerUnproxiedMap = new WeakMap<PlayerProxy, Player>();
@@ -172,6 +175,10 @@ function componentExecuteDirect<T>(info: ComponentInfo, func: (...a: any[]) => T
     return result;
 }
 
+function log(...params: any[]) {
+    global.log(...params);
+}
+
 function outputUserError(owner: PlayerProxy, error: Error) {
     // TODO: Error.prepareStackTrace to improve how user stack traces look
     if (owner !== undefined) {
@@ -201,11 +208,11 @@ function handleComponentError(component: Component, error: Error) {
             });
         }
         else {
-            global.log(error);
+            global.log(error.stack);
         }
     }
     else {
-        global.log(error);
+        global.log(error.stack);
     }
 }
 
@@ -243,8 +250,12 @@ export function update() {
     componentManager.deleteQueued();
     // After the update and postupdate are called we should let the exports know about important changes
     resetExports();
-    // We need a new iterator since we reached the end of the last one
-    const entities = entityManager.entries();
+    const collisionBoxInfo = [];
+
+    //
+    //  Position export updating + collision box gathering
+    //
+    let entities = entityManager.entries();
     for (const [id, entity] of entities) {
         exportValues.entities[id] = {
             position: {x: 0, y: 0},
@@ -273,6 +284,95 @@ export function update() {
                 handleComponentError(positionComponent, err);
             }
         }
+        // Retrieve collision box info
+        const collisionComponent = entity.get<CollisionBox>("collision-box");
+        const collisionBox = componentInfoMap.get(collisionComponent);
+        if (collisionComponent !== undefined && collisionBox.enabled) {
+            try {
+                const x1 = componentExecuteDirect(collisionBox, () => collisionComponent.x1.getValue());
+                const y1 = componentExecuteDirect(collisionBox, () => collisionComponent.y1.getValue());
+                const x2 = componentExecuteDirect(collisionBox, () => collisionComponent.x2.getValue());
+                const y2 = componentExecuteDirect(collisionBox, () => collisionComponent.y2.getValue());
+                const isStatic = componentExecuteDirect(collisionBox, () => collisionComponent.static.getValue());
+                const dense = componentExecuteDirect(collisionBox, () => collisionComponent.dense.getValue());
+                if (typeof x1 === "number" && typeof y1 === "number"
+                && typeof x2 === "number" && typeof y2 === "number"
+                && typeof isStatic === "boolean"
+                && typeof dense === "boolean"
+                && typeof id === "string") {
+                    exportValues.entities[id].collisionBox = {
+                        x1: Math.min(x1, x2),
+                        x2: Math.min(y1, y2),
+                        y1: Math.max(x1, x2),
+                        y2: Math.max(y1, y2)
+                    };
+                    const entPos = exportValues.entities[id].position;
+                    collisionBoxInfo.push(
+                        {
+                            id,
+                            static: isStatic,
+                            dense,
+                            bounds: {
+                                x1: entPos.x + x1,
+                                y1: entPos.y + y1,
+                                x2: entPos.x + x2,
+                                y2: entPos.y + y2
+                            }
+                        }
+                    );
+                }
+            }
+            catch (err) {
+                handleComponentError(collisionComponent, err);
+            }
+        }
+        // A sanity check to prevent a collision box of width or height less than 1
+        const box = exportValues.entities["" + id].collisionBox;
+        if (box.x2 - box.x1 < 1 || box.y2 - box.y1 < 1) {
+            box.x2 = box.x1 + 1;
+            box.y2 = box.x1 + 1;
+        }
+    }
+
+    //
+    //  Collision detection and correction
+    //
+    const collisions = collisionDetector.check(collisionBoxInfo);
+    for (const collision of collisions) {
+        const pairs: Array<[string, {x: number, y: number}]>
+            = [[collision.obj1, collision.obj1NewPos], [collision.obj2, collision.obj2NewPos]];
+        for (const [id, pos] of pairs) {
+            const entity = entityManager.get(id);
+            const positionComponent = entity.get<Position>("position");
+            const positionInfo = componentInfoMap.get(positionComponent);
+            if (positionComponent !== undefined && positionInfo.enabled) {
+                try {
+                    if (typeof positionComponent.x === "object"
+                    && typeof positionComponent.y === "object"
+                    && typeof positionComponent.x.base === "number"
+                    && typeof positionComponent.y.base === "number"
+                    ) {
+                        positionComponent.x.base += pos.x;
+                        positionComponent.y.base += pos.y;
+                    }
+                    exportValues.entities[id].position = {
+                        x: exportValues.entities[id].position.x + pos.x,
+                        y: exportValues.entities[id].position.y + pos.y
+                    };
+                }
+                catch (err) {
+                    handleComponentError(positionComponent, err);
+                }
+            }
+        }
+    }
+
+    //
+    //  Display object gathering
+    //
+    // We need a new iterator since we reached the end of the last one
+    entities = entityManager.entries();
+    for (const [id, entity] of entities) {
         // TODO: Make it so entities can have multiple displays
         const displayComponent = entity.get<Display>("display");
         const displayInfo = componentInfoMap.get(displayComponent);
@@ -304,38 +404,8 @@ export function update() {
                 }
             }
             catch (err) {
-                handleComponentError(positionComponent, err);
+                handleComponentError(displayComponent, err);
             }
-        }
-        // Retrieve collision box info
-        const collisionComponent = entity.get<CollisionBox>("collision-box");
-        const collisionInfo = componentInfoMap.get(collisionComponent);
-        if (collisionComponent !== undefined && collisionInfo.enabled) {
-            try {
-                const x1 = componentExecuteDirect(collisionInfo, () => collisionComponent.x1.getValue());
-                const y1 = componentExecuteDirect(collisionInfo, () => collisionComponent.y1.getValue());
-                const x2 = componentExecuteDirect(collisionInfo, () => collisionComponent.x2.getValue());
-                const y2 = componentExecuteDirect(collisionInfo, () => collisionComponent.y2.getValue());
-                if (typeof x1 === "number" && typeof y1 === "number"
-                && typeof x2 === "number" && typeof y2 === "number"
-                && typeof id === "string") {
-                    exportValues.entities[id].collisionBox = {
-                        x1: Math.min(x1, x2),
-                        x2: Math.min(y1, y2),
-                        y1: Math.max(x1, x2),
-                        y2: Math.max(y1, y2)
-                    };
-                }
-            }
-            catch (err) {
-                handleComponentError(collisionComponent, err);
-            }
-        }
-        // A sanity check to prevent a collision box of width or height less than 1
-        const box = exportValues.entities["" + id].collisionBox;
-        if (box.x2 - box.x1 < 1 || box.y2 - box.y1 < 1) {
-            box.x2 = box.x1 + 1;
-            box.y2 = box.x1 + 1;
         }
     }
     // Retrieve entity inspection information
@@ -376,7 +446,7 @@ export function update() {
             exportValues.sprites[playerID] = {
                 ownerID: undefined,
                 texture: "R000000000000000000000001",
-                depth: 10,
+                depth: 99,
                 textureSubregion: {
                     x: soulAnimFrame * 32 + soulAnimSet * 128,
                     y: 0,
@@ -487,7 +557,6 @@ const _createComponent = (
     const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
-    global.log(classToCreate.name);
     if (entity !== undefined) {
         const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
         global.log(

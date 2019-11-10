@@ -122,6 +122,19 @@ export default class GameSystem extends System {
             "display",
             client.id
         );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            entID,
+            "collision-box",
+            "collision-box",
+            client.id,
+            0,
+            0,
+            32,
+            32,
+            false
+        );
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
@@ -164,6 +177,19 @@ export default class GameSystem extends System {
             "display",
             "display",
             client.id
+        );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            entID,
+            "collision-box",
+            "collision-box",
+            client.id,
+            0,
+            0,
+            32,
+            32,
+            true
         );
     }
     public deleteEntity(id: string) {

@@ -153,14 +153,17 @@ export default class ScriptRunner {
             if (globalAccess) {
                 context.global.setSync("global", context.global.derefInto());
                 context.global.setSync("_log", new IVM.Reference(this._log));
+                context.global.setSync("_IVM", IVM);
                 // Just a simple test log function
                 // Essentially taken from the isolated-vm readme
                 this._isolate.compileScriptSync(
                 `
                     const log = global._log;
+                    const _IVM = global._IVM;
                     global._log = undefined;
+                    global._IVM = undefined;
                     global.log = (...args) => {
-                        return log.applyIgnored(undefined, args.map(arg => new IVM.ExternalCopy(arg).copyInto()));
+                        return log.applyIgnored(undefined, args.map(arg => new _IVM.ExternalCopy(arg).copyInto()));
                     };
                 `).runSync(context);
             }
