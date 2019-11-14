@@ -1,5 +1,6 @@
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
+import CollisionDetector from "./collision-detector";
 import Component from "./component";
 import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
@@ -11,13 +12,13 @@ import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } fro
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
 import MetaInfo from "./meta-info";
+import ObjectSerializer from "./object-serializer";
 import Player, { PlayerProxy } from "./player";
 import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
-import Velocity from "./velocity";
-import CollisionDetector from "./collision-detector";
+import SerializedObjectCollection from "./serialized-object-collection";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -38,12 +39,16 @@ const exportValues: Exports = {
 
 global.exportValues = exportValues;
 
+const serializedMap = {serializedData: {} as any};
+global.serializedMap = serializedMap;
+
 let messageQueue: MessageExportInfo[] = [];
 const playerResources = new Map<string, Map<string, Resource>>();
 
 let executingUser: PlayerProxy | undefined;
 
 const classList = new Map<string, ClassInterface>();
+const classPrototypeLookup = new WeakMap<ClassInterface, string>();
 let tickRate!: number;
 
 const collisionDetector = new CollisionDetector();
@@ -113,6 +118,7 @@ const entityManager = new Manager<EntityProxy>((id: string, creator: Player) => 
 });
 
 const componentInfoMap = new WeakMap<Component, ComponentInfo>();
+const componentInfoUnproxiedMap = new WeakMap<ComponentInfoProxy, ComponentInfo>();
 const componentManager = new Manager<Component>((
             componentID: string,
             componentClass: ClassInterface,
@@ -137,6 +143,7 @@ const componentManager = new Manager<Component>((
         );
         const component = new componentClass(infoProxy);
         componentInfoMap.set(component, info);
+        componentInfoUnproxiedMap.set(infoProxy, info);
 
         const trueEntity = entityUnproxiedMap.get(entity);
         trueEntity.directAdd(localID, component);
@@ -649,8 +656,13 @@ export function handleInput(playerID: string, input: number, state: InputType) {
     }
 }
 
-export function setComponentClass(classObj: ClassInterface, id: string) {
-    classList.set(id, classObj);
+export function setComponentClass(classObj: ClassInterface, id: string, overwrite: boolean = true) {
+    if (classObj !== undefined) {
+        if (overwrite || !classList.has(id)) {
+            classList.set(id, classObj);
+            classPrototypeLookup.set(classObj.prototype, id);
+        }
+    }
 }
 
 export function inspectEntity(playerID: string, entityID?: string) {
@@ -767,6 +779,189 @@ export function recoverFromTimeout() {
     }
 }
 
+interface GameObjectCollection extends SerializedObjectCollection {
+    entityReferences: Array<{
+        entID: string;
+        parentID: number;
+        name: string;
+    }>;
+    playerReferences: Array<{
+        playerID: string;
+        parentID: number;
+        name: string;
+    }>;
+    componentInfoReferences: Array<{
+        componentID: string;
+        parentID: number;
+        name: string;
+    }>;
+}
+
+interface SerializedObject {
+    module?: string;
+    object: any;
+    componentID?: string;
+}
+
+export function serializeGameState() {
+    const skip = new Set<any>();
+    const entities = entityManager.entries();
+    const players = playerManager.entries();
+    const components = componentManager.entries();
+    // Add the proxies to the set to skip
+    for (const [id, entityProxy] of entities) {
+        skip.add(entityProxy);
+    }
+    for (const [id, playerProxy] of players) {
+        skip.add(playerProxy);
+    }
+    for (const [id, component] of components) {
+        skip.add((component as any)._data);
+    }
+    // Get all of the pure entities
+    const pureEntities = Array.from(entityManager.entries()).map(([id, entity]) => entityUnproxiedMap.get(entity));
+    const pureComponentData = Array.from(componentManager.entries())
+        .map(([id, entity]) => componentInfoMap.get(entity));
+    const serializedObj = ObjectSerializer.serialize<GameObjectCollection>(
+        classPrototypeLookup,
+        (pureEntities as any).concat(pureComponentData),
+        skip,
+        (collect, parentID, obj, name) => {
+            if (collect.entityReferences === undefined) {
+                collect.entityReferences = [];
+            }
+            if (collect.playerReferences === undefined) {
+                collect.playerReferences = [];
+            }
+            if (collect.componentInfoReferences === undefined) {
+                collect.componentInfoReferences = [];
+            }
+            if (entityUnproxiedMap.has(obj)) {
+                collect.entityReferences.push({
+                    entID: entityUnproxiedMap.get(obj).id,
+                    parentID,
+                    name
+                });
+            }
+            else if (playerUnproxiedMap.has(obj)) {
+                collect.playerReferences.push({
+                    playerID: playerUnproxiedMap.get(obj).id,
+                    parentID,
+                    name
+                });
+            }
+            else if (componentInfoUnproxiedMap.has(obj)) {
+                collect.componentInfoReferences.push({
+                    componentID: componentInfoUnproxiedMap.get(obj).id,
+                    parentID,
+                    name
+                });
+            }
+        },
+        (obj) => {
+            if (componentInfoMap.has(obj)) {
+                return componentInfoMap.get(obj).id;
+            }
+            return undefined;
+        }
+    ) as GameObjectCollection;
+    serializedMap.serializedData = serializedObj;
+}
+
+export function deserializeGameState(gameState: GameObjectCollection) {
+    const sets = [];
+    const maps = [];
+    const componentInfoList = [] as ComponentInfo[];
+    const revivedObjects = ObjectSerializer.deserialize(classList, gameState, (id: number, data: SerializedObject) => {
+        switch (data.module) {
+            case "entity": {
+                const entity = entityManager.create(data.object._id);
+                const pureEntity = entityUnproxiedMap.get(entity);
+                Object.assign(pureEntity, data.object);
+                return pureEntity;
+            }
+            case "component-info": {
+                const componentInfo = new ComponentInfo(
+                    data.object.id,
+                    data.object.entity,
+                    data.object.name,
+                    data.object.description,
+                    data.object._enabled,
+                    data.object.exists,
+                    data.object.owner
+                );
+                Object.assign(componentInfo, data.object);
+                componentInfoList.push(componentInfo);
+                return componentInfo;
+            }
+            case "player": {
+                // Do nothing with players being loaded in
+                return undefined;
+            }
+            case "map": {
+                maps.push(id);
+                return undefined;
+            }
+            case "set": {
+                sets.push(id);
+                return undefined;
+            }
+            default: {
+                let revivedObj = {} as any;
+                if (data.module !== undefined && classList.has(data.module)) {
+                    revivedObj = new (classList.get(data.module))();
+                }
+                if (data.componentID !== undefined) {
+                    componentManager.add(data.componentID, revivedObj);
+                }
+                return Object.assign(revivedObj, data.object);
+            }
+        }
+    });
+    for (const set of sets) {
+        const rebuiltSet = Object.keys(revivedObjects[set]).map((key) => {
+            return revivedObjects[set][key];
+        });
+        const revivedSet = new Set<any>(rebuiltSet as any[]);
+        const refs = gameState.references.filter((ref) => ref.objID === set);
+        for (const ref of refs) {
+            revivedObjects[ref.parentID][ref.name] = revivedSet;
+        }
+    }
+    for (const map of maps) {
+        const rebuiltMap = Object.keys(revivedObjects[map]).map((key) => {
+            return [revivedObjects[map][key][0], revivedObjects[map][key][1]];
+        }) as [any, any];
+        const revivedMap = new Map<any, any>(rebuiltMap);
+        const refs = gameState.references.filter((ref) => ref.objID === map);
+        for (const ref of refs) {
+            revivedObjects[ref.parentID][ref.name] = revivedMap;
+        }
+    }
+    // Put component info in the manager
+    for (const componentInfo of componentInfoList) {
+        componentInfoMap.set(componentManager.get(componentInfo.id), componentInfo);
+    }
+    // Fix references
+    for (const ref of gameState.entityReferences) {
+        revivedObjects[ref.parentID][ref.name] = entityManager.get(ref.entID);
+    }
+    for (const ref of gameState.componentInfoReferences) {
+        const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
+            componentInfoMap.get(componentManager.get(ref.componentID)),
+            ["id", "entity", "exists"],
+            ["_enabled"]
+        );
+        revivedObjects[ref.parentID][ref.name] = infoProxy;
+    }
+
+    // Finally reload all entities
+    const entities = entityManager.entries();
+    for (const [id, e] of entities) {
+        e.reload();
+    }
+}
+
 const resetExports = () => {
     exportValues.entities = {};
     exportValues.inspectedEntityInfo = {};
@@ -787,10 +982,3 @@ enum InputType {
     Release = 1,
     Move = 2
 }
-
-classList.set("position", Position);
-classList.set("velocity", Velocity);
-classList.set("collision-box", CollisionBox);
-classList.set("default-control", DefaultControl);
-classList.set("event-component", EventComponent);
-classList.set("display", Display);

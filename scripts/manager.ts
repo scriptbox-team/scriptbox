@@ -23,6 +23,9 @@ export default class Manager<T> {
         this._items.set(id, item);
         return item;
     }
+    public add(id: string, element: T) {
+        this._items.set(id, element);
+    }
     public forceDelete(id: string, ...args: any[]) {
         if (this._deleteFunc !== undefined) {
             const item = this._items.get(id);

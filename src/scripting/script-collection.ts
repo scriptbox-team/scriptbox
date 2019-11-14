@@ -18,6 +18,9 @@ export default class ScriptCollection {
             addIns
         );
     }
+    public getScripts() {
+        return Object.keys(this._prebuiltScripts).map((key) => [key, this._prebuiltScripts[key]] as [string, Script]);
+    }
     // TODO: Consider having the prebuilt modules in runScript use something other than just the collection's
     // prebuilt scripts, it may be a good idea to only include what's absolutely necessary
     public async runScript(
@@ -74,6 +77,10 @@ export default class ScriptCollection {
     public execute(scriptPath: string, name: string, ...params: any) {
         const script = this.getScript(scriptPath);
         return script.execute(name, ...params);
+    }
+    public async executeAsync(scriptPath: string, name: string, ...params: any) {
+        const script = this.getScript(scriptPath);
+        return await script.executeAsync(name, ...params);
     }
     public executeReturnRef(scriptPath: string, name: string, ...params: any) {
         const funcRef = this.getScript(scriptPath).getReference(name);

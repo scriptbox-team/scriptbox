@@ -1,5 +1,6 @@
 import Client from "core/client";
 import Group, { GroupType } from "core/group";
+import Collection from "database/collection";
 import fs from "fs-extra";
 import IVM from "isolated-vm";
 import _ from "lodash";
@@ -28,13 +29,20 @@ export default class GameSystem extends System {
     private _scriptDir: string;
     private _playerScriptDir: string;
     private _validPlayerModules: {[name: string]: string};
-    constructor(tickRate: number, systemScriptDirectory: string, playerScriptDirectory: string) {
+    private _mapDBCollection: Collection;
+    private _mapLoaded: boolean = false;
+    constructor(
+            tickRate: number,
+            systemScriptDirectory: string,
+            playerScriptDirectory: string,
+            mapCollection: Collection) {
         super();
         this._resolveModule = this._resolveModule.bind(this);
         this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
         this._scriptDir = systemScriptDirectory;
         this._playerScriptDir = playerScriptDirectory;
+        this._mapDBCollection = mapCollection;
         this._cachedPlayerScripts = new Map<string, {time: number, script: Script}>();
 
         const playerFileDirs = this._getDirsRecursive(this._playerScriptDir);
@@ -42,7 +50,7 @@ export default class GameSystem extends System {
             this._getDirsRecursive(this._scriptDir, [this._playerScriptDir])
         );
 
-        const scripts: any = _.transform(fileDirs, (result, dir) => {
+        const scripts: {[s: string]: string} = _.transform(fileDirs, (result, dir) => {
             result[dir] = fs.readFileSync(dir, {encoding: "utf8"});
         }, {} as {[s: string]: string});
 
@@ -53,6 +61,20 @@ export default class GameSystem extends System {
         }, {} as {[name: string]: string});
 
         this._scriptCollection = new ScriptCollection(scripts);
+        const builtScripts = this._scriptCollection.getScripts();
+        for (const [scriptPath, script] of builtScripts) {
+            if (scriptPath !== GameSystem.scriptedServerSubsystemDir) {
+                const scriptName = path.relative(this._scriptDir, scriptPath);
+                const scriptNameNoExt = scriptName.substr(0, scriptName.length - path.extname(scriptPath).length);
+                this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "setComponentClass",
+                    script.getReference("default").derefInto(),
+                    scriptNameNoExt,
+                    false
+                );
+            }
+        }
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", tickRate);
     }
     public update() {
@@ -348,6 +370,39 @@ export default class GameSystem extends System {
         );
     }
 
+    public async saveMap() {
+        await this._scriptCollection.executeAsync(
+            GameSystem.scriptedServerSubsystemDir,
+            "serializeGameState"
+        );
+        const map = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
+            `
+                new IVM.ExternalCopy(global.serializedMap).copyInto();
+            `).result.serializedData;
+        console.log(map);
+        await this._mapDBCollection.drop();
+        await this._mapDBCollection.insert({id: "scriptbox-map", map});
+        this.addMessageToQueue([], `Map saved at ${new Date().toString()}. (${map.objects.length} objects)`);
+        console.log(`Map saved at ${new Date().toString()}. (${map.objects.length} objects)`);
+    }
+
+    public async loadMap() {
+        this._mapLoaded = true;
+        const query = await this._mapDBCollection.get("scriptbox-map");
+        if (query !== undefined && query !== null) {
+            await this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "deserializeGameState",
+                new IVM.ExternalCopy(query.map).copyInto()
+            );
+            this.addMessageToQueue([], `Map loaded. (${query.map.objects.length} objects)`);
+            console.log(`Map loaded. (${query.map.objects.length} objects)`);
+        }
+        else {
+            console.log(`No map available to load.`);
+        }
+    }
+
     private _preresolveModule(user: Client, modulePath: string) {
         let pathsToTry = [modulePath];
         const extension = path.extname(modulePath);
@@ -435,5 +490,9 @@ export default class GameSystem extends System {
 
     private _loadScriptResourceSync(id: string) {
         return this.loadResourceSync!(id, "utf8");
+    }
+
+    get mapLoaded() {
+        return this._mapLoaded;
     }
 }

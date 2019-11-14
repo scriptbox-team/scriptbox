@@ -1,6 +1,7 @@
 import Aspect from "./aspect";
 import AspectSet from "./aspect-set";
 import Component from "./component";
+import Map from "./map";
 import MetaInfo from "./meta-info";
 import Player, { PlayerProxy } from "./player";
 
@@ -262,6 +263,10 @@ export default class Entity {
     }
 
     public reload() {
+        const componentEntries = this._components.entries();
+        for (const [id, component] of componentEntries) {
+            this._componentsInverse.set(component, id);
+        }
         for (const [localID, component] of this._components) {
             component.onUnload();
         }

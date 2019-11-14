@@ -1,3 +1,4 @@
+import Database from "database/database";
 import _ from "lodash";
 import NetworkSystem from "networking/network-system";
 import path from "path";
@@ -76,6 +77,9 @@ export default class Server {
     private _gameSystem: GameSystem;
     private _gameSystemNetworker: GameSystemNetworker;
     private _idGenerator: IDGenerator;
+    private _database: Database;
+    private _nextSave: number;
+    private _saveTime: number = 30000;
 
     private _loop: GameLoop;
     /**
@@ -89,6 +93,8 @@ export default class Server {
         this._createPlayer = this._createPlayer.bind(this);
         this._deletePlayer = this._deletePlayer.bind(this);
         this._getResourceServerIP = this._getResourceServerIP.bind(this);
+
+        this._database = new Database("mongodb://localhost:27017", ["resources", "game-data"]);
 
         this._idGenerator = new IDGenerator(Math.random());
 
@@ -121,7 +127,8 @@ export default class Server {
         this._gameSystem = new GameSystem(
             this._tickRate,
             path.join(process.cwd(), "__scripted__"),
-            path.join(process.cwd(), "__scripted__", "exposed")
+            path.join(process.cwd(), "__scripted__", "exposed"),
+            this._database.getCollection("game-data")
         );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
         this._gameSystem.getResourceByID = (id) => this._resourceSystem.getResourceByID(id);
@@ -144,6 +151,19 @@ export default class Server {
         this._resourceSystem.addPlayerListingDelegate(this._gameSystem.updateResources);
 
         this._loop = new GameLoop(this._tick, this._tickRate);
+
+        this._database.connect()
+            .then(() => {
+                try {
+                    this._gameSystem.loadMap();
+                }
+                catch (err) {
+                    console.error(err);
+                    console.error("Map loading failed.");
+                }
+            });
+
+        this._nextSave = Date.now() + this._saveTime;
     }
 
     /**
@@ -176,19 +196,32 @@ export default class Server {
 
             if (exportValues.messages !== undefined) {
                 const messages = exportValues.messages.map((msg: MessageExportInfo) => {
+                    let group = new Group<Client>(
+                        GroupType.Only,
+                        msg.recipient.map((pID) => exportValues.players[pID].client)
+                    );
+                    if (msg.recipient.length === 0) {
+                        group = new Group<Client>(
+                            GroupType.All,
+                            []
+                        );
+                    }
                     return {
                         message: msg.message,
                         kind: msg.kind,
-                        recipient: new Group<Client>(
-                            GroupType.Only,
-                            msg.recipient.map((pID) => exportValues.players[pID].client)
-                        )
+                        recipient: group
                     };
                 });
                 this._messageSystem.sendChatMessages(messages);
             }
             this._resourceSystem.deleteQueued();
             this._clientManager.deleteQueued();
+
+            if (Date.now() > this._nextSave) {
+                this._gameSystem.saveMap();
+                this._nextSave += this._saveTime;
+            }
+
         }
         catch (error) {
             // TODO: Suppress repeated errors
