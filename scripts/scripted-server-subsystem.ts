@@ -909,6 +909,9 @@ export function deserializeGameState(gameState: GameObjectCollection) {
                 }, [] as any[]);
                 return new Set<any>(arr);
             }
+            case "array": {
+                return Object.assign([], data.object);
+            }
             default: {
                 let revivedObj = {} as any;
                 if (data.module !== undefined && classList.has(data.module)) {

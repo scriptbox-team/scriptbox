@@ -92,7 +92,7 @@ export default class Entity {
         componentClassID: string,
         localID: string,
         owner?: string | undefined,
-        ...params: any[]) => any;
+        ...params: any[]) => string;
     private _remove!: (entityID: string, component: Component) => void;
     private _components: Map<string, Component>;
     private _componentsInverse: WeakMap<Component, string>;

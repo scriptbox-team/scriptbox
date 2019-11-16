@@ -18,7 +18,7 @@ export default class EventComponent extends Component {
         super.onPostUpdate(delta);
         this._subEvent = this._subEvent.proceed(delta);
         if (this._subEvent === undefined) {
-            if (this.loopAtEnd) {
+            if (this.loopAtEnd.getValue()) {
                 this._subEvent = this._startSubEvent;
             }
             else {

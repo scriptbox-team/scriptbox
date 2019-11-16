@@ -142,7 +142,16 @@ export default class GameSystem extends System {
             entID,
             "display",
             "display",
-            client.id
+            client.id,
+            "R000000000000000000000002"
+        );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            entID,
+            "default-player-ac",
+            "animation-controller",
+            client.id,
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -396,7 +405,7 @@ export default class GameSystem extends System {
         this._mapLoaded = true;
         const query = await this._mapDBCollection.get("scriptbox-map");
         if (query !== undefined && query !== null) {
-            const skip = new Set<string>();
+            const skip = new Set<string>(["array"]);
             const modulesToLoad = query.map.objects.reduce((acc: Set<string>, obj: any) => {
                 if (!acc.has(obj.module) && !skip.has(obj.module)) {
                     if (obj.module !== undefined) {

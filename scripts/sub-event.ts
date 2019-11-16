@@ -6,27 +6,35 @@ interface SubEventOptions {
 
 export default class SubEvent {
     private _update: (time: number) => number;
-    private _start: (time: number) => number;
-    private _end: (time: number) => number;
+    private _start: () => void;
+    private _end: () => void;
     private _next?: SubEvent;
-    constructor(options: SubEventOptions) {
-        for (const option of ["start", "update", "end"]) {
-            if (options[option] !== undefined) {
-                (this as any)["_" + option] = options[option];
+    constructor(options?: SubEventOptions) {
+        if (options !== undefined) {
+            for (const option of ["start", "update", "end"]) {
+                if (options[option] !== undefined) {
+                    (this as any)["_" + option] = options[option];
+                }
             }
         }
     }
-    public start(delta: number) {
-        return this._nextEventIfNegative(this._start(delta));
+    public start() {
+        if (this._start !== undefined) {
+            this._start();
+        }
     }
     public proceed(delta: number) {
-        return this._nextEventIfNegative(this._update(delta));
+        const res = this._update !== undefined ? this._update(delta) : 0;
+        return this._nextEventIfNegative(res);
     }
     public wait(time: number) {
         let runTime = time;
         return this.setNext(new SubEvent({update: (delta) => {
-            runTime -= delta;
-            return runTime;
+            const result = runTime -= delta;
+            if (runTime < 0) {
+                runTime = time;
+            }
+            return result;
         }}));
     }
     public do(func: () => void) {
@@ -57,16 +65,17 @@ export default class SubEvent {
         const ceilPrecision = 100000;
         const ceilResult = this._ceilTo(result, ceilPrecision);
         if (ceilResult <= 0) {
-            const modifiedResult = this._end(result);
+            if (this._end !== undefined) {
+                this._end();
+            }
             if (this._next === undefined) {
                 return undefined;
             }
-            const ceilModifiedResult = this._ceilTo(modifiedResult, ceilPrecision);
-            const nextSubEvent = this._next.start(modifiedResult);
-            if (nextSubEvent === this._next && ceilModifiedResult < 0) {
-                this._next.proceed(-modifiedResult);
+            this._next.start();
+            if (ceilResult < 0) {
+                return this._next.proceed(-ceilResult);
             }
-            return nextSubEvent;
+            return this._next;
         }
         return this;
     }
