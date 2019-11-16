@@ -74,9 +74,9 @@ export default class ScriptCollection {
     public convert(obj: any) {
         return new IVM.ExternalCopy(obj).copyInto();
     }
-    public execute(scriptPath: string, name: string, ...params: any) {
+    public execute(scriptPath: string, name: string, params: any[] = [], timeout: number = 500) {
         const script = this.getScript(scriptPath);
-        return script.execute(name, ...params);
+        return script.execute(name, params, timeout);
     }
     public async executeAsync(scriptPath: string, name: string, ...params: any) {
         const script = this.getScript(scriptPath);

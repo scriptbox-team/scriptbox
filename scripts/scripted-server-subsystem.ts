@@ -347,32 +347,28 @@ export function update() {
     //
     //  Collision detection and correction
     //
-    const collisions = collisionDetector.check(collisionBoxInfo);
+    const collisions = collisionDetector.check(collisionBoxInfo, () => true);
     for (const collision of collisions) {
-        const pairs: Array<[string, {x: number, y: number}]>
-            = [[collision.obj1, collision.obj1NewPos], [collision.obj2, collision.obj2NewPos]];
-        for (const [id, pos] of pairs) {
-            const entity = entityManager.get(id);
-            const positionComponent = entity.get<Position>("position");
-            const positionInfo = componentInfoMap.get(positionComponent);
-            if (positionComponent !== undefined && positionInfo.enabled) {
-                try {
-                    if (typeof positionComponent.x === "object"
-                    && typeof positionComponent.y === "object"
-                    && typeof positionComponent.x.base === "number"
-                    && typeof positionComponent.y.base === "number"
-                    ) {
-                        positionComponent.x.base += pos.x;
-                        positionComponent.y.base += pos.y;
-                    }
-                    exportValues.entities[id].position = {
-                        x: exportValues.entities[id].position.x + pos.x,
-                        y: exportValues.entities[id].position.y + pos.y
-                    };
+        const entity = entityManager.get(collision.primaryObj);
+        const positionComponent = entity.get<Position>("position");
+        const positionInfo = componentInfoMap.get(positionComponent);
+        if (positionComponent !== undefined && positionInfo.enabled) {
+            try {
+                if (typeof positionComponent.x === "object"
+                && typeof positionComponent.y === "object"
+                && typeof positionComponent.x.base === "number"
+                && typeof positionComponent.y.base === "number"
+                ) {
+                    positionComponent.x.base += collision.primaryObjNewPos.x;
+                    positionComponent.y.base += collision.primaryObjNewPos.y;
                 }
-                catch (err) {
-                    handleComponentError(positionComponent, err);
-                }
+                exportValues.entities[collision.primaryObj].position = {
+                    x: exportValues.entities[collision.primaryObj].position.x + collision.primaryObjNewPos.x,
+                    y: exportValues.entities[collision.primaryObj].position.y + collision.primaryObjNewPos.y
+                };
+            }
+            catch (err) {
+                handleComponentError(positionComponent, err);
             }
         }
     }

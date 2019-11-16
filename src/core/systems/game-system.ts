@@ -69,13 +69,15 @@ export default class GameSystem extends System {
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "setComponentClass",
-                    script.getReference("default").derefInto(),
-                    scriptNameNoExt,
-                    false
+                    [
+                        script.getReference("default").derefInto(),
+                        scriptNameNoExt,
+                        false
+                    ]
                 );
             }
         }
-        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", tickRate);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", [tickRate]);
     }
     public update() {
         const profile = process.hrtime();
@@ -101,139 +103,163 @@ export default class GameSystem extends System {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createPlayer",
-            client.id,
-            client.username,
-            client.displayName
+            [
+                client.id,
+                client.username,
+                client.displayName
+            ]
         );
-        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", client.id);
+        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", [client.id]);
         // Creating the entity is temporary
         // Until players can add default modules on their own
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "position",
-            "position",
-            client.id,
-            0,
-            0
+            [
+                entID,
+                "position",
+                "position",
+                client.id,
+                0,
+                0
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "velocity",
-            "velocity",
-            client.id,
-            0,
-            0
+            [
+                entID,
+                "velocity",
+                "velocity",
+                client.id,
+                0,
+                0
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "default-control",
-            "control",
-            client.id
+            [
+                    entID,
+                "default-control",
+                "control",
+                client.id
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "display",
-            "display",
-            client.id,
-            "R000000000000000000000002"
+            [
+                entID,
+                "display",
+                "display",
+                client.id,
+                "R000000000000000000000002"
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "default-player-ac",
-            "animation-controller",
-            client.id,
+            [
+                entID,
+                "default-player-ac",
+                "animation-controller",
+                client.id
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "collision-box",
-            "collision-box",
-            client.id,
-            0,
-            0,
-            32,
-            32,
-            false
+            [
+                entID,
+                "collision-box",
+                "collision-box",
+                client.id,
+                0,
+                0,
+                32,
+                32,
+                false
+            ]
         );
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
-            client.id,
-            entID
+            [
+                client.id,
+                entID
+            ]
         );
     }
     public deletePlayer(client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "deletePlayer",
-            client.id
+            [client.id]
         );
     }
     public handleKeyInput(key: number, state: number, client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "handleInput",
-            client.id,
-            key,
-            state
+            [
+                client.id,
+                key,
+                state
+            ]
         );
     }
     public async createEntityAt(prefabID: string, x: number, y: number, client: Client) {
-        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", client.id);
+        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", [client.id]);
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "position",
-            "position",
-            client.id,
-            x,
-            y
+            [
+                entID,
+                "position",
+                "position",
+                client.id,
+                x,
+                y
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "display",
-            "display",
-            client.id
+            [
+                entID,
+                "display",
+                "display",
+                client.id
+            ]
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
-            entID,
-            "collision-box",
-            "collision-box",
-            client.id,
-            0,
-            0,
-            32,
-            32,
-            true
+            [
+                entID,
+                "collision-box",
+                "collision-box",
+                client.id,
+                0,
+                0,
+                32,
+                32,
+                true
+            ]
         );
     }
     public deleteEntity(id: string) {
-        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "deleteEntity", id);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "deleteEntity", [id]);
     }
     public setPlayerEntityInspection(player: Client, entityID?: string) {
-        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "inspectEntity", player.id, entityID);
+        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "inspectEntity", [player.id, entityID]);
     }
     public removeComponent(componentID: string) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "deleteComponent",
-            componentID
+            [componentID]
         );
     }
     public async runResourcePlayerScript(
@@ -303,7 +329,7 @@ export default class GameSystem extends System {
             entityID = this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "getPlayerControllingEntity",
-                client.id
+                [client.id]
             );
         }
         if (entityID !== undefined) {
@@ -338,17 +364,21 @@ export default class GameSystem extends System {
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "setComponentClass",
-                defaultExport.derefInto(),
-                className
+                [
+                    defaultExport.derefInto(),
+                    className
+                ]
             );
             if (apply) {
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
-                    entityID,
-                    className,
-                    className,
-                    client.id
+                    [
+                        entityID,
+                        className,
+                        className,
+                        client.id
+                    ]
                 );
             }
         }
@@ -363,8 +393,10 @@ export default class GameSystem extends System {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
-            client.id,
-            entityID
+            [
+                client.id,
+                entityID
+            ]
         );
     }
 
@@ -372,8 +404,10 @@ export default class GameSystem extends System {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setComponentEnableState",
-            componentID,
-            state
+            [
+                componentID,
+                state
+            ]
         );
     }
 
@@ -381,8 +415,10 @@ export default class GameSystem extends System {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setResourceList",
-            player.id,
-            this._scriptCollection.convert(resources)
+            [
+                player.id,
+                this._scriptCollection.convert(resources)
+            ]
         );
     }
 
@@ -447,8 +483,10 @@ export default class GameSystem extends System {
                         this._scriptCollection.execute(
                             GameSystem.scriptedServerSubsystemDir,
                             "setComponentClass",
-                            defaultExport.derefInto(),
-                            resource!.id
+                            [
+                                defaultExport.derefInto(),
+                                resource!.id
+                            ]
                         );
                     }
                 }
@@ -460,7 +498,8 @@ export default class GameSystem extends System {
             await this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "deserializeGameState",
-                new IVM.ExternalCopy(query.map).copyInto()
+                [new IVM.ExternalCopy(query.map).copyInto()],
+                18000
             );
             this.addMessageToQueue([], `Map loaded. (${query.map.objects.length} objects)`);
             console.log(`Map loaded. (${query.map.objects.length} objects)`);
@@ -480,38 +519,44 @@ export default class GameSystem extends System {
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "createComponent",
-                entID,
-                "position",
-                "position",
-                undefined,
-                i * 32,
-                32
+                [
+                    entID,
+                    "position",
+                    "position",
+                    undefined,
+                    i * 32,
+                    32
+                ]
             );
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "createComponent",
-                entID,
-                "display",
-                "display",
-                undefined,
-                "R000000000000000000000003",
-                32,
-                0,
-                32,
-                32
+                [
+                    entID,
+                    "display",
+                    "display",
+                    undefined,
+                    "R000000000000000000000003",
+                    32,
+                    0,
+                    32,
+                    32
+                ]
             );
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "createComponent",
-                entID,
-                "collision-box",
-                "collision-box",
-                undefined,
-                0,
-                0,
-                32,
-                32,
-                true
+                [
+                    entID,
+                    "collision-box",
+                    "collision-box",
+                    undefined,
+                    0,
+                    0,
+                    32,
+                    32,
+                    true
+                ]
             );
             for (let j = 2; j < 8; j++) {
                 const entID2 = this._scriptCollection.execute(
@@ -521,38 +566,44 @@ export default class GameSystem extends System {
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
-                    entID2,
-                    "position",
-                    "position",
-                    undefined,
-                    i * 32,
-                    j * 32
+                    [
+                        entID2,
+                        "position",
+                        "position",
+                        undefined,
+                        i * 32,
+                        j * 32
+                    ]
                 );
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
-                    entID2,
-                    "display",
-                    "display",
-                    undefined,
-                    "R000000000000000000000003",
-                    32,
-                    32,
-                    32,
-                    32
+                    [
+                        entID2,
+                        "display",
+                        "display",
+                        undefined,
+                        "R000000000000000000000003",
+                        32,
+                        32,
+                        32,
+                        32
+                    ]
                 );
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
-                    entID2,
-                    "collision-box",
-                    "collision-box",
-                    undefined,
-                    0,
-                    0,
-                    32,
-                    32,
-                    true
+                    [
+                        entID2,
+                        "collision-box",
+                        "collision-box",
+                        undefined,
+                        0,
+                        0,
+                        32,
+                        32,
+                        true
+                    ]
                 );
             }
         }
