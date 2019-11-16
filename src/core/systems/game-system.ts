@@ -115,8 +115,8 @@ export default class GameSystem extends System {
             "position",
             "position",
             client.id,
-            150 + Math.random() * 150,
-            150 + Math.random() * 150
+            0,
+            0
         );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
