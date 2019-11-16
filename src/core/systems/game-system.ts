@@ -466,7 +466,95 @@ export default class GameSystem extends System {
             console.log(`Map loaded. (${query.map.objects.length} objects)`);
         }
         else {
-            console.log(`No map available to load.`);
+            console.log(`No map available to load. Generating default map.`);
+            this._generateMap();
+        }
+    }
+
+    private _generateMap() {
+        for (let i = -25; i < 25; i++) {
+            const entID = this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createEntity",
+            );
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                entID,
+                "position",
+                "position",
+                undefined,
+                i * 32,
+                32
+            );
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                entID,
+                "display",
+                "display",
+                undefined,
+                "R000000000000000000000003",
+                32,
+                0,
+                32,
+                32
+            );
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                entID,
+                "collision-box",
+                "collision-box",
+                undefined,
+                0,
+                0,
+                32,
+                32,
+                true
+            );
+            for (let j = 2; j < 8; j++) {
+                const entID2 = this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "createEntity",
+                );
+                this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "createComponent",
+                    entID2,
+                    "position",
+                    "position",
+                    undefined,
+                    i * 32,
+                    j * 32
+                );
+                this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "createComponent",
+                    entID2,
+                    "display",
+                    "display",
+                    undefined,
+                    "R000000000000000000000003",
+                    32,
+                    32,
+                    32,
+                    32
+                );
+                this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "createComponent",
+                    entID2,
+                    "collision-box",
+                    "collision-box",
+                    undefined,
+                    0,
+                    0,
+                    32,
+                    32,
+                    true
+                );
+            }
         }
     }
 
