@@ -15,9 +15,9 @@ interface TextureRegion {
     height: number;
 }
 
-export default class AnimationController extends Component {
+export default abstract class AnimationController extends Component {
+    public abstract frames: {[name: string]: TextureRegion};
     private _animations: SimpleAnimation[] = [];
-    private _frames: {[name: string]: TextureRegion} = {};
     public onUpdate() {
         while (this._animations.length > 0 && !this._animations[this._animations.length - 1].exists) {
             this._animations.pop();
@@ -25,7 +25,7 @@ export default class AnimationController extends Component {
         if (this._animations.length > 0) {
             const animation = this._animations[this._animations.length - 1];
             this.with<Display>("display", (display) => {
-                const frame = this._frames[animation.currentFrame.getValue()];
+                const frame = this.frames[animation.currentFrame.getValue()];
                 if (frame !== undefined) {
                     display.textureX.base = frame.x;
                     display.textureY.base = frame.y;
@@ -36,7 +36,7 @@ export default class AnimationController extends Component {
         }
     }
     public animate(frames: FrameData[], loop: boolean) {
-        const ent = this.entity.add("simple-animation", "simple-animation", this.owner, frames);
+        const ent = this.entity.add("simple-animation", "simple-animation" + Date.now(), this.owner, frames);
         if (loop) {
             ent.loop();
         }

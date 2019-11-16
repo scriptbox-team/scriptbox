@@ -15,7 +15,6 @@ export default abstract class Control extends Component {
     }
     public sendKeyPress(input: string) {
         const commands = this.commands.getValue();
-        global.log(JSON.stringify(Array.from(this.commands.base.entries())));
         if (commands.has(input)) {
             this.inputStates[input] = true;
         }

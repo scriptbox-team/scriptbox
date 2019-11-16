@@ -19,7 +19,7 @@ export default class ScriptRunner {
      * @memberof ScriptRunner
      */
     constructor() {
-        this._isolate = new IVM.Isolate({inspector: true});
+        this._isolate = new IVM.Isolate({inspector: true, memoryLimit: 2000});
     }
 
     /**

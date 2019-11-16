@@ -79,7 +79,7 @@ export default class Server {
     private _idGenerator: IDGenerator;
     private _database: Database;
     private _nextSave: number;
-    private _saveTime: number = 30000;
+    private _saveTime: number = 120000;
 
     private _loop: GameLoop;
     /**

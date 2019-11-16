@@ -119,6 +119,9 @@ export default class ObjectSerializer {
         if (prototype !== undefined && classPrototypeLookup.has(prototype)) {
             module = classPrototypeLookup.get(prototype);
         }
+        else if (Array.isArray(obj)) {
+            module = "array";
+        }
         for (const prop of props) {
             switch (typeof obj[prop]) {
                 case "object": {

@@ -5,7 +5,7 @@ import ComponentInfo from "./component-info";
 export default class Component {
     public static externalFromID: (id: string) => Component | undefined;
     public static fromID(id: string) {
-        this.externalFromID(id);
+        return this.externalFromID(id);
     }
     public tags = new AspectSet<string>([]);
     private _data: ComponentInfo;

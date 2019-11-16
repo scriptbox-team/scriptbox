@@ -46,13 +46,31 @@ export default class ResourceSystem extends System {
     }
     public async loadExistingResources(savedResourcePath: string, initialResourcePath?: string) {
         const resources = await this._getResources();
-        if (resources.length === 0) {
-            if (initialResourcePath !== undefined) {
-                const defaultResourcePaths = this._getDirsRecursive(initialResourcePath);
-                for (const resourcePath of defaultResourcePaths) {
-                    const id = path.basename(resourcePath);
-                    const file = await fs.readFile(resourcePath);
-                    const type = fileType(file);
+        const resourceIDSet = new Set<string>();
+        if (resources.length !== 0) {
+            for (const resource of resources) {
+                const resourcePath = path.join(savedResourcePath, resource.id);
+                const file = await fs.readFile(resourcePath);
+                const type = fileType(file);
+                resourceIDSet.add(resource.id);
+                await this.addOrUpdateFile(
+                    "scriptbox",
+                    {
+                        name: resource.id,
+                        mimetype: type !== undefined ? type.mime : "text/plain",
+                        data: file
+                    },
+                    resource.id
+                );
+            }
+        }
+        if (initialResourcePath !== undefined) {
+            const defaultResourcePaths = this._getDirsRecursive(initialResourcePath);
+            for (const resourcePath of defaultResourcePaths) {
+                const id = path.basename(resourcePath);
+                const file = await fs.readFile(resourcePath);
+                const type = fileType(file);
+                if (!resourceIDSet.has(id)) {
                     await this.addOrUpdateFile(
                         "scriptbox",
                         {
@@ -64,22 +82,6 @@ export default class ResourceSystem extends System {
                         true
                     );
                 }
-            }
-        }
-        else {
-            for (const resource of resources) {
-                const resourcePath = path.join(savedResourcePath, resource.id);
-                const file = await fs.readFile(resourcePath);
-                const type = fileType(file);
-                await this.addOrUpdateFile(
-                    "scriptbox",
-                    {
-                        name: resource.id,
-                        mimetype: type !== undefined ? type.mime : "text/plain",
-                        data: file
-                    },
-                    resource.id
-                );
             }
         }
         console.log("Resource data loaded.");
