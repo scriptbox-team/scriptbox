@@ -8,6 +8,7 @@ ModuleAlias.addAliases({
   messaging: path.join(__dirname, "messaging"),
   scripting: path.join(__dirname, "scripting"),
   networking: path.join(__dirname, "networking"),
+  database: path.join(__dirname, "database"),
   "resource-management": path.join(__dirname, "resource-management")
 });
 
@@ -17,4 +18,3 @@ import Server from "core/server";
 
 // Create and start the server
 const serv = new Server({port: 7777, resourcePort: 7778});
-serv.start();

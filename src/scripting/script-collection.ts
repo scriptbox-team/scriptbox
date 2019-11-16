@@ -18,6 +18,9 @@ export default class ScriptCollection {
             addIns
         );
     }
+    public getScripts() {
+        return Object.keys(this._prebuiltScripts).map((key) => [key, this._prebuiltScripts[key]] as [string, Script]);
+    }
     // TODO: Consider having the prebuilt modules in runScript use something other than just the collection's
     // prebuilt scripts, it may be a good idea to only include what's absolutely necessary
     public async runScript(
@@ -40,7 +43,7 @@ export default class ScriptCollection {
             this._prebuiltScripts
         );
     }
-    public async buildScripts(
+    public buildScripts(
             pathsWithCode: {[s: string]: string},
             moduleDependencyHandler?: (specifier: string, referrer: IVM.Module) => [string, string] | undefined) {
         return this.scriptRunner.buildManySync(
@@ -48,7 +51,7 @@ export default class ScriptCollection {
             moduleDependencyHandler
         );
     }
-    public async runScripts(
+    public runScripts(
             modulePaths: {[s: string]: IVM.Module},
             args: string,
             entityValue?: IVM.Reference<any>,
@@ -75,6 +78,10 @@ export default class ScriptCollection {
         const script = this.getScript(scriptPath);
         return script.execute(name, ...params);
     }
+    public async executeAsync(scriptPath: string, name: string, ...params: any) {
+        const script = this.getScript(scriptPath);
+        return await script.executeAsync(name, ...params);
+    }
     public executeReturnRef(scriptPath: string, name: string, ...params: any) {
         const funcRef = this.getScript(scriptPath).getReference(name);
         const context = this.getScript(scriptPath).context;
@@ -99,9 +106,6 @@ export default class ScriptCollection {
     }
     public getScript(scriptPath: string) {
         const script = this._prebuiltScripts[scriptPath];
-        if (script === undefined) {
-            throw new Error("Component at path " + scriptPath + " could not be found.");
-        }
         return script;
     }
 }

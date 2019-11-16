@@ -63,6 +63,9 @@
       "resource-management/*": [
           "./src/resource-management/*"
       ],
+      "database/*": [
+          "./src/database/*"
+      ],
       "scripts/*": [
           "./scripts/*"
       ]
