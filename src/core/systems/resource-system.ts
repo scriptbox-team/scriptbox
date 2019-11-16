@@ -1,6 +1,7 @@
 import Client from "core/client";
 import IDGenerator from "core/id-generator";
 import Manager from "core/manager";
+import Collection from "database/collection";
 import fileType from "file-type";
 import fs from "fs-extra";
 import ResourceServer from "networking/resource-server";
@@ -13,11 +14,6 @@ import System from "./system";
 interface ResourceSystemOptions {
     serverPort: string;
     resourcePath: string;
-    initialResourcePath?: string;
-}
-
-interface PlayerResourceData {
-    resourcesByFilename: Map<string, string>;
 }
 
 interface ResourceFile {
@@ -29,16 +25,17 @@ interface ResourceFile {
 export default class ResourceSystem extends System {
     public playerByUsername?: (username: string) => Client | undefined;
     private _playerListingUpdateDelegates: Array<(user: Client, resources: {[filename: string]: Resource}) => void>;
-    private _playerResourceData: Map<string, PlayerResourceData> = new Map<string, PlayerResourceData>();
-    private _resourceManager: Manager<Resource>;
     private _resourceServer: ResourceServer;
     private _playerTokens: Map<number, Client>;
     private _idGenerator: IDGenerator;
-    constructor(idGenerator: IDGenerator, options: ResourceSystemOptions) {
+    private _resourceCollection: Collection;
+    private _resourceDeletionQueue: string[];
+    constructor(idGenerator: IDGenerator, collection: Collection, options: ResourceSystemOptions) {
         super();
         this._resourceCreate = this._resourceCreate.bind(this);
         this._onResourceDelete = this._onResourceDelete.bind(this);
-        this._resourceManager = new Manager<Resource>(this._resourceCreate, this._onResourceDelete);
+        this._resourceCollection = collection;
+        this._resourceDeletionQueue = [];
         this._playerListingUpdateDelegates
             = new Array<(user: Client, resources: {[filename: string]: Resource}) => void>();
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
@@ -46,33 +43,51 @@ export default class ResourceSystem extends System {
         this._resourceServer.onFileUpload = this.handleFileUpload;
         this._resourceServer.onFileDelete = this.handleFileDelete;
         this._idGenerator = idGenerator;
-
-        if (options.initialResourcePath !== undefined) {
-            const defaultResources = this._getDirsRecursive(options.initialResourcePath);
-            for (const res of defaultResources) {
-                const name = path.basename(res);
-                const file = fs.readFileSync(res);
-                this.addOrUpdateFile(
-                    "",
+    }
+    public async loadExistingResources(savedResourcePath: string, initialResourcePath?: string) {
+        const resources = await this._getResources();
+        if (resources.length === 0) {
+            if (initialResourcePath !== undefined) {
+                const defaultResourcePaths = this._getDirsRecursive(initialResourcePath);
+                for (const resourcePath of defaultResourcePaths) {
+                    const id = path.basename(resourcePath);
+                    const file = await fs.readFile(resourcePath);
+                    const type = fileType(file);
+                    await this.addOrUpdateFile(
+                        "scriptbox",
+                        {
+                            name: id,
+                            mimetype: type !== undefined ? type.mime : "text/plain",
+                            data: file
+                        },
+                        id,
+                        true
+                    );
+                }
+            }
+        }
+        else {
+            for (const resource of resources) {
+                const resourcePath = path.join(savedResourcePath, resource.id);
+                const file = await fs.readFile(resourcePath);
+                const type = fileType(file);
+                await this.addOrUpdateFile(
+                    "scriptbox",
                     {
-                        name,
-                        mimetype: fileType(file)!.mime,
+                        name: resource.id,
+                        mimetype: type !== undefined ? type.mime : "text/plain",
                         data: file
                     },
-                    name,
-                    true
+                    resource.id
                 );
             }
         }
+        console.log("Resource data loaded.");
     }
-    public addResource(user: string, type: ResourceType, file: ResourceFile, id?: string): Promise<Resource> {
-        let playerResourceData = this._playerResourceData.get(user);
-        if (playerResourceData === undefined) {
-            playerResourceData = {resourcesByFilename: new Map<string, string>()};
-            this._playerResourceData.set(user, playerResourceData);
-        }
-        const filename = this._getAvailableFilename(file.name, playerResourceData.resourcesByFilename);
-        const resource = this._resourceManager.create(
+    public async addResource(user: string, type: ResourceType, file: ResourceFile, id?: string): Promise<Resource> {
+        const playerResourceData = await this.getPlayerResources(user);
+        const filename = this._getAvailableFilename(file.name, playerResourceData);
+        const resource = new Resource(
             id !== undefined ? id : this._idGenerator.makeFrom("R", Date.now(), Math.random()),
             type,
             this._filenameToName(filename),
@@ -83,48 +98,51 @@ export default class ResourceSystem extends System {
             Date.now(),
             ""
         );
-        playerResourceData.resourcesByFilename.set(filename, resource.id);
-        this._updateResourceListing(user, playerResourceData.resourcesByFilename);
-        return this._resourceServer.add(resource, file);
+        await this._setResource(resource);
+        await this._updateResourceListing(user, playerResourceData.concat([resource]));
+        return await this._resourceServer.add(resource, file);
     }
     public async updateResource(
             user: string,
             type: ResourceType,
             resourceID: string,
             file: ResourceFile): Promise<Resource> {
-        const resource = this._resourceManager.get(resourceID);
+        const resource = await this.getResourceByID(resourceID);
+        const playerResourceData = await this.getPlayerResources(user);
         if (resource === undefined) {
             return Promise.reject(`Resource of ID \'${resourceID}\' does not exist`);
         }
         const owner = resource.owner;
-        const playerResourceData = this._playerResourceData.get(owner);
-        if (owner !== user || playerResourceData === undefined) {
+        if (owner !== user && user !== "scriptbox") {
             // TODO: Allow admins to edit resources they don't own
             return Promise.reject(`User ${user} does not have priveleges to edit this resource`);
         }
-        playerResourceData.resourcesByFilename.delete(resource.filename);
         // Update the type just in case they uploaded something different
         resource.type = type;
         resource.time = Date.now();
-        resource.filename = this._getAvailableFilename(file.name, playerResourceData.resourcesByFilename);
-        playerResourceData.resourcesByFilename.set(resource.filename, resource.id);
+        resource.filename = this._getAvailableFilename(file.name, playerResourceData);
+        await this._updateResource(resource);
         // TODO: Allow resources to have multiple contributors (owners)
-        this._updateResourceListing(owner, playerResourceData.resourcesByFilename);
+        await this._updateResourceListing(owner, playerResourceData.concat([resource]));
         return this._resourceServer.update(resource, file);
     }
-    public deleteResource(user: string, resourceID: string): void {
-        const resource = this._resourceManager.get(resourceID);
+    public async deleteResource(user: string, resourceID: string): Promise<void> {
+        const resource = await this.getResourceByID(resourceID);
         if (resource === undefined) {
             throw new Error(`Resource of ID \'${resourceID}\' does not exist`);
         }
         const owner = resource.owner;
-        if (owner !== user) {
+        if (owner !== user && user !== "scriptbox") {
             // TODO: Allow admins to edit resources they don't own
             throw new Error(`User ${user} does not have priveleges to delete other players' resources`);
         }
-        this._resourceManager.queueForDeletion(resourceID);
+        this._resourceDeletionQueue.push(resourceID);
     }
-    public addOrUpdateFile(username: string, file: ResourceFile, resourceID?: string, alwaysCreate: boolean = false) {
+    public async addOrUpdateFile(
+            username: string,
+            file: ResourceFile,
+            resourceID?: string,
+            alwaysCreate: boolean = false) {
         let resourceType: ResourceType | undefined;
         switch (file.mimetype) {
             case "image/bmp":
@@ -158,23 +176,23 @@ export default class ResourceSystem extends System {
         if (resourceType !== undefined) {
             if (resourceID === undefined || alwaysCreate) {
                 // Upload new resource
-                this.addResource(username, resourceType, file, resourceID);
+                await this.addResource(username, resourceType, file, resourceID);
             }
             else {
                 // Update resource (overwrite)
-                this.updateResource(username, resourceType, resourceID, file);
+                await this.updateResource(username, resourceType, resourceID, file);
             }
         }
     }
-    public handleFileUpload = (token: number, file: ResourceFile, resourceID?: string) => {
+    public handleFileUpload = async (token: number, file: ResourceFile, resourceID?: string) => {
         const player = this.getPlayerFromToken(token);
         if (player === undefined) {
             throw new Error("Invalid token");
         }
-        return this.addOrUpdateFile(player.username, file, resourceID);
+        return await this.addOrUpdateFile(player.username, file, resourceID);
     }
-    public updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
-        const resource = this.getResourceByID(resourceID);
+    public async updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
+        const resource = await this.getResourceByID(resourceID);
         if (resource === undefined) {
             throw new Error(`Resource to modify was not found`);
         }
@@ -195,9 +213,9 @@ export default class ResourceSystem extends System {
                 throw new Error(`Resource attribute ${attribute} is not recognized as a valid modifiable attribute`);
             }
         }
-        const resourceData = this._playerResourceData.get(owner);
+        const resourceData = await this.getPlayerResources(owner);
         if (resourceData !== undefined) {
-            this._updateResourceListing(owner, resourceData.resourcesByFilename);
+            await this._updateResourceListing(owner, resourceData);
         }
     }
     public handleFileDelete = (token: number, resourceID: string) => {
@@ -218,53 +236,48 @@ export default class ResourceSystem extends System {
     public getPlayerFromToken(token: number) {
         return this._playerTokens.get(token);
     }
-    public loadResource(resourceID: string, encoding: string) {
-        return this._resourceServer.loadResource(resourceID, encoding);
+    public async loadResource(resourceID: string, encoding: string) {
+        return await this._resourceServer.loadResource(resourceID, encoding);
     }
     public loadResourceSync(resourceID: string, encoding: string) {
         return this._resourceServer.loadResourceSync(resourceID, encoding);
     }
-    public getResourceByID(resourceID: string) {
-        return this._resourceManager.get(resourceID);
-    }
-    public deleteQueued() {
-        this._resourceManager.deleteQueued();
+    public async deleteQueued() {
+        for (const resourceID of this._resourceDeletionQueue) {
+            await this._deleteResource(resourceID);
+            // Delete resource from database
+        }
+        this._resourceDeletionQueue = [];
     }
     public addPlayerListingDelegate(cb: (user: Client, resources: {[filename: string]: Resource}) => void) {
         this._playerListingUpdateDelegates.push(cb);
     }
-    public getResourceByFilename(filename: string, playerUsername: string) {
-        const playerResourceData = this._playerResourceData.get(playerUsername);
-        if (playerResourceData === undefined) {
-            return undefined;
-        }
-        const id = playerResourceData.resourcesByFilename.get(filename);
-        if (id === undefined) {
-            return id;
-        }
-        return this._resourceManager.get(id);
+    public async getResourceByFilename(username: string, filename: string): Promise<Resource> {
+        return (await this._resourceCollection.getMany({owner: username, filename}))[0];
     }
     get port() {
         return this._resourceServer.port;
     }
-    private _updateResourceListing(owner: string, resourceMap: Map<string, string>) {
+    public async getResourceByID(resourceID: string): Promise<Resource> {
+        return await this._resourceCollection.get(resourceID);
+    }
+    public async getPlayerResources(username: string): Promise<Resource[]> {
+        return await this._resourceCollection.getMany({owner: username});
+    }
+    private async _updateResourceListing(owner: string, resources: Resource[]) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);
             if (player !== undefined && this._playerListingUpdateDelegates !== undefined) {
                 for (const func of this._playerListingUpdateDelegates) {
-                    func(player, this._resourceMapToObject(resourceMap));
+                    func(player, await this._resourceArrayToObject(resources));
                 }
             }
         }
     }
-    private _resourceMapToObject(resources: Map<string, string>) {
-        const iterator = resources.entries();
+    private async _resourceArrayToObject(resources: Resource[]) {
         const obj: {[filename: string]: Resource} = {};
-        for (const [filename, resourceID] of iterator) {
-            const res = this._resourceManager.get(resourceID);
-            if (res !== undefined) {
-                obj[filename] = res;
-            }
+        for (const resource of resources) {
+            obj[resource.filename] = resource;
         }
         return obj;
     }
@@ -280,30 +293,39 @@ export default class ResourceSystem extends System {
             icon: string) {
         return new Resource(id, type, name, filename, creator, owner, description, time, icon);
     }
-    private _onResourceDelete(resource: Resource) {
-        const ownerData = this._playerResourceData.get(resource.owner);
-        if (ownerData !== undefined) {
-            ownerData.resourcesByFilename.delete(resource.filename);
-            this._updateResourceListing(resource.owner, ownerData.resourcesByFilename);
-        }
+    private async _onResourceDelete(resource: Resource) {
         this._resourceServer.delete(resource);
+        await this._deleteResource(resource.id);
     }
     private _filenameToName(filename: string) {
         const ext = path.extname(filename);
         return filename.substr(0, filename.length - ext.length);
     }
-    private _getAvailableFilename(filename: string, fileMap: Map<string, string>) {
+    private _getAvailableFilename(filename: string, files: Resource[]) {
         const ext = path.extname(filename);
         const fileWithoutExt = filename.substr(0, filename.length - ext.length);
         let tryFilename = fileWithoutExt + ext;
         let num = 1;
-        while (fileMap.get(tryFilename) !== undefined) {
+        const set = new Set(files.map((file) => file.name));
+        while (set.has(tryFilename)) {
             tryFilename = fileWithoutExt + "." + (num++) + ext;
             if (num > 100000) {
                 throw new Error("Maximum filename renumbering attempts exceeded");
             }
         }
         return tryFilename;
+    }
+    private async _getResources(): Promise<Resource[]> {
+        return await this._resourceCollection.getMany({});
+    }
+    private async _setResource(resourceData: Resource) {
+        await this._resourceCollection.insert(resourceData);
+    }
+    private async _updateResource(resourceData: Resource) {
+        await this._resourceCollection.update(resourceData.id, resourceData);
+    }
+    private async _deleteResource(id: string) {
+        await this._resourceCollection.delete(id);
     }
     private _getDirsRecursive(dir: string) {
         return fs.readdirSync(dir).reduce((result, elemPath) => {

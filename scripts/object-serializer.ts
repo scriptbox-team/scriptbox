@@ -1,6 +1,7 @@
 import Map from "./map";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
+import WeakMap from "./weak-map";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -22,7 +23,7 @@ export default class ObjectSerializer {
     public static serialize<T extends SerializedObjectCollection>(
             invClassList: WeakMap<ClassInterface, string>,
             objects: object[],
-            skip: Set<any>,
+            skip: (arg: any) => boolean,
             handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
             getComponentID: (object: any) => string | undefined
         ) {
@@ -91,7 +92,12 @@ export default class ObjectSerializer {
             return this._deserializeSingle(i++, classList, obj, customClassHandler);
         });
         for (const ref of collection.references) {
-            this._resolveReference(revivedObjects, ref);
+            try {
+                this._resolveReference(revivedObjects, ref);
+            }
+            catch (err) {
+                global.log(`${err.stack}`);
+            }
         }
         return revivedObjects;
     }
@@ -102,7 +108,7 @@ export default class ObjectSerializer {
             refSet: WeakMap<object, number>,
             classPrototypeLookup: WeakMap<ClassInterface, string>,
             obj: any,
-            skip: Set<any>,
+            skip: (arg: any) => boolean,
             handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
             getComponentID: (object: any) => string | undefined
         ) {
@@ -120,7 +126,7 @@ export default class ObjectSerializer {
                         serializedObject[prop] = obj[prop];
                         continue;
                     }
-                    if (skip.has(obj[prop])) {
+                    if (skip(obj[prop])) {
                         handleSkip(collect, loc, obj[prop], prop);
                         continue;
                     }
@@ -151,7 +157,7 @@ export default class ObjectSerializer {
         refSet: WeakMap<object, number>,
         classPrototypeLookup: WeakMap<ClassInterface, string>,
         obj: Map<any, any>,
-        skip: Set<any>,
+        skip: (arg: any) => boolean,
         handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
         getComponentID: (object: any) => string | undefined
     ) {
@@ -178,12 +184,12 @@ export default class ObjectSerializer {
         refSet: WeakMap<object, number>,
         classPrototypeLookup: WeakMap<ClassInterface, string>,
         obj: Set<any>,
-        skip: Set<any>,
+        skip: (arg: any) => boolean,
         handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
         getComponentID: (object: any) => string | undefined
     ) {
         const serializedObject = {} as object;
-        const iterator = obj.entries();
+        const iterator = obj.values();
         let module: undefined | string;
         const prototype = Object.getPrototypeOf(obj);
         if (prototype !== undefined && classPrototypeLookup.has(prototype)) {
@@ -199,7 +205,7 @@ export default class ObjectSerializer {
                         serializedObject[i] = elem;
                         continue;
                     }
-                    if (skip.has(elem)) {
+                    if (skip(elem)) {
                         handleSkip(collect, loc, elem, "" + i);
                         continue;
                     }
@@ -247,8 +253,14 @@ export default class ObjectSerializer {
     ) {
         const parent = revivedObjects[reference.parentID];
         const child = revivedObjects[reference.objID];
-        if (parent[reference.name] !== undefined) {
-            Object.assign(parent[reference.name], child);
+        if (parent instanceof Map) {
+            return;
+            // This is handled elsewhere
+            // Because the elements are arrays
+            // Which may first need to have their references resoolved
+        }
+        else if (parent instanceof Set) {
+            parent.add(child);
         }
         else {
             parent[reference.name] = child;

@@ -23,6 +23,7 @@ export default class Collection {
         this._get = funcs.get;
         this._getMany = funcs.getMany;
         this._drop = funcs.drop;
+        this._update = funcs.update;
     }
     public async insert(document: object) {
         await this._insert(document);

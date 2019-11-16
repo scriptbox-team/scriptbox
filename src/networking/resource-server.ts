@@ -15,7 +15,7 @@ interface ResourceFile {
 }
 
 export default class ResourceServer {
-    public onFileUpload?: (token: number, file: ResourceFile, resource?: string) => void;
+    public onFileUpload?: (token: number, file: ResourceFile, resource?: string) => Promise<void>;
     public onFileDelete?: (token: number, resource: string) => void;
     private _app: express.Application;
     private _port: string;
@@ -62,7 +62,7 @@ export default class ResourceServer {
             res.sendFile(req.params.id, {root: this._resourcePath});
         });
         this._app.route("/")
-            .post((req: express.Request, res: express.Response) => {
+            .post(async (req: express.Request, res: express.Response) => {
                 const files = req.files;
                 if (files === undefined) {
                     return;
@@ -74,7 +74,7 @@ export default class ResourceServer {
                     if (Array.isArray(file)) {
                         for (const subfile of file) {
                             try {
-                                this.onFileUpload!(parseInt(req.body.token, 10), subfile, req.body.resourceID);
+                                await this.onFileUpload!(parseInt(req.body.token, 10), subfile, req.body.resourceID);
                             }
                             catch (err) {
                                 console.log(err);
@@ -90,7 +90,7 @@ export default class ResourceServer {
                     }
                     else {
                         try {
-                            this.onFileUpload!(parseInt(req.body.token, 10), file, req.body.resourceID);
+                            await this.onFileUpload!(parseInt(req.body.token, 10), file, req.body.resourceID);
                         }
                         catch (err) {
                             console.log(err);
@@ -105,9 +105,9 @@ export default class ResourceServer {
                     }
                 }
             })
-            .delete((req: express.Request, res: express.Response) => {
+            .delete(async (req: express.Request, res: express.Response) => {
                 try {
-                    this.onFileDelete!(parseInt(req.body.token, 10), req.body.resourceID);
+                    await this.onFileDelete!(parseInt(req.body.token, 10), req.body.resourceID);
                 }
                 catch (err) {
                     console.log(err);
@@ -141,13 +141,16 @@ export default class ResourceServer {
         await fs.unlink(this._resourcePath + resource.id);
     }
     public async loadResource(resourceID: string, encoding: string) {
-        return fs.readFile(this._resourcePath + resourceID, encoding);
+        return await fs.readFile(this._resourcePath + resourceID, encoding);
     }
     public loadResourceSync(resourceID: string, encoding: string) {
         return fs.readFileSync(this._resourcePath + resourceID, encoding);
     }
     get port() {
         return this._port;
+    }
+    get resourcePath() {
+        return this._resourcePath;
     }
     // TODO: Change all functions with promises to async functions'
     // TODO: Refactor ResourceServer into multiple classes; one to handle file system management and the other for API

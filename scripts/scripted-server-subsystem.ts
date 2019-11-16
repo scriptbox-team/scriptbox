@@ -11,6 +11,7 @@ import EventComponent from "./event-component";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
+import Map from "./map";
 import MetaInfo from "./meta-info";
 import ObjectSerializer from "./object-serializer";
 import Player, { PlayerProxy } from "./player";
@@ -19,6 +20,8 @@ import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
 import SerializedObjectCollection from "./serialized-object-collection";
+import Set from "./set";
+import WeakMap from "./weak-map";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -804,20 +807,6 @@ interface SerializedObject {
 }
 
 export function serializeGameState() {
-    const skip = new Set<any>();
-    const entities = entityManager.entries();
-    const players = playerManager.entries();
-    const components = componentManager.entries();
-    // Add the proxies to the set to skip
-    for (const [id, entityProxy] of entities) {
-        skip.add(entityProxy);
-    }
-    for (const [id, playerProxy] of players) {
-        skip.add(playerProxy);
-    }
-    for (const [id, component] of components) {
-        skip.add((component as any)._data);
-    }
     // Get all of the pure entities
     const pureEntities = Array.from(entityManager.entries()).map(([id, entity]) => entityUnproxiedMap.get(entity));
     const pureComponentData = Array.from(componentManager.entries())
@@ -825,7 +814,11 @@ export function serializeGameState() {
     const serializedObj = ObjectSerializer.serialize<GameObjectCollection>(
         classPrototypeLookup,
         (pureEntities as any).concat(pureComponentData),
-        skip,
+        (obj) => {
+            return entityUnproxiedMap.has(obj)
+            || playerUnproxiedMap.has(obj)
+            || componentInfoUnproxiedMap.has(obj);
+        },
         (collect, parentID, obj, name) => {
             if (collect.entityReferences === undefined) {
                 collect.entityReferences = [];
@@ -869,9 +862,9 @@ export function serializeGameState() {
 }
 
 export function deserializeGameState(gameState: GameObjectCollection) {
-    const sets = [];
-    const maps = [];
+    const maps = [] as number[];
     const componentInfoList = [] as ComponentInfo[];
+    const componentProxies = new Map<string, ComponentInfoProxy>();
     const revivedObjects = ObjectSerializer.deserialize(classList, gameState, (id: number, data: SerializedObject) => {
         switch (data.module) {
             case "entity": {
@@ -891,6 +884,13 @@ export function deserializeGameState(gameState: GameObjectCollection) {
                     data.object.owner
                 );
                 Object.assign(componentInfo, data.object);
+                const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
+                    componentInfo,
+                    ["id", "entity", "exists"],
+                    ["_enabled"]
+                );
+                componentProxies.set(data.object.id, infoProxy);
+                componentInfoUnproxiedMap.set(infoProxy, componentInfo);
                 componentInfoList.push(componentInfo);
                 return componentInfo;
             }
@@ -900,11 +900,14 @@ export function deserializeGameState(gameState: GameObjectCollection) {
             }
             case "map": {
                 maps.push(id);
-                return undefined;
+                return new Map<any, any>();
             }
             case "set": {
-                sets.push(id);
-                return undefined;
+                const arr = Object.keys(data.object).reduce((acc, key) => {
+                    acc.push(data.object[key]);
+                    return acc;
+                }, [] as any[]);
+                return new Set<any>(arr);
             }
             default: {
                 let revivedObj = {} as any;
@@ -918,41 +921,38 @@ export function deserializeGameState(gameState: GameObjectCollection) {
             }
         }
     });
-    for (const set of sets) {
-        const rebuiltSet = Object.keys(revivedObjects[set]).map((key) => {
-            return revivedObjects[set][key];
-        });
-        const revivedSet = new Set<any>(rebuiltSet as any[]);
-        const refs = gameState.references.filter((ref) => ref.objID === set);
-        for (const ref of refs) {
-            revivedObjects[ref.parentID][ref.name] = revivedSet;
-        }
-    }
-    for (const map of maps) {
-        const rebuiltMap = Object.keys(revivedObjects[map]).map((key) => {
-            return [revivedObjects[map][key][0], revivedObjects[map][key][1]];
-        }) as [any, any];
-        const revivedMap = new Map<any, any>(rebuiltMap);
-        const refs = gameState.references.filter((ref) => ref.objID === map);
-        for (const ref of refs) {
-            revivedObjects[ref.parentID][ref.name] = revivedMap;
-        }
-    }
     // Put component info in the manager
     for (const componentInfo of componentInfoList) {
-        componentInfoMap.set(componentManager.get(componentInfo.id), componentInfo);
+        const component = componentManager.get(componentInfo.id);
+        if (component !== undefined) {
+            componentInfoMap.set(component, componentInfo);
+        }
     }
     // Fix references
     for (const ref of gameState.entityReferences) {
-        revivedObjects[ref.parentID][ref.name] = entityManager.get(ref.entID);
+        if (revivedObjects[ref.parentID] instanceof Set) {
+            revivedObjects[ref.parentID].add(entityManager.get(ref.entID));
+        }
+        else {
+            revivedObjects[ref.parentID][ref.name] = entityManager.get(ref.entID);
+        }
     }
     for (const ref of gameState.componentInfoReferences) {
-        const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
-            componentInfoMap.get(componentManager.get(ref.componentID)),
-            ["id", "entity", "exists"],
-            ["_enabled"]
-        );
-        revivedObjects[ref.parentID][ref.name] = infoProxy;
+        if (revivedObjects[ref.parentID] instanceof Set) {
+            revivedObjects[ref.parentID].add(componentProxies.get(ref.componentID));
+        }
+        else {
+            revivedObjects[ref.parentID][ref.name] = componentProxies.get(ref.componentID);
+        }
+    }
+    // Handle maps
+    for (const mapID of maps) {
+        const map = revivedObjects[mapID];
+        const refs = gameState.references.filter((ref) => ref.parentID === mapID);
+        for (const ref of refs) {
+            const arr = revivedObjects[ref.objID];
+            map.set(arr[0], arr[1]);
+        }
     }
 
     // Finally reload all entities

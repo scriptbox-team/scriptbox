@@ -53,13 +53,13 @@ export default class Database {
     private async insert(collectionName: string, document: object) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
-        await collection.insert(document);
+        await collection.insertOne(document);
     }
 
     private async update(collectionName: string, id: string, document: object) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
-        await collection.update({id}, document);
+        await collection.replaceOne({id}, document);
     }
 
     private async delete(collectionName: string, id: string) {

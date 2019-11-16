@@ -116,10 +116,10 @@ export default class Server {
         this._displaySystemNetworker = new DisplaySystemNetworker(this._displaySystem);
         this._resourceSystem = new ResourceSystem(
             this._idGenerator,
+            this._database.getCollection("resources"),
             {
                 serverPort: "" + options.resourcePort,
-                resourcePath: "./data/res/",
-                initialResourcePath: path.join(process.cwd(), "./data-default")
+                resourcePath: "./data/res/"
             }
         );
         this._resourceSystem.playerByUsername = (username) => this._usernameToPlayer.get(username);
@@ -131,9 +131,9 @@ export default class Server {
             this._database.getCollection("game-data")
         );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
-        this._gameSystem.getResourceByID = (id) => this._resourceSystem.getResourceByID(id);
-        this._gameSystem.getResourceByFilename = (user, file) => this._resourceSystem.getResourceByFilename(file, user);
-        this._gameSystem.loadResource = (resource, enc) => this._resourceSystem.loadResource(resource, enc);
+        this._gameSystem.getResourceByID = async (id) => await this._resourceSystem.getResourceByID(id);
+        this._gameSystem.getPlayerResources = async (user) => await this._resourceSystem.getPlayerResources(user);
+        this._gameSystem.loadResource = async (resource, enc) => await this._resourceSystem.loadResource(resource, enc);
         this._gameSystem.loadResourceSync = (resource, enc) => this._resourceSystem.loadResourceSync(resource, enc);
 
         this._networkSystem.hookup([
@@ -153,14 +153,25 @@ export default class Server {
         this._loop = new GameLoop(this._tick, this._tickRate);
 
         this._database.connect()
-            .then(() => {
+            .then(async () => {
                 try {
-                    this._gameSystem.loadMap();
+                    await this._resourceSystem.loadExistingResources(
+                        path.join(process.cwd(), "./data/res"),
+                        path.join(process.cwd(), "./data-default")
+                    );
+                }
+                catch (err) {
+                    console.error(err);
+                    console.error("Resource loading failed.");
+                }
+                try {
+                    await this._gameSystem.loadMap();
                 }
                 catch (err) {
                     console.error(err);
                     console.error("Map loading failed.");
                 }
+                this.start();
             });
 
         this._nextSave = Date.now() + this._saveTime;

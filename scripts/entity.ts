@@ -4,6 +4,7 @@ import Component from "./component";
 import Map from "./map";
 import MetaInfo from "./meta-info";
 import Player, { PlayerProxy } from "./player";
+import WeakMap from "./weak-map";
 
 export interface EntityProxy {
     readonly delete: () => void;

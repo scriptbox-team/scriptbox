@@ -43,7 +43,7 @@ export default class ScriptCollection {
             this._prebuiltScripts
         );
     }
-    public async buildScripts(
+    public buildScripts(
             pathsWithCode: {[s: string]: string},
             moduleDependencyHandler?: (specifier: string, referrer: IVM.Module) => [string, string] | undefined) {
         return this.scriptRunner.buildManySync(
@@ -51,7 +51,7 @@ export default class ScriptCollection {
             moduleDependencyHandler
         );
     }
-    public async runScripts(
+    public runScripts(
             modulePaths: {[s: string]: IVM.Module},
             args: string,
             entityValue?: IVM.Reference<any>,
@@ -106,9 +106,6 @@ export default class ScriptCollection {
     }
     public getScript(scriptPath: string) {
         const script = this._prebuiltScripts[scriptPath];
-        if (script === undefined) {
-            throw new Error("Component at path " + scriptPath + " could not be found.");
-        }
         return script;
     }
 }

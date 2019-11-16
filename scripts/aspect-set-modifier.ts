@@ -1,3 +1,5 @@
+import Set from "./set";
+
 export default class AspectSetModifier<T extends (string | number | boolean | symbol)> {
     private _func?: (v: Set<T>) => Set<T>;
     private _deleted: boolean;

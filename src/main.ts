@@ -18,4 +18,3 @@ import Server from "core/server";
 
 // Create and start the server
 const serv = new Server({port: 7777, resourcePort: 7778});
-serv.start();
