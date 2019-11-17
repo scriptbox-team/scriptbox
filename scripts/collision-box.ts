@@ -1,5 +1,6 @@
 import Aspect from "./aspect";
 import Component from "./component";
+import { EntityProxy } from "./entity";
 
 export default class CollisionBox extends Component {
     public x1: Aspect<number> = new Aspect(0);
@@ -64,5 +65,9 @@ export default class CollisionBox extends Component {
 
     public getSize() {
         return {x: this.getWidth(), y: this.getHeight()};
+    }
+
+    public canPush(entity: EntityProxy) {
+        return true;
     }
 }

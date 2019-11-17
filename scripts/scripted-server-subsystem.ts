@@ -347,7 +347,32 @@ export function update() {
     //
     //  Collision detection and correction
     //
-    const collisions = collisionDetector.check(collisionBoxInfo, () => true);
+    const collisions = collisionDetector.check(collisionBoxInfo, (obj1, obj2) => {
+        const entity1 = entityManager.get(obj1);
+        const box1 = entity1.get<CollisionBox>("collision-box");
+        const entity2 = entityManager.get(obj2);
+        const box2 = entity2.get<CollisionBox>("collision-box");
+        let result1 = false;
+        let result2 = false;
+        try {
+            if (typeof box1.canPush === "function") {
+                result1 = box1.canPush(entity2);
+            }
+        }
+        catch (err) {
+            handleComponentError(box1, err);
+        }
+        try {
+            if (typeof box2.canPush === "function") {
+                result2 = box2.canPush(entity1);
+            }
+        }
+        catch (err) {
+            handleComponentError(box2, err);
+        }
+
+        return result1 && result2;
+    });
     for (const collision of collisions) {
         const entity = entityManager.get(collision.primaryObj);
         const positionComponent = entity.get<Position>("position");
