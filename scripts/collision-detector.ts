@@ -176,8 +176,8 @@ export default class CollisionDetector {
                         }
                         else if (skip.get(box2.id) === undefined || !skip.get(box2.id).has(box.id)) {
                             const [box1Offsets, box2Offsets] = c.result.penetration.reduce((arr, offset) => {
-                                arr[0].push({x: offset.x * 0.49, y: offset.y * 0.49});
-                                arr[1].push({x: offset.x * -0.49, y: offset.y * -0.49});
+                                arr[0].push({x: offset.x * 0.31, y: offset.y * 0.31});
+                                arr[1].push({x: offset.x * -0.31, y: offset.y * -0.31});
                                 return arr;
                             }, [[], []] as [Array<{x: number, y: number}>, Array<{x: number, y: number}>]);
                             collisionResults.push(this._findCollisionEvents(
