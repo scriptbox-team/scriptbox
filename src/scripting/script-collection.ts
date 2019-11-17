@@ -89,7 +89,7 @@ export default class ScriptCollection {
             export function run(func, ...args) {return new IVM.Reference(func(...args))};
         `;
         const tmpScript = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
-        const res = tmpScript.execute("run", funcRef.derefInto(), ...params);
+        const res = tmpScript.execute("run", [funcRef.derefInto(), ...params]);
         if (res.typeof === "undefined") {
             console.log("ref is undefined");
             return undefined;

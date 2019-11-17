@@ -109,7 +109,11 @@ export default class GameSystem extends System {
                 client.displayName
             ]
         );
-        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", [client.id]);
+        const entID = this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createEntity",
+            [client.id]
+        );
         // Creating the entity is temporary
         // Until players can add default modules on their own
         await this._scriptCollection.execute(
@@ -210,7 +214,11 @@ export default class GameSystem extends System {
         );
     }
     public async createEntityAt(prefabID: string, x: number, y: number, client: Client) {
-        const entID = this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "createEntity", [client.id]);
+        const entID = this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createEntity",
+            [client.id]
+        );
         await this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createComponent",
