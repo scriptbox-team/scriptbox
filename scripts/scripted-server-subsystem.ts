@@ -1,3 +1,4 @@
+import ActionInstance from "./action-instance";
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import CollisionDetector from "./collision-detector";
@@ -7,7 +8,6 @@ import Control from "./control";
 import DefaultControl from "./default-control";
 import Display from "./display";
 import Entity, { EntityProxy } from "./entity";
-import EventComponent from "./event-component";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";

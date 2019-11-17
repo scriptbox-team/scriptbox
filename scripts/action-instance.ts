@@ -2,7 +2,7 @@ import Aspect from "./aspect";
 import Component from "./component";
 import SubEvent from "./sub-event";
 
-export default class EventComponent extends Component {
+export default class ActionInstance extends Component {
     public loopAtEnd: Aspect<boolean>;
     private _startSubEvent: SubEvent;
     private _subEvent: SubEvent;

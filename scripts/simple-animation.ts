@@ -1,12 +1,12 @@
+import ActionInstance from "./action-instance";
 import Aspect from "./aspect";
-import EventComponent from "./event-component";
 
 interface FrameData {
     frame: string;
     duration: number;
 }
 
-export default class SimpleAnimation extends EventComponent {
+export default class SimpleAnimation extends ActionInstance {
     public currentFrame: Aspect<string>;
     public onCreate(frames: FrameData[] = []) {
         super.onCreate();
