@@ -68,6 +68,6 @@ export default class CollisionBox extends Component {
     }
 
     public canPush(entity: EntityProxy) {
-        return true;
+        return this.dense.getValue();
     }
 }

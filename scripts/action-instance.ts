@@ -16,7 +16,9 @@ export default class ActionInstance extends Component {
     }
     public onPostUpdate(delta: number) {
         super.onPostUpdate(delta);
-        this._subEvent = this._subEvent.proceed(delta);
+        if (this._subEvent !== undefined) {
+            this._subEvent = this._subEvent.proceed(delta);
+        }
         if (this._subEvent === undefined) {
             if (this.loopAtEnd.getValue()) {
                 this._subEvent = this._startSubEvent;

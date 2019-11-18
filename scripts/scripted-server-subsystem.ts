@@ -6,6 +6,7 @@ import Component from "./component";
 import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
+import DirectionFlipper from "./direction-flipper";
 import Display from "./display";
 import Entity, { EntityProxy } from "./entity";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
@@ -22,7 +23,7 @@ import Resource from "./resource";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import WeakMap from "./weak-map";
-import DirectionFlipper from "./direction-flipper";
+import Chat from "./chat";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -267,6 +268,13 @@ export function initialize(initTickRate: number) {
     Entity.externalFromID = getEntity;
     Component.externalFromID = (id: string) => {
         return componentManager.get(id);
+    };
+    Chat.externalSendChatMessage = (msg: string) => {
+        messageQueue.push({
+            message: msg,
+            kind: "chat",
+            recipient: Array.from(playerManager.entries()).map(([id, player]) => id)
+        });
     };
 }
 
@@ -773,7 +781,8 @@ export function createPlayer(
         38: "up",
         40: "down",
         37: "left",
-        39: "right"
+        39: "right",
+        90: "action1"
     };
     playerManager.create(id, username, displayName, controlSet);
     global.log(

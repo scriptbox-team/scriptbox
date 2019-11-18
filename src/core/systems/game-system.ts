@@ -197,6 +197,26 @@ export default class GameSystem extends System {
                 client.id,
             ]
         );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "hurtable",
+                "hurtable",
+                client.id,
+            ]
+        );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "basic-attack",
+                "basic-attack",
+                client.id,
+            ]
+        );
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",
@@ -272,9 +292,9 @@ export default class GameSystem extends System {
             "createComponent",
             [
                 entID,
-                "sample/ice",
-                "ice",
-                client.id
+                "damaging",
+                "damaging",
+                client.id,
             ]
         );
     }
