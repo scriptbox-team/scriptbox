@@ -284,17 +284,8 @@ export default class GameSystem extends System {
                 0,
                 32,
                 32,
+                true,
                 true
-            ]
-        );
-        await this._scriptCollection.execute(
-            GameSystem.scriptedServerSubsystemDir,
-            "createComponent",
-            [
-                entID,
-                "damaging",
-                "damaging",
-                client.id,
             ]
         );
     }
