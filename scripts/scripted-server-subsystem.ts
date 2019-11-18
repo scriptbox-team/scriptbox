@@ -22,6 +22,7 @@ import Resource from "./resource";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import WeakMap from "./weak-map";
+import DirectionFlipper from "./direction-flipper";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -144,21 +145,39 @@ const componentManager = new Manager<Component>((
             ["id", "entity", "exists"],
             ["_enabled"]
         );
-        const component = new componentClass(infoProxy);
-        componentInfoMap.set(component, info);
-        componentInfoUnproxiedMap.set(infoProxy, info);
 
-        const trueEntity = entityUnproxiedMap.get(entity);
-        trueEntity.directAdd(localID, component);
-        componentExecute(component, "onCreate", ...args);
-        componentExecute(component, "onLoad", ...args);
+        let component: any;
+        try {
+            component = new componentClass(infoProxy);
+            componentInfoMap.set(component, info);
+            componentInfoUnproxiedMap.set(infoProxy, info);
+
+            const trueEntity = entityUnproxiedMap.get(entity);
+            trueEntity.directAdd(localID, component);
+            componentExecute(component, "onCreate", ...args);
+            componentExecute(component, "onLoad", ...args);
+        }
+        catch (err) {
+            if (component !== undefined) {
+                handleComponentError(component, err);
+            }
+            else {
+                outputUserError(creator, err);
+                info.forceDisable();
+            }
+        }
 
         return component;
     },
     (component: Component) => {
         const info = componentInfoMap.get(component);
-        componentExecute(component, "onDestroy");
-        componentExecute(component, "onUnload");
+        try {
+            componentExecute(component, "onDestroy");
+            componentExecute(component, "onUnload");
+        }
+        catch (err) {
+            handleComponentError(component, err);
+        }
         const trueEntity = entityUnproxiedMap.get(info.entity);
         trueEntity.directRemove(trueEntity.getComponentLocalID(component));
     }
@@ -373,7 +392,11 @@ export function update() {
 
         return result1 && result2;
     });
+    const collisionsChecked = new Map<string, Set<string>>();
     for (const collision of collisions) {
+        if (!collisionsChecked.has(collision.primaryObj)) {
+            collisionsChecked.set(collision.primaryObj, new Set<string>());
+        }
         const entity = entityManager.get(collision.primaryObj);
         const positionComponent = entity.get<Position>("position");
         const positionInfo = componentInfoMap.get(positionComponent);
@@ -394,6 +417,49 @@ export function update() {
             }
             catch (err) {
                 handleComponentError(positionComponent, err);
+            }
+        }
+        for (const other of collision.secondaryObjs) {
+            if (!collisionsChecked.has(other.id)) {
+                collisionsChecked.set(other.id, new Set<string>());
+            }
+
+            if (!collisionsChecked.get(collision.primaryObj).has(other.id)
+                    && !collisionsChecked.get(other.id).has(collision.primaryObj)) {
+                collisionsChecked.get(collision.primaryObj).add(other.id);
+                const otherEntity = entityManager.get(other.id);
+                const componentIterator = entity.componentIterator();
+                for (const component of componentIterator) {
+                    const info = componentInfoMap.get(component);
+                    if (info !== undefined && info.enabled) {
+                        info.lastFrameTime = -1;
+                        try {
+                            componentExecute(component, "onCollision", otherEntity, other.dense, other.direction);
+                        }
+                        catch (err) {
+                            handleComponentError(component, err);
+                        }
+                    }
+                }
+                const otherComponentIterator = otherEntity.componentIterator();
+                for (const component of otherComponentIterator) {
+                    const info = componentInfoMap.get(component);
+                    if (info !== undefined && info.enabled) {
+                        info.lastFrameTime = -1;
+                        try {
+                            componentExecute(
+                                component,
+                                "onCollision",
+                                entity,
+                                other.dense,
+                                DirectionFlipper.flip(other.direction)
+                            );
+                        }
+                        catch (err) {
+                            handleComponentError(component, err);
+                        }
+                    }
+                }
             }
         }
     }

@@ -65,7 +65,8 @@ export default class GameSystem extends System {
         for (const [scriptPath, script] of builtScripts) {
             if (scriptPath !== GameSystem.scriptedServerSubsystemDir) {
                 const scriptName = path.relative(this._scriptDir, scriptPath);
-                const scriptNameNoExt = scriptName.substr(0, scriptName.length - path.extname(scriptPath).length);
+                const scriptNameNoExt = scriptName.substr(0, scriptName.length - path.extname(scriptPath).length)
+                    .replace("\\", "/");
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "setComponentClass",
@@ -145,7 +146,7 @@ export default class GameSystem extends System {
             "createComponent",
             [
                     entID,
-                "default-control",
+                "player-control",
                 "control",
                 client.id
             ]
@@ -184,6 +185,16 @@ export default class GameSystem extends System {
                 32,
                 32,
                 false
+            ]
+        );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "gravity",
+                "gravity",
+                client.id,
             ]
         );
         this._scriptCollection.execute(
@@ -254,6 +265,16 @@ export default class GameSystem extends System {
                 32,
                 32,
                 true
+            ]
+        );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "sample/ice",
+                "ice",
+                client.id
             ]
         );
     }

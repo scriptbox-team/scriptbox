@@ -1,6 +1,7 @@
 import Aspect from "./aspect";
 import AspectSet from "./aspect-set";
 import ComponentInfo from "./component-info";
+import { EntityProxy } from "./entity";
 
 export default class Component {
     public static externalFromID: (id: string) => Component | undefined;
@@ -28,6 +29,9 @@ export default class Component {
 
     }
     public onDestroy() {
+
+    }
+    public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {
 
     }
     public destroy() {

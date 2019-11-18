@@ -1,4 +1,5 @@
 import QuadtreeGrid from "./quadtree-grid";
+import DirectionFlipper from "./direction-flipper";
 
 interface BoundingBox {
     x1: number;
@@ -34,8 +35,14 @@ interface QuadtreeTestResult {
         y2: number;
     };
     result: {
-        penetration: Vector[];
+        penetration: Penetration[];
     };
+}
+
+interface Penetration {
+    x: number;
+    y: number;
+    direction: "up" | "down" | "left" | "right";
 }
 
 interface Collision {
@@ -43,7 +50,8 @@ interface Collision {
     primaryObjNewPos: Vector;
     secondaryObjs: Array<{
         id: string,
-        dense: boolean
+        dense: boolean,
+        direction?: "up" | "down" | "left" | "right"
     }>;
 }
 
@@ -114,7 +122,7 @@ export default class CollisionDetector {
             };
         }
         this._lastHitboxes = boxesByID;
-        return firstCollisions.concat(secondCollisions).concat(recheckCollisions);
+        return [...firstCollisions, ...secondCollisions, ...recheckCollisions];
     }
 
     private _handleCollisions(
@@ -148,7 +156,8 @@ export default class CollisionDetector {
                         },
                         secondaryObjs: [{
                             id: c.box.id,
-                            dense: false
+                            dense: false,
+                            direction: undefined
                         }]
                     });
                 }
@@ -176,10 +185,18 @@ export default class CollisionDetector {
                         }
                         else if (skip.get(box2.id) === undefined || !skip.get(box2.id).has(box.id)) {
                             const [box1Offsets, box2Offsets] = c.result.penetration.reduce((arr, offset) => {
-                                arr[0].push({x: offset.x * 0.31, y: offset.y * 0.31});
-                                arr[1].push({x: offset.x * -0.31, y: offset.y * -0.31});
+                                arr[0].push({
+                                    x: offset.x * 0.31,
+                                    y: offset.y * 0.31,
+                                    direction: offset.direction
+                                });
+                                arr[1].push({
+                                    x: offset.x * -0.31,
+                                    y: offset.y * -0.31,
+                                    direction: DirectionFlipper.flip(offset.direction)
+                                });
                                 return arr;
-                            }, [[], []] as [Array<{x: number, y: number}>, Array<{x: number, y: number}>]);
+                            }, [[], []] as [Penetration[], Penetration[]]);
                             collisionResults.push(this._findCollisionEvents(
                                 boxesByID,
                                 grid,
@@ -207,14 +224,16 @@ export default class CollisionDetector {
         return collisionResults;
     }
 
+// TODO: Use collision normal instead of "direction"
+
     private _findCollisionEvents(
             boxesByID: {[id: string]: CollisionBoxInfo},
             grid: QuadtreeGrid<{x1: number, y1: number, x2: number, y2: number, id: string}>,
             box: CollisionBoxInfo,
             box2: CollisionBoxInfo,
-            offsets: Array<{x: number, y: number}>,
+            offsets: Array<{x: number, y: number, direction: "up" | "down" | "left" | "right"}>,
             ignore: string[] = [],
-            collisionHandle: (obj1: string, obj2: string) => boolean) {
+            collisionHandle: (obj1: string, obj2: string) => boolean): Collision {
         const potentialCollisions: Collision[] = [];
         const offsetExtra = 1;
         for (const offset of [offsets[0], offsets[1]]) {
@@ -241,11 +260,13 @@ export default class CollisionDetector {
                 // So this position is fine
                 const secondaryObjs = [{
                     id: box2.id,
-                    dense: true
+                    dense: true,
+                    direction: DirectionFlipper.flip(offset.direction)
                 }].concat(undenseCollisions.map((collision) => {
                     return {
                         id: collision.box.id,
-                        dense: false
+                        dense: false,
+                        direction: undefined
                     };
                 }));
                 return {
@@ -285,24 +306,28 @@ export default class CollisionDetector {
                             const secondaryObjs = [
                                 {
                                     id: box2.id,
-                                    dense: true
+                                    dense: true,
+                                    direction: DirectionFlipper.flip(offset.direction)
                                 },
                                 {
                                     id: c.box.id,
-                                    dense: true
+                                    dense: true,
+                                    direction: DirectionFlipper.flip(secondaryOffset.direction)
                                 }
                             ]
                                 .concat(undenseCollisions.map((collision) => {
                                     return {
                                         id: collision.box.id,
-                                        dense: false
+                                        dense: false,
+                                        direction: undefined
                                     };
                                 }))
                                 .concat(undenseCollisions2.map((collision) => {
-                                        return {
-                                            id: collision.box.id,
-                                            dense: false
-                                        };
+                                    return {
+                                        id: collision.box.id,
+                                        dense: false,
+                                        direction: undefined
+                                    };
                                 }));
 
                             return {
@@ -331,7 +356,8 @@ export default class CollisionDetector {
                 },
                 secondaryObjs: [{
                     id: box2.id,
-                    dense: false
+                    dense: false,
+                    direction: undefined
                 }]
             };
         }
@@ -396,14 +422,19 @@ export default class CollisionDetector {
         };
     }
 
-    private _getPenetrationVectors(box: BoundingBox, origin: Vector) {
+    private _getPenetrationVectors(box: BoundingBox, origin: Vector): Penetration[] {
+        const dirs = ["down", "left", "up", "right"] as Array<"up" | "right" | "down" | "left">;
         return this._getLines(box).map((line) => {
             const originLine = {x: origin.x, y: origin.y, vec: this._getNormal(line)};
             const [t, u] = this._getLineIntersections(originLine, line);
             if (t === undefined) {
                 return undefined;
             }
-            return {x: -originLine.vec.x * t, y: -originLine.vec.y * t};
+            return {
+                x: -originLine.vec.x * t,
+                y: -originLine.vec.y * t,
+                direction: dirs.shift()
+            };
         })
             .filter((val) => val !== undefined);
     }
