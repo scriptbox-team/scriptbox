@@ -74,9 +74,9 @@ export default class ScriptCollection {
     public convert(obj: any) {
         return new IVM.ExternalCopy(obj).copyInto();
     }
-    public execute(scriptPath: string, name: string, ...params: any) {
+    public execute(scriptPath: string, name: string, params: any[] = [], timeout: number = 500) {
         const script = this.getScript(scriptPath);
-        return script.execute(name, ...params);
+        return script.execute(name, params, timeout);
     }
     public async executeAsync(scriptPath: string, name: string, ...params: any) {
         const script = this.getScript(scriptPath);
@@ -89,7 +89,7 @@ export default class ScriptCollection {
             export function run(func, ...args) {return new IVM.Reference(func(...args))};
         `;
         const tmpScript = this.scriptRunner.buildSync(script, {IVM}, undefined, context);
-        const res = tmpScript.execute("run", funcRef.derefInto(), ...params);
+        const res = tmpScript.execute("run", [funcRef.derefInto(), ...params]);
         if (res.typeof === "undefined") {
             console.log("ref is undefined");
             return undefined;

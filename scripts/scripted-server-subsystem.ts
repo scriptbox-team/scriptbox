@@ -1,3 +1,4 @@
+import ActionInstance from "./action-instance";
 import Aspect from "./aspect";
 import CollisionBox from "./collision-box";
 import CollisionDetector from "./collision-detector";
@@ -5,9 +6,9 @@ import Component from "./component";
 import ComponentInfo, { ComponentInfoProxy } from "./component-info";
 import Control from "./control";
 import DefaultControl from "./default-control";
+import DirectionFlipper from "./direction-flipper";
 import Display from "./display";
 import Entity, { EntityProxy } from "./entity";
-import EventComponent from "./event-component";
 import Exports, { ComponentExportInfo, EntityExportInfo, MessageExportInfo } from "./export-values";
 import IDGenerator from "./id-generator";
 import Manager from "./manager";
@@ -22,6 +23,7 @@ import Resource from "./resource";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import WeakMap from "./weak-map";
+import Chat from "./chat";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -144,21 +146,39 @@ const componentManager = new Manager<Component>((
             ["id", "entity", "exists"],
             ["_enabled"]
         );
-        const component = new componentClass(infoProxy);
-        componentInfoMap.set(component, info);
-        componentInfoUnproxiedMap.set(infoProxy, info);
 
-        const trueEntity = entityUnproxiedMap.get(entity);
-        trueEntity.directAdd(localID, component);
-        componentExecute(component, "onCreate", ...args);
-        componentExecute(component, "onLoad", ...args);
+        let component: any;
+        try {
+            component = new componentClass(infoProxy);
+            componentInfoMap.set(component, info);
+            componentInfoUnproxiedMap.set(infoProxy, info);
+
+            const trueEntity = entityUnproxiedMap.get(entity);
+            trueEntity.directAdd(localID, component);
+            componentExecute(component, "onCreate", ...args);
+            componentExecute(component, "onLoad", ...args);
+        }
+        catch (err) {
+            if (component !== undefined) {
+                handleComponentError(component, err);
+            }
+            else {
+                outputUserError(creator, err);
+                info.forceDisable();
+            }
+        }
 
         return component;
     },
     (component: Component) => {
         const info = componentInfoMap.get(component);
-        componentExecute(component, "onDestroy");
-        componentExecute(component, "onUnload");
+        try {
+            componentExecute(component, "onDestroy");
+            componentExecute(component, "onUnload");
+        }
+        catch (err) {
+            handleComponentError(component, err);
+        }
         const trueEntity = entityUnproxiedMap.get(info.entity);
         trueEntity.directRemove(trueEntity.getComponentLocalID(component));
     }
@@ -248,6 +268,13 @@ export function initialize(initTickRate: number) {
     Entity.externalFromID = getEntity;
     Component.externalFromID = (id: string) => {
         return componentManager.get(id);
+    };
+    Chat.externalSendChatMessage = (msg: string) => {
+        messageQueue.push({
+            message: msg,
+            kind: "chat",
+            recipient: Array.from(playerManager.entries()).map(([id, player]) => id)
+        });
     };
 }
 
@@ -347,31 +374,99 @@ export function update() {
     //
     //  Collision detection and correction
     //
-    const collisions = collisionDetector.check(collisionBoxInfo);
+    const collisions = collisionDetector.check(collisionBoxInfo, (obj1, obj2) => {
+        const entity1 = entityManager.get(obj1);
+        const box1 = entity1.get<CollisionBox>("collision-box");
+        const entity2 = entityManager.get(obj2);
+        const box2 = entity2.get<CollisionBox>("collision-box");
+        let result1 = false;
+        let result2 = false;
+        try {
+            if (typeof box1.canPush === "function") {
+                result1 = box1.canPush(entity2);
+            }
+        }
+        catch (err) {
+            handleComponentError(box1, err);
+        }
+        try {
+            if (typeof box2.canPush === "function") {
+                result2 = box2.canPush(entity1);
+            }
+        }
+        catch (err) {
+            handleComponentError(box2, err);
+        }
+
+        return result1 && result2;
+    });
+    const collisionsChecked = new Map<string, Set<string>>();
     for (const collision of collisions) {
-        const pairs: Array<[string, {x: number, y: number}]>
-            = [[collision.obj1, collision.obj1NewPos], [collision.obj2, collision.obj2NewPos]];
-        for (const [id, pos] of pairs) {
-            const entity = entityManager.get(id);
-            const positionComponent = entity.get<Position>("position");
-            const positionInfo = componentInfoMap.get(positionComponent);
-            if (positionComponent !== undefined && positionInfo.enabled) {
-                try {
-                    if (typeof positionComponent.x === "object"
-                    && typeof positionComponent.y === "object"
-                    && typeof positionComponent.x.base === "number"
-                    && typeof positionComponent.y.base === "number"
-                    ) {
-                        positionComponent.x.base += pos.x;
-                        positionComponent.y.base += pos.y;
-                    }
-                    exportValues.entities[id].position = {
-                        x: exportValues.entities[id].position.x + pos.x,
-                        y: exportValues.entities[id].position.y + pos.y
-                    };
+        if (!collisionsChecked.has(collision.primaryObj)) {
+            collisionsChecked.set(collision.primaryObj, new Set<string>());
+        }
+        const entity = entityManager.get(collision.primaryObj);
+        const positionComponent = entity.get<Position>("position");
+        const positionInfo = componentInfoMap.get(positionComponent);
+        if (positionComponent !== undefined && positionInfo.enabled) {
+            try {
+                if (typeof positionComponent.x === "object"
+                && typeof positionComponent.y === "object"
+                && typeof positionComponent.x.base === "number"
+                && typeof positionComponent.y.base === "number"
+                ) {
+                    positionComponent.x.base += collision.primaryObjNewPos.x;
+                    positionComponent.y.base += collision.primaryObjNewPos.y;
                 }
-                catch (err) {
-                    handleComponentError(positionComponent, err);
+                exportValues.entities[collision.primaryObj].position = {
+                    x: exportValues.entities[collision.primaryObj].position.x + collision.primaryObjNewPos.x,
+                    y: exportValues.entities[collision.primaryObj].position.y + collision.primaryObjNewPos.y
+                };
+            }
+            catch (err) {
+                handleComponentError(positionComponent, err);
+            }
+        }
+        for (const other of collision.secondaryObjs) {
+            if (!collisionsChecked.has(other.id)) {
+                collisionsChecked.set(other.id, new Set<string>());
+            }
+
+            if (!collisionsChecked.get(collision.primaryObj).has(other.id)
+                    && !collisionsChecked.get(other.id).has(collision.primaryObj)) {
+                collisionsChecked.get(collision.primaryObj).add(other.id);
+                const otherEntity = entityManager.get(other.id);
+                const componentIterator = entity.componentIterator();
+                for (const component of componentIterator) {
+                    const info = componentInfoMap.get(component);
+                    if (info !== undefined && info.enabled) {
+                        info.lastFrameTime = -1;
+                        try {
+                            componentExecute(component, "onCollision", otherEntity, other.dense, other.direction);
+                        }
+                        catch (err) {
+                            handleComponentError(component, err);
+                        }
+                    }
+                }
+                const otherComponentIterator = otherEntity.componentIterator();
+                for (const component of otherComponentIterator) {
+                    const info = componentInfoMap.get(component);
+                    if (info !== undefined && info.enabled) {
+                        info.lastFrameTime = -1;
+                        try {
+                            componentExecute(
+                                component,
+                                "onCollision",
+                                entity,
+                                other.dense,
+                                DirectionFlipper.flip(other.direction)
+                            );
+                        }
+                        catch (err) {
+                            handleComponentError(component, err);
+                        }
+                    }
                 }
             }
         }
@@ -686,7 +781,8 @@ export function createPlayer(
         38: "up",
         40: "down",
         37: "left",
-        39: "right"
+        39: "right",
+        90: "action1"
     };
     playerManager.create(id, username, displayName, controlSet);
     global.log(

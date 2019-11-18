@@ -2,7 +2,7 @@ import Aspect from "./aspect";
 import Component from "./component";
 import SubEvent from "./sub-event";
 
-export default class EventComponent extends Component {
+export default class ActionInstance extends Component {
     public loopAtEnd: Aspect<boolean>;
     private _startSubEvent: SubEvent;
     private _subEvent: SubEvent;
@@ -16,7 +16,9 @@ export default class EventComponent extends Component {
     }
     public onPostUpdate(delta: number) {
         super.onPostUpdate(delta);
-        this._subEvent = this._subEvent.proceed(delta);
+        if (this._subEvent !== undefined) {
+            this._subEvent = this._subEvent.proceed(delta);
+        }
         if (this._subEvent === undefined) {
             if (this.loopAtEnd.getValue()) {
                 this._subEvent = this._startSubEvent;

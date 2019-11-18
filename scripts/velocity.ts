@@ -1,5 +1,6 @@
 import Aspect from "./aspect";
 import Component from "./component";
+import { EntityProxy } from "./entity";
 import Position from "./position";
 
 export default class Velocity extends Component {
@@ -22,6 +23,33 @@ export default class Velocity extends Component {
         this.with<Position>("position", (position) => {
             position.move(this.x.getValue() * delta, this.y.getValue() * delta);
         });
+    }
+
+    public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {
+        const xVel = this.x.getValue();
+        const yVel = this.y.getValue();
+        switch (direction) {
+            case "up":
+                if (yVel < 0) {
+                    this.y.base = 0;
+                }
+                break;
+            case "down":
+                if (yVel > 0) {
+                    this.y.base = 0;
+                }
+                break;
+            case "left":
+                if (xVel < 0) {
+                    this.x.base = 0;
+                }
+                break;
+            case "right":
+                if (xVel > 0) {
+                    this.x.base = 0;
+                }
+                break;
+        }
     }
 
     public move(xOffset: number, yOffset: number) {

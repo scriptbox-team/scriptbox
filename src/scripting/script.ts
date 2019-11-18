@@ -9,13 +9,13 @@ export default class Script {
         this.context = context;
         this.result = result;
     }
-    public execute(name: string, ...params: any) {
+    public execute(name: string, params: any, timeout: number = 500) {
         const module = this.module;
         const funcRef = module.namespace.getSync(name);
         if (funcRef.typeof !== "function") {
             throw new Error("Function \"" + name + "\" not found in script.");
         }
-        return funcRef.applySync(undefined, params, {timeout: 500});
+        return funcRef.applySync(undefined, params, {timeout});
     }
     public async executeAsync(name: string, ...params: any) {
         const module = this.module;

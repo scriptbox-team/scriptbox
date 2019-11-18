@@ -269,10 +269,20 @@ export default class Entity {
             this._componentsInverse.set(component, id);
         }
         for (const [localID, component] of this._components) {
-            component.onUnload();
+            try {
+                component.onUnload();
+            }
+            catch (err) {
+                global.log(err.stack);
+            }
         }
         for (const [localID, component] of this._components) {
-            component.onLoad();
+            try {
+                component.onLoad();
+            }
+            catch (err) {
+                global.log(err.stack);
+            }
         }
     }
 }

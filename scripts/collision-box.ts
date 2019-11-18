@@ -1,5 +1,6 @@
 import Aspect from "./aspect";
 import Component from "./component";
+import { EntityProxy } from "./entity";
 
 export default class CollisionBox extends Component {
     public x1: Aspect<number> = new Aspect(0);
@@ -9,7 +10,7 @@ export default class CollisionBox extends Component {
     public static: Aspect<boolean> = new Aspect(false);
     public dense: Aspect<boolean> = new Aspect(true);
 
-    public onCreate(x1?: number, y1?: number, x2?: number, y2?: number, isStatic?: boolean) {
+    public onCreate(x1?: number, y1?: number, x2?: number, y2?: number, isStatic?: boolean, isDense?: boolean) {
         if (typeof x1 === "number") {
             this.x1.base = x1;
         }
@@ -24,6 +25,9 @@ export default class CollisionBox extends Component {
         }
         if (typeof isStatic === "boolean") {
             this.static.base = isStatic;
+        }
+        if (typeof isDense === "boolean") {
+            this.dense.base = isDense;
         }
     }
 
@@ -64,5 +68,9 @@ export default class CollisionBox extends Component {
 
     public getSize() {
         return {x: this.getWidth(), y: this.getHeight()};
+    }
+
+    public canPush(entity: EntityProxy) {
+        return this.dense.getValue();
     }
 }
