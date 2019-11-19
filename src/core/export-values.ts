@@ -14,6 +14,16 @@ interface EntityExportInfo {
     controlledBy?: string;
     componentInfo: {[localID: string]: ComponentExportInfo};
 }
+
+interface SoundInfo {
+    position: {
+        x: number;
+        y: number;
+    };
+    resource: string;
+    volume: number;
+}
+
 export interface MessageExportInfo {
     message: string;
     kind: "Chat" | "Announcement" | "Error";
@@ -38,4 +48,5 @@ export default interface Exports {
         client: Client,
         camera: {x: number, y: number, scale: number}
     }};
+    sounds: {[id: string]: SoundInfo};
 }

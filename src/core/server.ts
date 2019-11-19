@@ -203,6 +203,7 @@ export default class Server {
             });
             this._displaySystem.broadcastDisplay(exportValues);
             this._displaySystem.sendCameraData(exportValues);
+            this._displaySystem.sendSoundData(exportValues);
             this._displaySystem.sendInspectedEntities(exportValues);
 
             if (exportValues.messages !== undefined) {

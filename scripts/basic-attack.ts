@@ -1,6 +1,7 @@
 import Attack from "./attack";
 import HitboxFactory from "./hitbox-factory";
 import PlayerControl from "./player-control";
+import SoundEmitter from "./sound-emitter";
 
 interface FrameData {
     frame: string;
@@ -15,6 +16,7 @@ interface FrameData {
         damage: number;
         knockback: number;
         knockbackAngle: number;
+        sound: string;
     };
 }
 
@@ -31,7 +33,8 @@ export default class BasicAttack extends Attack {
             },
             damage: 20,
             knockback: 250,
-            knockbackAngle: -0.767945
+            knockbackAngle: -0.767945,
+            sound: "R000000000000000000000004"
         }},
         {frame: "attack4", duration: 0.1},
     ];
@@ -44,10 +47,12 @@ export default class BasicAttack extends Attack {
             ai.do(() => {
                 if (frame.attackData) {
                     let facing = 1;
-                    this.with<PlayerControl>(("control"), (playerControl) => {
+                    this.with<PlayerControl>("control", (playerControl) => {
                         facing = playerControl.facing.getValue();
                     });
-                    global.log(facing);
+                    this.with<SoundEmitter>("sound-emitter", (soundEmitter) => {
+                        soundEmitter.play(frame.attackData.sound, 1);
+                    });
                     HitboxFactory.createHitbox({
                         origin: this.entity,
                         damage: frame.attackData.damage,

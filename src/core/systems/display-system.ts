@@ -3,6 +3,7 @@ import Difference from "core/difference";
 import Exports from "core/export-values";
 import Group, { GroupType } from "core/group";
 import _ from "lodash";
+import AudioObject from "resource-management/audio-object";
 import ComponentInfo from "resource-management/component-info";
 import ComponentOption, { ComponentOptionType } from "resource-management/component-option";
 import RenderObject from "resource-management/render-object";
@@ -21,6 +22,7 @@ export default class DisplaySystem extends System {
     private _lastExportValues: Exports;
     private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
     private _cameraDataCallback?: (player: Client, cameraData: {x: number, y: number, scale: number}) => void;
+    private _soundDataCallback?: (audioObjects: AudioObject[], playerGroup: Group<Client>) => void;
     private _entityInspectionCallback?: (
         entityID: string,
         components: ComponentInfo[],
@@ -33,6 +35,7 @@ export default class DisplaySystem extends System {
             sprites: {},
             inspectedEntityInfo: {},
             messages: [],
+            sounds: [],
             players: {}
         };
     }
@@ -61,11 +64,36 @@ export default class DisplaySystem extends System {
             }
         });
     }
+    public sendSoundData(exportValues: Exports) {
+        _.each(exportValues.players, (playerData, id) => {
+            const playerCamera = playerData.camera;
+            const sounds: AudioObject[] = [];
+            _.each(exportValues.sounds, (soundData, soundID) => {
+                const vec = {
+                    x: soundData.position.x - playerCamera.x,
+                    y: soundData.position.y - playerCamera.y
+                };
+                const dist = Math.sqrt(vec.x * vec.x + vec.y * vec.y);
+                const vol = soundData.volume * (1 - dist / 320);
+                if (vol > 0) {
+                    console.log("push");
+                    sounds.push(new AudioObject(soundID, soundData.resource, vol, false));
+                }
+            });
+            if (sounds.length > 0 && this._soundDataCallback !== undefined) {
+                console.log(sounds);
+                this._soundDataCallback(sounds, new Group<Client>(GroupType.Only, [playerData.client]));
+            }
+        });
+    }
     public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: Group<Client>) => void) {
         this._renderDisplayObjectCallback = callback;
     }
     public onCameraData(callback: (player: Client, cameraData: {x: number, y: number, scale: number}) => void) {
         this._cameraDataCallback = callback;
+    }
+    public onSoundData(callback: (audioObjects: AudioObject[], playerGroup: Group<Client>) => void) {
+        this._soundDataCallback = callback;
     }
     public onEntityInspection(callback: (
             entityID: string,

@@ -6,8 +6,10 @@ import ClientConnectionPacket from "networking/packets/client-connection-packet"
 import ServerCameraUpdatePacket from "networking/packets/server-camera-update-packet";
 import ServerDisplayPacket from "networking/packets/server-display-packet";
 import ServerEntityInspectionListingPacket from "networking/packets/server-entity-inspection-listing-packet";
+import ServerSoundPacket from "networking/packets/server-sound-packet";
 import ServerMessage from "networking/server-messages/server-message";
 import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
+import AudioObject from "resource-management/audio-object";
 import ComponentInfo from "resource-management/component-info";
 import RenderObject from "resource-management/render-object";
 
@@ -22,9 +24,11 @@ export default class DisplaySystemNetworker extends Networker {
         this.onRenderObjectDisplay = this.onRenderObjectDisplay.bind(this);
         this.onEntityInspectionListing = this.onEntityInspectionListing.bind(this);
         this.onCameraData = this.onCameraData.bind(this);
+        this.onSoundData = this.onSoundData.bind(this);
 
         this._displaySystem = displaySystem;
         this._displaySystem.onRenderObjectDisplay(this.onRenderObjectDisplay);
+        this._displaySystem.onSoundData(this.onSoundData);
         this._displaySystem.onEntityInspection(this.onEntityInspectionListing);
         this._displaySystem.onCameraData(this.onCameraData);
     }
@@ -38,6 +42,14 @@ export default class DisplaySystemNetworker extends Networker {
         this.send(
             new ServerMessage(
                 new ServerNetEvent(ServerEventType.DisplayPackage, new ServerDisplayPacket(renderObjects)),
+                playerGroup
+            )
+        );
+    }
+    public onSoundData(audioObjects: AudioObject[], playerGroup: Group<Client>) {
+        this.send(
+            new ServerMessage(
+                new ServerNetEvent(ServerEventType.SoundPlay, new ServerSoundPacket(audioObjects)),
                 playerGroup
             )
         );
