@@ -1,27 +1,27 @@
 export default class AudioObject {
     public static serialize(
+            id: string,
             resource: string,
             volume: number,
-            loop: boolean,
-            music: boolean): AudioObject | undefined {
+            loop: boolean): AudioObject | undefined {
         if (
-                typeof(resource) === "string"
+                typeof id === "string"
+                && typeof(resource) === "string"
                 && typeof(volume) === "number"
                 && typeof(loop) === "boolean"
-                && typeof(music) === "boolean"
         ) {
-            return new AudioObject(resource, volume, loop, music);
+            return new AudioObject(id, resource, volume, loop);
         }
         return undefined;
     }
+    public id: string;
     public resource: string;
     public volume: number;
     public loop: boolean;
-    public music: boolean;
-    constructor(resource: string, volume: number, loop: boolean, music: boolean) {
+    constructor(id: string, resource: string, volume: number, loop: boolean) {
+        this.id = id;
         this.resource = resource;
         this.volume = volume;
         this.loop = loop;
-        this.music = music;
     }
 }

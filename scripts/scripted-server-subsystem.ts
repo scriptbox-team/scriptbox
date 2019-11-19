@@ -1,5 +1,6 @@
 import ActionInstance from "./action-instance";
 import Aspect from "./aspect";
+import Chat from "./chat";
 import CollisionBox from "./collision-box";
 import CollisionDetector from "./collision-detector";
 import Component from "./component";
@@ -22,8 +23,8 @@ import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
+import SoundEmitter from "./sound-emitter";
 import WeakMap from "./weak-map";
-import Chat from "./chat";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -39,7 +40,9 @@ const exportValues: Exports = {
     entities: {},
     sprites: {},
     inspectedEntityInfo: {},
-    messages: []
+    players: {},
+    messages: [],
+    sounds: {}
 };
 
 global.exportValues = exportValues;
@@ -510,6 +513,33 @@ export function update() {
             }
             catch (err) {
                 handleComponentError(displayComponent, err);
+            }
+        }
+        const soundEmitterComponent = entity.get<SoundEmitter>("sound-emitter");
+        const soundEmitterInfo = componentInfoMap.get(soundEmitterComponent);
+        if (soundEmitterComponent !== undefined && soundEmitterInfo.enabled) {
+            try {
+                if (Array.isArray(soundEmitterComponent.soundQueue)) {
+                    const entPosition = exportValues.entities[id].position;
+                    for (const elem of soundEmitterComponent.soundQueue) {
+                        if (typeof elem === "object"
+                                && typeof elem.resource === "string"
+                                && typeof elem.volume === "number") {
+                            exportValues.sounds[soundEmitterInfo.id] = {
+                                position: {
+                                    x: entPosition.x,
+                                    y: entPosition.y
+                                },
+                                resource: elem.resource,
+                                volume: elem.volume
+                            };
+                        }
+                        soundEmitterComponent.soundQueue = [];
+                    }
+                }
+            }
+            catch (err) {
+                handleComponentError(soundEmitterComponent, err);
             }
         }
     }
@@ -1067,6 +1097,7 @@ const resetExports = () => {
     exportValues.sprites = {};
     exportValues.players = {};
     exportValues.messages = [];
+    exportValues.sounds = {};
 };
 
 /**

@@ -217,6 +217,16 @@ export default class GameSystem extends System {
                 client.id,
             ]
         );
+        await this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "sound-emitter",
+                "sound-emitter",
+                client.id,
+            ]
+        );
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setPlayerControllingEntity",

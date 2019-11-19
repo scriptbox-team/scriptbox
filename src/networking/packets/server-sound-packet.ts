@@ -11,10 +11,10 @@ export default class ServerSoundPacket extends Packet {
                 const renderObjectArray = [];
                 const allClear = _.every(obj.audioPackage, (elem) => {
                     const audioObject = AudioObject.serialize(
+                        elem.id,
                         elem.resource,
                         elem.volume,
-                        elem.loop,
-                        elem.music
+                        elem.loop
                     );
                     if (audioObject !== undefined) {
                         renderObjectArray.push(audioObject);

@@ -12,6 +12,16 @@ export interface EntityExportInfo {
     controlledBy?: string;
     componentInfo: {[localID: string]: ComponentExportInfo};
 }
+
+export interface SoundInfo {
+    position: {
+        x: number;
+        y: number;
+    };
+    resource: string;
+    volume: number;
+}
+
 export interface MessageExportInfo {
     message: string;
     kind: "chat" | "announcement" | "status" | "error" | "error-status";
@@ -35,4 +45,5 @@ export default interface Exports {
     }};
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
     messages: MessageExportInfo[];
+    sounds: {[id: string]: SoundInfo};
 }

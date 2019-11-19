@@ -158,10 +158,16 @@ export default class ResourceSystem extends System {
             case "audio/mpeg":
             case "audio/mp3":
             case "audio/ogg":
-            case "audio/wav": {
+            case "audio/wav":
+            case "audio/wave":
+            case "audio/vnd.wave":
+            case "audio/x-wav": {
                 // Change mimetype to mpeg if it's mp3
                 if (file.mimetype === "audio/mp3") {
                     file.mimetype = "audio/mpeg";
+                }
+                if (file.mimetype === "audio/vnd.wave" || file.mimetype === "audio/wave") {
+                    file.mimetype = "audio/wav";
                 }
                 resourceType = ResourceType.Sound;
                 break;
@@ -172,7 +178,7 @@ export default class ResourceSystem extends System {
                 break;
             }
             default: {
-                throw new Error("File type not supported.");
+                throw new Error(`File of media type ${file.mimetype} not supported.`);
             }
         }
         if (resourceType !== undefined) {
