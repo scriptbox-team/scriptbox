@@ -35,7 +35,7 @@ export default class DisplaySystem extends System {
             sprites: {},
             inspectedEntityInfo: {},
             messages: [],
-            sounds: [],
+            sounds: {},
             players: {}
         };
     }
