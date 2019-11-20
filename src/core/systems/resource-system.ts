@@ -49,6 +49,8 @@ export default class ResourceSystem extends System {
         this._idGenerator = idGenerator;
     }
     public async loadExistingResources(savedResourcePath: string, initialResourcePath?: string) {
+        const existingResourceData: {[id: string]: {name: string}} = {
+        };
         const resources = await this._getResources();
         const resourceIDSet = new Set<string>();
         if (resources.length !== 0) {
@@ -75,10 +77,11 @@ export default class ResourceSystem extends System {
                 const file = await fs.readFile(resourcePath);
                 const type = fileType(file);
                 if (!resourceIDSet.has(id)) {
+                    const name = existingResourceData[id] !== undefined ? existingResourceData[id].name : id;
                     await this.addOrUpdateFile(
                         "scriptbox",
                         {
-                            name: id,
+                            name,
                             mimetype: type !== undefined ? type.mime : "text/plain",
                             data: file
                         },
@@ -311,7 +314,7 @@ export default class ResourceSystem extends System {
         return await this._resourceCollection.getMany({owner: username});
     }
     public async searchSharedResources(search: string) {
-        const tags = search.split(/\s+/);
+        const tags = search.toLowerCase().split(/\s+/);
         return await this._resourceCollection.getMany({
             shared: true,
             tags: {
@@ -395,8 +398,8 @@ export default class ResourceSystem extends System {
         return Object.assign(
             {
                 tags: Array.from(new Set([
-                    ...resourceData.name.split(/\s+/),
-                    ...resourceData.description.split(/\s+/)
+                    ...resourceData.name.toLowerCase().split(/\s+/),
+                    ...resourceData.description.toLowerCase().split(/\s+/)
                 ]).values())
             },
             resourceData
