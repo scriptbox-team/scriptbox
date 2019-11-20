@@ -1,7 +1,7 @@
-import Attack from "./attack";
-import HitboxFactory from "./hitbox-factory";
-import PlayerControl from "./player-control";
-import SoundEmitter from "./sound-emitter";
+import Attack from "attack";
+import HitboxFactory from "hitbox-factory";
+import PlayerControl from "player-control";
+import SoundEmitter from "sound-emitter";
 
 interface FrameData {
     frame: string;

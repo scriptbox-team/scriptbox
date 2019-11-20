@@ -21,11 +21,11 @@ import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
+import ResourceGetter from "./resource-getter";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import SoundEmitter from "./sound-emitter";
 import WeakMap from "./weak-map";
-import ResourceGetter from "./resource-getter";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -677,7 +677,6 @@ export function get(entID: string, propName: string) {
 export function createEntity(creatorID?: string): string {
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
     const ent = entityManager.create(makeID("E"), creator);
-    global.log("Entity created (ID: " + ent.id + ")");
     return ent.id;
 }
 
@@ -691,7 +690,6 @@ export function getEntity(id: string) {
 
 const _deleteEntity = (id: string) => {
     entityManager.queueForDeletion(id);
-    global.log("Entity queued for deletion (ID: " + id + ")");
 };
 
 export function deleteEntity(id: string) {
@@ -709,14 +707,6 @@ const _createComponent = (
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
     if (entity !== undefined) {
         const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
-        global.log(
-            "Component created (Entity ID: "
-            + entID
-            + ", Component Local ID: "
-            + localID
-            + ", Params: "
-            + JSON.stringify(params)
-            +  ")");
         return component.id;
     }
     return undefined;
@@ -733,7 +723,6 @@ export function createComponent(
 
 const _deleteComponent = (componentID: string) => {
     componentManager.queueForDeletion(componentID);
-    global.log("Component queued for deletion (ID: " + componentID + ")");
 };
 
 export function deleteComponent(componentID: string) {
@@ -830,14 +819,6 @@ export function createPlayer(
         90: "action1"
     };
     playerManager.create(id, username, displayName, controlSet);
-    global.log(
-        "Player created (ID: "
-        + id
-        + ", Username: "
-        + username
-        + ", Display Name: "
-        + displayName
-        +  ")");
 }
 
 export function deletePlayer(id: string) {

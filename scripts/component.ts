@@ -1,7 +1,7 @@
-import Aspect from "./aspect";
-import AspectSet from "./aspect-set";
-import ComponentInfo from "./component-info";
-import { EntityProxy } from "./entity";
+import Aspect from "aspect";
+import AspectSet from "aspect-set";
+import ComponentInfo from "component-info";
+import { EntityProxy } from "entity";
 
 export default class Component {
     public static externalFromID: (id: string) => Component | undefined;

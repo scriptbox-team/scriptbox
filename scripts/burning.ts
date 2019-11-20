@@ -1,8 +1,8 @@
-import Aspect from "./aspect";
-import Chat from "./chat";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Hurtable from "./hurtable";
+import Aspect from "aspect";
+import Chat from "chat";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Hurtable from "hurtable";
 
 export default class Burning extends Component {
     public damage: Aspect<number> = new Aspect(20);

@@ -1,7 +1,7 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import Component from "./component";
-import Position from "./position";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import Position from "position";
 
 export default class Hurtable extends Component {
     public maxHP: Aspect<number> = new Aspect(100);

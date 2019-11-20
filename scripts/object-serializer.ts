@@ -1,7 +1,7 @@
-import Map from "./map";
-import SerializedObjectCollection from "./serialized-object-collection";
-import Set from "./set";
-import WeakMap from "./weak-map";
+import Map from "map";
+import SerializedObjectCollection from "serialized-object-collection";
+import Set from "set";
+import WeakMap from "weak-map";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};

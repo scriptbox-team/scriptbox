@@ -1,6 +1,6 @@
-import CollisionBox from "./collision-box";
-import Entity, { EntityProxy } from "./entity";
-import Position from "./position";
+import CollisionBox from "collision-box";
+import Entity, { EntityProxy } from "entity";
+import Position from "position";
 
 interface HitboxOptions {
     origin: EntityProxy;

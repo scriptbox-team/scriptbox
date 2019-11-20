@@ -1,5 +1,5 @@
-import Component from "./component";
-import Display from "./display";
+import Component from "component";
+import Display from "display";
 
 interface TextureRegion {
     x: number;

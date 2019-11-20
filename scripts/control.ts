@@ -1,6 +1,6 @@
-import Aspect from "./aspect";
-import AspectSet from "./aspect-set";
-import Component from "./component";
+import Aspect from "aspect";
+import AspectSet from "aspect-set";
+import Component from "component";
 
 export default abstract class Control extends Component {
     public abstract commands: AspectSet<string>;

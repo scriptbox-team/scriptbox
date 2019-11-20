@@ -1,5 +1,5 @@
-import Aspect from "./aspect";
-import Component from "./component";
+import Aspect from "aspect";
+import Component from "component";
 
 export default class Display extends Component {
     public textureID: Aspect<string> = new Aspect<string>("");

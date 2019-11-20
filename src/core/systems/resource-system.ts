@@ -225,13 +225,14 @@ export default class ResourceSystem extends System {
     }
     public async updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
         const resource = await this.getResourceByID(resourceID);
+        const owner = resource.owner;
         if (resource === undefined) {
             throw new Error(`Resource to modify was not found`);
         }
-        const owner = resource.owner;
         if (owner !== username) {
             throw new Error(`User ${username} does not have priveleges to modify other players' resource data`);
         }
+        let resourceData = await this.getPlayerResources(owner);
         switch (attribute) {
             case "name": {
                 resource.name = value;
@@ -239,6 +240,12 @@ export default class ResourceSystem extends System {
             }
             case "description": {
                 resource.description = value;
+                break;
+            }
+            case "filename": {
+                if (resource.filename !== value) {
+                    resource.filename = this._getAvailableFilename(value, resourceData);
+                }
                 break;
             }
             case "shared": {
@@ -250,7 +257,7 @@ export default class ResourceSystem extends System {
             }
         }
         await this._updateResource(resource);
-        const resourceData = await this.getPlayerResources(owner);
+        resourceData = await this.getPlayerResources(owner);
         if (resourceData !== undefined) {
             await this._updateResourceListing(owner, resourceData);
         }
@@ -288,7 +295,12 @@ export default class ResourceSystem extends System {
     }
     public async deleteQueued() {
         for (const resourceID of this._resourceDeletionQueue) {
-            await this._deleteResource(resourceID);
+            const currentRes = await this.getResourceByID(resourceID);
+            if (currentRes !== undefined) {
+                const owner = currentRes.owner;
+                await this._deleteResource(resourceID);
+                this.sendPlayerListingUpdates(owner);
+            }
             // Delete resource from database
         }
         this._resourceDeletionQueue = [];
@@ -394,7 +406,7 @@ export default class ResourceSystem extends System {
         const fileWithoutExt = filename.substr(0, filename.length - ext.length);
         let tryFilename = fileWithoutExt + ext;
         let num = 1;
-        const set = new Set(files.map((file) => file.name));
+        const set = new Set(files.map((file) => file.filename));
         while (set.has(tryFilename)) {
             tryFilename = fileWithoutExt + "." + (num++) + ext;
             if (num > 100000) {

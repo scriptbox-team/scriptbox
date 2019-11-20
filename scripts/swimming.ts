@@ -1,9 +1,9 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Gravity from "./gravity";
-import PlayerControl from "./player-control";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Gravity from "gravity";
+import PlayerControl from "player-control";
 
 export default class Swimming extends Component {
     public density: Aspect<number> = new Aspect(2);

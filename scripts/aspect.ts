@@ -1,6 +1,6 @@
-import AspectModifier from "./aspect-modifier";
-import Map from "./map";
-import Set from "./set";
+import AspectModifier from "aspect-modifier";
+import Map from "map";
+import Set from "set";
 
 export default class Aspect<T extends (string | number | boolean | symbol)> {
     public tags: Set<string>;

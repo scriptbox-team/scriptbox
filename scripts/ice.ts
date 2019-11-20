@@ -1,5 +1,5 @@
-import Component from "./component";
-import { EntityProxy } from "./entity";
+import Component from "component";
+import { EntityProxy } from "entity";
 
 export default class Ice extends Component {
     public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {

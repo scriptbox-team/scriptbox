@@ -1,6 +1,6 @@
-import Aspect from "./aspect";
-import Entity, { EntityProxy } from "./entity";
-import PlayerSoul from "./player-soul";
+import Aspect from "aspect";
+import Entity, { EntityProxy } from "entity";
+import PlayerSoul from "player-soul";
 
 export interface PlayerProxy {
     readonly id: string;

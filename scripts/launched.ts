@@ -1,8 +1,8 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Velocity from "./velocity";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Velocity from "velocity";
 
 export default class Launched extends Component {
     public launchDeterioration: Aspect<number> = new Aspect(550);

@@ -1,7 +1,7 @@
-import Aspect from "./aspect";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Position from "./position";
+import Aspect from "aspect";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Position from "position";
 
 export default class Velocity extends Component {
     public x: Aspect<number> = new Aspect(0);

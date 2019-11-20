@@ -1,4 +1,4 @@
-import { PlayerProxy } from "./player";
+import { PlayerProxy } from "player";
 
 export interface MetaInfoProxy {
     name: string;

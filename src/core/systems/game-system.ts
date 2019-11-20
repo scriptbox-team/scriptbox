@@ -486,7 +486,7 @@ export default class GameSystem extends System {
             GameSystem.scriptedServerSubsystemDir,
             "setResourceList",
             [
-                player.id,
+                player.username,
                 this._scriptCollection.convert(resources)
             ]
         );
@@ -621,7 +621,6 @@ export default class GameSystem extends System {
         // Generate a pool of water in a steel box
         for (let i = -40; i < -26; i++) {
             for (let j = 2; j < 8; j++) {
-                console.log(i);
                 if (j === 7 || i === -40 || i === -27) {
                     const ent = this._generateBox(i * 32, j * 32);
                     this._scriptCollection.execute(

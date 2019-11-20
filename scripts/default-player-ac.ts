@@ -1,4 +1,4 @@
-import AnimationController from "./animation-controller";
+import AnimationController from "animation-controller";
 
 interface FrameData {
     frame: string;

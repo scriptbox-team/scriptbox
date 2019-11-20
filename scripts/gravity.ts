@@ -1,9 +1,9 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Position from "./position";
-import Velocity from "./velocity";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Position from "position";
+import Velocity from "velocity";
 
 export default class Gravity extends Component {
     public strength: Aspect<number> = new Aspect<number>(950);

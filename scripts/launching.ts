@@ -1,8 +1,8 @@
-import Aspect from "./aspect";
-import AspectSet from "./aspect-set";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Velocity from "./velocity";
+import Aspect from "aspect";
+import AspectSet from "aspect-set";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Velocity from "velocity";
 
 export default class Launching extends Component {
     public launchCooldown = new Aspect<number>(0.5);

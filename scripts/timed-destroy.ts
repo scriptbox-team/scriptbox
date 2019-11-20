@@ -1,4 +1,4 @@
-import ActionInstance from "./action-instance";
+import ActionInstance from "action-instance";
 
 export default class TimedDestroy extends ActionInstance {
     public onCreate(time: number = 0) {
