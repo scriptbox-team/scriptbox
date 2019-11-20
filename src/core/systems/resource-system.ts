@@ -145,6 +145,7 @@ export default class ResourceSystem extends System {
         if (resource.filename !== file.name) {
             resource.filename = this._getAvailableFilename(file.name, playerResourceData);
         }
+
         await this._updateResource(resource);
         // TODO: Allow resources to have multiple contributors (owners)
         await this._updateResourceListing(owner, playerResourceData);
@@ -223,7 +224,6 @@ export default class ResourceSystem extends System {
         return await this.addOrUpdateFile(player.username, file, resourceID);
     }
     public async updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
-        console.log(username + ", " + resourceID + "," + attribute + "," + value);
         const resource = await this.getResourceByID(resourceID);
         if (resource === undefined) {
             throw new Error(`Resource to modify was not found`);
@@ -243,7 +243,6 @@ export default class ResourceSystem extends System {
             }
             case "shared": {
                 resource.shared = value === "true";
-                console.log(typeof resource.shared);
                 break;
             }
             default: {
@@ -395,15 +394,12 @@ export default class ResourceSystem extends System {
         await this._resourceCollection.delete(id);
     }
     private _tagifyResource(resourceData: Resource) {
-        return Object.assign(
-            {
-                tags: Array.from(new Set([
-                    ...resourceData.name.toLowerCase().split(/\s+/),
-                    ...resourceData.description.toLowerCase().split(/\s+/)
-                ]).values())
-            },
-            resourceData
-        );
+        const tagged = Object.assign({}, resourceData) as TaggedResource;
+        tagged.tags = Array.from(new Set([
+            ...resourceData.name.toLowerCase().split(/\s+/),
+            ...resourceData.description.toLowerCase().split(/\s+/)
+        ]).values());
+        return tagged;
     }
     private _getDirsRecursive(dir: string) {
         return fs.readdirSync(dir).reduce((result, elemPath) => {

@@ -214,7 +214,7 @@ function log(...params: any[]) {
 
 function outputUserError(owner: PlayerProxy, error: Error) {
     // TODO: Error.prepareStackTrace to improve how user stack traces look
-    if (owner !== undefined) {
+    if (owner !== undefined && owner.exists) {
         messageQueue.push({
             message: `<${error.stack}>`,
             kind: "error",
@@ -229,7 +229,7 @@ function outputUserError(owner: PlayerProxy, error: Error) {
 function handleComponentError(component: Component, error: Error) {
     const info = componentInfoMap.get(component);
     if (info !== undefined) {
-        const owner = info.owner;
+        const owner = playerUnproxiedMap.get(info.owner);
         if (owner !== undefined) {
             outputUserError(owner, error);
             info.forceDisable();
@@ -565,7 +565,7 @@ export function update() {
             id: entityID,
             name: "Entity " + entityID, // temporary
             componentInfo,
-            controlledBy: entity.controller !== undefined ? entity.controller.id : undefined
+            controlledBy: entity.controller !== undefined && entity.controller.exists ? entity.controller.id : undefined
         };
         exportValues.inspectedEntityInfo[player] = entityInfo;
     }

@@ -11,6 +11,7 @@ export interface PlayerProxy {
     readonly locked: boolean;
     readonly control: (entity: EntityProxy) => boolean;
     readonly release: () => void;
+    readonly exists: boolean;
 }
 
 export default class Player {
