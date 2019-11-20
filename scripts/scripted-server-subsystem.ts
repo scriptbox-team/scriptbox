@@ -558,6 +558,9 @@ export function update() {
         const entity = entityManager.get(entityID);
         const components = Array.from(entity.componentIterator());
         const componentInfo = components.reduce((acc, component) => {
+            if (!component.exists) {
+                return acc;
+            }
             acc[component.localID] = getComponentInfo(component);
             return acc;
         }, {});
@@ -628,8 +631,9 @@ function getComponentInfo(component: Component): ComponentExportInfo {
         });
     return {
         id: info.id,
-        name: info.name,
+        name: component.localID,
         enabled: info.enabled,
+        description: info.description,
         lastFrameTime: info.lastFrameTime,
         attributes
     };
@@ -1087,6 +1091,22 @@ export function deserializeGameState(gameState: GameObjectCollection) {
     const entities = entityManager.entries();
     for (const [id, e] of entities) {
         e.reload();
+    }
+}
+
+export function setComponentMeta(componentID: string, property: string, value: string) {
+    const component = componentManager.get(componentID);
+    if (component !== undefined) {
+        switch (property) {
+            case "name": {
+                component.localID = value;
+                break;
+            }
+            case "description": {
+                component.description = value;
+                break;
+            }
+        }
     }
 }
 

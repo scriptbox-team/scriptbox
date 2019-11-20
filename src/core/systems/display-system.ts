@@ -124,7 +124,7 @@ export default class DisplaySystem extends System {
                     return new ComponentOption(attribute.name, attribute.name, optionType, attribute.value, true);
                 });
                 return new ComponentInfo(component.id, component.name,
-                    "n/a", "blah blah", 0, "", component.enabled, attributes);
+                    "", component.description, 0, "", component.enabled, attributes);
             });
             const player = exportValues.players![playerID];
             if (player !== undefined) {

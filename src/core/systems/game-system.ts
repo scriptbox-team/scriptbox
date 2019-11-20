@@ -450,6 +450,18 @@ export default class GameSystem extends System {
         );
     }
 
+    public changeComponentMeta(componentID: string, property: string, value: string) {
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "setComponentMeta",
+            [
+                componentID,
+                property,
+                value
+            ]
+        );
+    }
+
     public setComponentEnableState(componentID: string, state: boolean) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,

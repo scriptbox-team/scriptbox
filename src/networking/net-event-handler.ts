@@ -15,6 +15,7 @@ import ClientEntityDeletionPacket from "./packets/client-entity-deletion-packet"
 import ClientEntityInspectionPacket from "./packets/client-entity-inspection-packet";
 import ClientExecuteScriptPacket from "./packets/client-execute-script-packet";
 import ClientKeybindsPacket from "./packets/client-keybinds-packet";
+import ClientModifyComponentMetaPacket from "./packets/client-modify-component-meta-packet";
 import ClientModifyMetadataPacket from "./packets/client-modify-metadata-packet";
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
 import ClientRequestEditScriptPacket from "./packets/client-request-edit-script-packet";
@@ -55,6 +56,8 @@ export default class NetEventHandler {
     private _searchResourceRepoDelegates: Array<(packet: ClientSearchResourceRepoPacket, player: Client) => void>;
     private _requestEditScriptDelegates: Array<(packet: ClientRequestEditScriptPacket, player: Client) => void>;
     private _editScriptDelegates: Array<(packet: ClientEditScriptPacket, player: Client) => void>;
+    private _modifyComponentMetaDelegates:
+        Array<(packet: ClientModifyComponentMetaPacket, player: Client) => void>;
     private _connectionIDToPlayer: Map<number, Client> = new Map<number, Client>();
     /**
      * Creates an instance of NetEventHandler.
@@ -84,6 +87,9 @@ export default class NetEventHandler {
             = new Array<(packet: ClientSearchResourceRepoPacket, player: Client) => void>();
         this._requestEditScriptDelegates = new Array<(packet: ClientRequestEditScriptPacket, player: Client) => void>();
         this._editScriptDelegates = new Array<(packet: ClientEditScriptPacket, player: Client) => void>();
+        this._modifyComponentMetaDelegates
+            = new Array<(packet: ClientModifyComponentMetaPacket, player: Client) => void>();
+
     }
     /**
      * Add a delegate for when a client connects.
@@ -179,6 +185,9 @@ export default class NetEventHandler {
     }
     public addEditScriptDelegates(func: (packet: ClientEditScriptPacket, player: Client) => void) {
         this._editScriptDelegates.push(func);
+    }
+    public addModifyComponentMetaDelegate(func: (packet: ClientModifyComponentMetaPacket, player: Client) => void) {
+        this._modifyComponentMetaDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -359,6 +368,14 @@ export default class NetEventHandler {
                     ClientEditScriptPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
                     this._editScriptDelegates
+                );
+                break;
+            }
+            case ClientEventType.ModifyComponentMeta: {
+                this._sendToDelegates(
+                    ClientModifyComponentMetaPacket.deserialize(event.data),
+                    this._getPlayerFromConnectionID(connectionID),
+                    this._modifyComponentMetaDelegates
                 );
                 break;
             }

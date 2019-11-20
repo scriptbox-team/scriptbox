@@ -27,7 +27,8 @@ export enum ClientEventType {
     CloneResource = 18,
     SearchResourceRepo = 19,
     RequestEditScript = 20,
-    EditScript = 21
+    EditScript = 21,
+    ModifyComponentMeta = 22
 }
 
 /**

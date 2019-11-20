@@ -8,6 +8,7 @@ import ClientEntityDeletionPacket from "networking/packets/client-entity-deletio
 import ClientEntityInspectionPacket from "networking/packets/client-entity-inspection-packet";
 import ClientExecuteScriptPacket from "networking/packets/client-execute-script-packet";
 import ClientKeyboardInputPacket from "networking/packets/client-keyboard-input-packet";
+import ClientModifyComponentMetaPacket from "networking/packets/client-modify-component-meta-packet";
 import ClientRemoveComponentPacket from "networking/packets/client-remove-component-packet";
 import ClientSetComponentEnableStatePacket from "networking/packets/client-set-component-enable-state-packet";
 import ClientSetControlPacket from "networking/packets/client-set-control-packet";
@@ -28,6 +29,7 @@ export default class GameSystemNetworker extends Networker {
         this.executeScriptDelegate = this.executeScriptDelegate.bind(this);
         this.entitySetControlDelegate = this.entitySetControlDelegate.bind(this);
         this.setComponentEnableState = this.setComponentEnableState.bind(this);
+        this.modifyComponentMetaDelegate = this.modifyComponentMetaDelegate.bind(this);
         this._gameSystem = gameSystem;
     }
     public hookupInput(netEventHandler: NetEventHandler) {
@@ -41,6 +43,7 @@ export default class GameSystemNetworker extends Networker {
         netEventHandler.addExecuteScriptDelegate(this.executeScriptDelegate);
         netEventHandler.addSetControlDelegate(this.entitySetControlDelegate);
         netEventHandler.addSetComponentEnableStateDelegate(this.setComponentEnableState);
+        netEventHandler.addModifyComponentMetaDelegate(this.modifyComponentMetaDelegate);
     }
     public playerConnectionDelegate(packet: ClientConnectionPacket, client: Client) {
         this._gameSystem.createPlayer(client);
@@ -72,5 +75,8 @@ export default class GameSystemNetworker extends Networker {
     public executeScriptDelegate(
             packet: ClientExecuteScriptPacket, client: Client) {
         this._gameSystem.runResourcePlayerScript(packet.script, packet.args, client, packet.entityID);
+    }
+    public modifyComponentMetaDelegate(packet: ClientModifyComponentMetaPacket, client: Client) {
+        this._gameSystem.changeComponentMeta(packet.componentID, packet.property, packet.value);
     }
 }
