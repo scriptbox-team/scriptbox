@@ -1,6 +1,6 @@
-import CollisionBox from "./collision-box";
-import Entity, { EntityProxy } from "./entity";
-import Position from "./position";
+import CollisionBox from "collision-box";
+import Entity, { EntityProxy } from "entity";
+import Position from "position";
 
 interface HitboxOptions {
     origin: EntityProxy;
@@ -58,7 +58,6 @@ export default class HitboxFactory {
             };
             knockbackAngle = Math.PI - knockbackAngle;
         }
-        global.log(JSON.stringify(bounds));
         ent.add("position", "position", undefined, pos.x, pos.y);
         const collisionBox = ent.add(
             "collision-box",

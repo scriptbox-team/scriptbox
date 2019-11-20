@@ -1,5 +1,5 @@
-import Aspect from "./aspect";
-import Component from "./component";
+import Aspect from "aspect";
+import Component from "component";
 
 export default class Position extends Component {
     public x: Aspect<number> = new Aspect(0);

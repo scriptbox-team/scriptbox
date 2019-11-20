@@ -1,5 +1,5 @@
-import QuadtreeGrid from "./quadtree-grid";
-import DirectionFlipper from "./direction-flipper";
+import QuadtreeGrid from "quadtree-grid";
+import DirectionFlipper from "direction-flipper";
 
 interface BoundingBox {
     x1: number;

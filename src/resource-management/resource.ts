@@ -10,13 +10,14 @@ export default class Resource {
     public static serialize(
         id: string,
         type: ResourceType,
-        filename: string,
         name: string,
+        filename: string,
         creator: string,
         owner: string,
         description: string,
         time: number,
         icon: string,
+        shared: boolean
     ) {
         if (
                 typeof id === "string"
@@ -28,8 +29,9 @@ export default class Resource {
                 && typeof description === "string"
                 && typeof time === "number"
                 && typeof icon === "string"
+                && typeof shared === "boolean"
         ) {
-            return new Resource(id, type, name, filename, creator, owner, description, time, icon);
+            return new Resource(id, type, name, filename, creator, owner, description, time, icon, shared);
         }
     }
     public id: string;
@@ -41,6 +43,7 @@ export default class Resource {
     public description: string;
     public time: number;
     public icon: string;
+    public shared: boolean;
     constructor(
             id: string,
             type: ResourceType,
@@ -50,7 +53,8 @@ export default class Resource {
             owner: string,
             description: string,
             time: number,
-            icon: string) {
+            icon: string,
+            shared: boolean) {
         this.id = id;
         this.type = type;
         this.name = name;
@@ -60,5 +64,6 @@ export default class Resource {
         this.description = description;
         this.time = time;
         this.icon = icon;
+        this.shared = shared;
     }
 }

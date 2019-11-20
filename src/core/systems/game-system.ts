@@ -23,39 +23,41 @@ export default class GameSystem extends System {
     public getPlayerResources?: (username: string) => Promise<Resource[]>;
     public loadResource?: (resourceID: string, encoding: string) => Promise<string>;
     public loadResourceSync?: (resourceID: string, encoding: string) => string;
+    public addResources?: (dirs: string[]) => Promise<void>;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
     private _cachedPlayerScripts: Map<string, {time: number, script: Script}>;
     private _scriptDir: string;
-    private _playerScriptDir: string;
+    private _playerFileDirs: string[];
     private _validPlayerModules: {[name: string]: string};
     private _mapDBCollection: Collection;
     private _mapLoaded: boolean = false;
     constructor(
             tickRate: number,
             systemScriptDirectory: string,
-            playerScriptDirectory: string,
+            playerExcludeFiles: string[],
             mapCollection: Collection) {
         super();
         this._resolveModule = this._resolveModule.bind(this);
         this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
         this._scriptDir = systemScriptDirectory;
-        this._playerScriptDir = playerScriptDirectory;
         this._mapDBCollection = mapCollection;
         this._cachedPlayerScripts = new Map<string, {time: number, script: Script}>();
 
-        const playerFileDirs = this._getDirsRecursive(this._playerScriptDir);
-        const fileDirs = playerFileDirs.concat(
-            this._getDirsRecursive(this._scriptDir, [this._playerScriptDir])
-        );
+        const fileDirs = this._getDirsRecursive(this._scriptDir);
 
         const scripts: {[s: string]: string} = _.transform(fileDirs, (result, dir) => {
             result[dir] = fs.readFileSync(dir, {encoding: "utf8"});
         }, {} as {[s: string]: string});
 
-        this._validPlayerModules = playerFileDirs.reduce((result, dir) => {
-            const relativePath = path.relative(this._playerScriptDir, dir);
+        this._playerFileDirs = fileDirs.filter((dir) => {
+            const dirRelative = path.relative(this._scriptDir, dir).replace("\\", "/");
+            return !playerExcludeFiles.includes(dirRelative);
+        });
+
+        this._validPlayerModules = this._playerFileDirs.reduce((result, dir) => {
+            const relativePath = path.relative(this._scriptDir, dir).replace("\\", "/");
             result[relativePath] = dir;
             return result;
         }, {} as {[name: string]: string});
@@ -439,6 +441,12 @@ export default class GameSystem extends System {
         this._messageQueue.push({recipient: clients, message});
     }
 
+    public async loadDefaultCodeResources() {
+        if (this.addResources !== undefined) {
+            await this.addResources(this._playerFileDirs);
+        }
+    }
+
     public setPlayerControl(client: Client, entityID?: string) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -446,6 +454,18 @@ export default class GameSystem extends System {
             [
                 client.id,
                 entityID
+            ]
+        );
+    }
+
+    public changeComponentMeta(componentID: string, property: string, value: string) {
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "setComponentMeta",
+            [
+                componentID,
+                property,
+                value
             ]
         );
     }
@@ -461,12 +481,12 @@ export default class GameSystem extends System {
         );
     }
 
-    public updateResources(player: Client, resources: {[filename: string]: Resource}) {
+    public updateResources(player: Client, resources: Resource[]) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setResourceList",
             [
-                player.id,
+                player.username,
                 this._scriptCollection.convert(resources)
             ]
         );
@@ -561,23 +581,9 @@ export default class GameSystem extends System {
     }
 
     private _generateMap() {
+        // Generate the regular ground tiles
         for (let i = -25; i < 25; i++) {
-            const entID = this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createEntity",
-            );
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "position",
-                    "position",
-                    undefined,
-                    i * 32,
-                    32
-                ]
-            );
+            const entID = this._generateBox(i * 32, 32);
             this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "createComponent",
@@ -593,38 +599,8 @@ export default class GameSystem extends System {
                     32
                 ]
             );
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "collision-box",
-                    "collision-box",
-                    undefined,
-                    0,
-                    0,
-                    32,
-                    32,
-                    true
-                ]
-            );
             for (let j = 2; j < 8; j++) {
-                const entID2 = this._scriptCollection.execute(
-                    GameSystem.scriptedServerSubsystemDir,
-                    "createEntity",
-                );
-                this._scriptCollection.execute(
-                    GameSystem.scriptedServerSubsystemDir,
-                    "createComponent",
-                    [
-                        entID2,
-                        "position",
-                        "position",
-                        undefined,
-                        i * 32,
-                        j * 32
-                    ]
-                );
+                const entID2 = this._generateBox(i * 32, j * 32);
                 this._scriptCollection.execute(
                     GameSystem.scriptedServerSubsystemDir,
                     "createComponent",
@@ -640,23 +616,191 @@ export default class GameSystem extends System {
                         32
                     ]
                 );
-                this._scriptCollection.execute(
-                    GameSystem.scriptedServerSubsystemDir,
-                    "createComponent",
-                    [
-                        entID2,
-                        "collision-box",
-                        "collision-box",
-                        undefined,
-                        0,
-                        0,
-                        32,
-                        32,
-                        true
-                    ]
-                );
             }
         }
+        // Generate a pool of water in a steel box
+        for (let i = -40; i < -26; i++) {
+            for (let j = 2; j < 8; j++) {
+                if (j === 7 || i === -40 || i === -27) {
+                    const ent = this._generateBox(i * 32, j * 32);
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "display",
+                            "display",
+                            undefined,
+                            "R000000000000000000000003",
+                            96,
+                            0,
+                            32,
+                            32
+                        ]
+                    );
+                }
+                else if (j === 2) {
+                    const ent = this._generateBox(i * 32, j * 32, false);
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "display",
+                            "display",
+                            undefined,
+                            "R000000000000000000000005",
+                            0,
+                            0,
+                            32,
+                            32
+                        ]
+                    );
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "water",
+                            "water",
+                            undefined,
+                        ]
+                    );
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "water-animation",
+                            "water-animation",
+                            undefined,
+                        ]
+                    );
+                }
+                else {
+                    const ent = this._generateBox(i * 32, j * 32, false);
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "display",
+                            "display",
+                            undefined,
+                            "R000000000000000000000005",
+                            256,
+                            0,
+                            32,
+                            32
+                        ]
+                    );
+                    this._scriptCollection.execute(
+                        GameSystem.scriptedServerSubsystemDir,
+                        "createComponent",
+                        [
+                            ent,
+                            "water",
+                            "water",
+                            undefined,
+                        ]
+                    );
+                }
+            }
+        }
+        // Generate a platform of ice
+        for (let i = 26; i < 40; i++) {
+            const entID = this._generateBox(i * 32, 32);
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                [
+                    entID,
+                    "display",
+                    "display",
+                    undefined,
+                    "R000000000000000000000003",
+                    128,
+                    0,
+                    32,
+                    32
+                ]
+            );
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                [
+                    entID,
+                    "ice",
+                    "ice",
+                    undefined
+                ]
+            );
+        }
+        // Generate a platform of lava
+        for (let i = 41; i < 50; i++) {
+            const entID = this._generateBox(i * 32, 32);
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                [
+                    entID,
+                    "display",
+                    "display",
+                    undefined,
+                    "R000000000000000000000003",
+                    160,
+                    0,
+                    32,
+                    32
+                ]
+            );
+            this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "createComponent",
+                [
+                    entID,
+                    "lava",
+                    "lava",
+                    undefined
+                ]
+            );
+        }
+    }
+
+    private _generateBox(x: number, y: number, solid: boolean = true) {
+        const entID = this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createEntity",
+        );
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "position",
+                "position",
+                undefined,
+                x,
+                y
+            ]
+        );
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createComponent",
+            [
+                entID,
+                "collision-box",
+                "collision-box",
+                undefined,
+                0,
+                0,
+                32,
+                32,
+                true,
+                solid
+            ]
+        );
+        return entID;
     }
 
     private _preresolveModule(modulePath: string, resourcesByFilename: {[filename: string]: Resource}) {

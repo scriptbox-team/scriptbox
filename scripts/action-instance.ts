@@ -1,6 +1,6 @@
-import Aspect from "./aspect";
-import Component from "./component";
-import SubEvent from "./sub-event";
+import Aspect from "aspect";
+import Component from "component";
+import SubEvent from "sub-event";
 
 export default class ActionInstance extends Component {
     public loopAtEnd: Aspect<boolean>;

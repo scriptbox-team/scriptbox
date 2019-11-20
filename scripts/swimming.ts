@@ -1,9 +1,9 @@
-import Aspect from "../aspect";
-import AspectModifier from "../aspect-modifier";
-import Component from "../component";
-import { EntityProxy } from "../entity";
-import Gravity from "../gravity";
-import PlayerControl from "../player-control";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Gravity from "gravity";
+import PlayerControl from "player-control";
 
 export default class Swimming extends Component {
     public density: Aspect<number> = new Aspect(2);
@@ -13,6 +13,7 @@ export default class Swimming extends Component {
     private _walkVelModifier?: AspectModifier<number>;
     private _jumpImpulseModifier?: AspectModifier<number>;
     private _dashImpulseModifier?: AspectModifier<number>;
+    private _gravityModifier?: AspectModifier<number>;
     public onLoad() {
         const density = this.density.getValue();
         this.with<PlayerControl>("control", (pc) => {
@@ -23,7 +24,7 @@ export default class Swimming extends Component {
             this._dashImpulseModifier = pc.dashImpulse.addModifier((n) => n / density);
         });
         this.with<Gravity>("gravity", (grav) => {
-            this._dashImpulseModifier = grav.strength.addModifier((n) => n / density ** 2);
+            this._gravityModifier = grav.strength.addModifier((n) => n / density ** 2);
         });
     }
     public onUnload() {
@@ -41,6 +42,9 @@ export default class Swimming extends Component {
         }
         if (this._dashImpulseModifier) {
             this._dashImpulseModifier.delete();
+        }
+        if (this._gravityModifier) {
+            this._gravityModifier.delete();
         }
     }
     public onPostUpdate() {

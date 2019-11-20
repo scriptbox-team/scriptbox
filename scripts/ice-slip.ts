@@ -1,7 +1,7 @@
-import AspectModifier from "../aspect-modifier";
-import Component from "../component";
-import { EntityProxy } from "../entity";
-import PlayerControl from "../player-control";
+import AspectModifier from "aspect-modifier";
+import Component from "component";
+import { EntityProxy } from "entity";
+import PlayerControl from "player-control";
 
 export default class IceSlip extends Component {
     private _continue: boolean = true;

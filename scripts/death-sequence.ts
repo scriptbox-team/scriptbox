@@ -1,9 +1,9 @@
-import ActionInstance from "./action-instance";
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import Chat from "./chat";
-import Control from "./control";
-import Hurtable from "./hurtable";
+import ActionInstance from "action-instance";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import Chat from "chat";
+import Control from "control";
+import Hurtable from "hurtable";
 
 export default class DeathSequence extends ActionInstance {
     public currentFrame: Aspect<string>;

@@ -1,7 +1,7 @@
-import Aspect from "./aspect";
-import Component from "./component";
-import Display from "./display";
-import SimpleAnimation from "./simple-animation";
+import Aspect from "aspect";
+import Component from "component";
+import Display from "display";
+import SimpleAnimation from "simple-animation";
 
 interface FrameData {
     frame: string;

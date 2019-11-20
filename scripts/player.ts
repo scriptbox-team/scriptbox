@@ -1,6 +1,6 @@
-import Aspect from "./aspect";
-import Entity, { EntityProxy } from "./entity";
-import PlayerSoul from "./player-soul";
+import Aspect from "aspect";
+import Entity, { EntityProxy } from "entity";
+import PlayerSoul from "player-soul";
 
 export interface PlayerProxy {
     readonly id: string;
@@ -11,6 +11,7 @@ export interface PlayerProxy {
     readonly locked: boolean;
     readonly control: (entity: EntityProxy) => boolean;
     readonly release: () => void;
+    readonly exists: boolean;
 }
 
 export default class Player {

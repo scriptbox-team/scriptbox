@@ -1,9 +1,9 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import AspectSet from "./aspect-set";
-import Control from "./control";
-import Position from "./position";
-import Velocity from "./velocity";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import AspectSet from "aspect-set";
+import Control from "control";
+import Position from "position";
+import Velocity from "velocity";
 
 export default class DefaultControl extends Control {
     public commands: AspectSet<string>

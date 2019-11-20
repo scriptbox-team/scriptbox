@@ -1,10 +1,10 @@
-import Aspect from "./aspect";
-import AspectSet from "./aspect-set";
-import Component from "./component";
-import Map from "./map";
-import MetaInfo from "./meta-info";
-import Player, { PlayerProxy } from "./player";
-import WeakMap from "./weak-map";
+import Aspect from "aspect";
+import AspectSet from "aspect-set";
+import Component from "component";
+import Map from "map";
+import MetaInfo from "meta-info";
+import Player, { PlayerProxy } from "player";
+import WeakMap from "weak-map";
 
 export interface EntityProxy {
     readonly delete: () => void;
@@ -213,7 +213,11 @@ export default class Entity {
         return this._componentsInverse.get(component);
     }
     public setComponentLocalID(component: Component, newID: string) {
-        if (this._components.has(newID)) {
+        const currentComp = this._components.get(newID);
+        if (currentComp === component) {
+            return;
+        }
+        if (currentComp !== undefined) {
             throw new Error(`Entity ${this.id} already has a component with a local ID of ${newID}.`);
         }
         const currentLocalID = this._componentsInverse.get(component);

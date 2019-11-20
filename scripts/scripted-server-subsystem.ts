@@ -21,6 +21,7 @@ import PlayerSoul from "./player-soul";
 import Position from "./position";
 import ProxyGenerator from "./proxy-generator";
 import Resource from "./resource";
+import ResourceGetter from "./resource-getter";
 import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import SoundEmitter from "./sound-emitter";
@@ -214,7 +215,7 @@ function log(...params: any[]) {
 
 function outputUserError(owner: PlayerProxy, error: Error) {
     // TODO: Error.prepareStackTrace to improve how user stack traces look
-    if (owner !== undefined) {
+    if (owner !== undefined && owner.exists) {
         messageQueue.push({
             message: `<${error.stack}>`,
             kind: "error",
@@ -229,7 +230,7 @@ function outputUserError(owner: PlayerProxy, error: Error) {
 function handleComponentError(component: Component, error: Error) {
     const info = componentInfoMap.get(component);
     if (info !== undefined) {
-        const owner = info.owner;
+        const owner = playerUnproxiedMap.get(info.owner);
         if (owner !== undefined) {
             outputUserError(owner, error);
             info.forceDisable();
@@ -269,6 +270,16 @@ export function initialize(initTickRate: number) {
     tickRate = initTickRate;
     Entity.externalCreate = createEntity;
     Entity.externalFromID = getEntity;
+    ResourceGetter.externalGet = (username, filename) => {
+        const playerRes = playerResources.get(username);
+        if (playerRes !== undefined) {
+            const res = playerRes.get(filename);
+            if (res !== undefined) {
+                return res.id;
+            }
+        }
+        return undefined;
+    };
     Component.externalFromID = (id: string) => {
         return componentManager.get(id);
     };
@@ -558,6 +569,9 @@ export function update() {
         const entity = entityManager.get(entityID);
         const components = Array.from(entity.componentIterator());
         const componentInfo = components.reduce((acc, component) => {
+            if (!component.exists) {
+                return acc;
+            }
             acc[component.localID] = getComponentInfo(component);
             return acc;
         }, {});
@@ -565,7 +579,7 @@ export function update() {
             id: entityID,
             name: "Entity " + entityID, // temporary
             componentInfo,
-            controlledBy: entity.controller !== undefined ? entity.controller.id : undefined
+            controlledBy: entity.controller !== undefined && entity.controller.exists ? entity.controller.id : undefined
         };
         exportValues.inspectedEntityInfo[player] = entityInfo;
     }
@@ -628,8 +642,9 @@ function getComponentInfo(component: Component): ComponentExportInfo {
         });
     return {
         id: info.id,
-        name: info.name,
+        name: component.localID,
         enabled: info.enabled,
+        description: info.description,
         lastFrameTime: info.lastFrameTime,
         attributes
     };
@@ -662,7 +677,6 @@ export function get(entID: string, propName: string) {
 export function createEntity(creatorID?: string): string {
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
     const ent = entityManager.create(makeID("E"), creator);
-    global.log("Entity created (ID: " + ent.id + ")");
     return ent.id;
 }
 
@@ -676,7 +690,6 @@ export function getEntity(id: string) {
 
 const _deleteEntity = (id: string) => {
     entityManager.queueForDeletion(id);
-    global.log("Entity queued for deletion (ID: " + id + ")");
 };
 
 export function deleteEntity(id: string) {
@@ -694,14 +707,6 @@ const _createComponent = (
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
     if (entity !== undefined) {
         const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
-        global.log(
-            "Component created (Entity ID: "
-            + entID
-            + ", Component Local ID: "
-            + localID
-            + ", Params: "
-            + JSON.stringify(params)
-            +  ")");
         return component.id;
     }
     return undefined;
@@ -718,7 +723,6 @@ export function createComponent(
 
 const _deleteComponent = (componentID: string) => {
     componentManager.queueForDeletion(componentID);
-    global.log("Component queued for deletion (ID: " + componentID + ")");
 };
 
 export function deleteComponent(componentID: string) {
@@ -815,14 +819,6 @@ export function createPlayer(
         90: "action1"
     };
     playerManager.create(id, username, displayName, controlSet);
-    global.log(
-        "Player created (ID: "
-        + id
-        + ", Username: "
-        + username
-        + ", Display Name: "
-        + displayName
-        +  ")");
 }
 
 export function deletePlayer(id: string) {
@@ -871,11 +867,10 @@ export function setComponentEnableState(componentID: string, state: boolean) {
     }
 }
 
-export function setResourceList(playerUsername: string, resources: {[filename: string]: Resource}) {
-    const keys = Object.keys(resources);
+export function setResourceList(playerUsername: string, resources: Resource[]) {
     const resourceMap = new Map<string, Resource>();
-    for (const key of keys) {
-        resourceMap.set(key, resources[key]);
+    for (const resource of resources) {
+        resourceMap.set(resource.filename, resource);
     }
     playerResources.set(playerUsername, resourceMap);
 }
@@ -1088,6 +1083,22 @@ export function deserializeGameState(gameState: GameObjectCollection) {
     const entities = entityManager.entries();
     for (const [id, e] of entities) {
         e.reload();
+    }
+}
+
+export function setComponentMeta(componentID: string, property: string, value: string) {
+    const component = componentManager.get(componentID);
+    if (component !== undefined) {
+        switch (property) {
+            case "name": {
+                component.localID = value;
+                break;
+            }
+            case "description": {
+                component.description = value;
+                break;
+            }
+        }
     }
 }
 

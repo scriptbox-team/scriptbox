@@ -1,5 +1,5 @@
-import ActionInstance from "./action-instance";
-import Aspect from "./aspect";
+import ActionInstance from "action-instance";
+import Aspect from "aspect";
 
 interface FrameData {
     frame: string;

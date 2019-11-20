@@ -1,10 +1,10 @@
-import Aspect from "./aspect";
-import AspectSet from "./aspect-set";
-import Component from "./component";
-import { EntityProxy } from "./entity";
-import Hurtable from "./hurtable";
-import Map from "./map";
-import Set from "./set";
+import Aspect from "aspect";
+import AspectSet from "aspect-set";
+import Component from "component";
+import { EntityProxy } from "entity";
+import Hurtable from "hurtable";
+import Map from "map";
+import Set from "set";
 
 export default class Damaging extends Component {
     public hurtCooldown = new Aspect<number>(0.5);

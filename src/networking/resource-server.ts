@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
 import fs from "fs-extra";
@@ -27,6 +28,7 @@ export default class ResourceServer {
         this._port = options.port;
         this._resourcePath = options.resourcePath;
         this._resourceContentType = new Map<string, string>();
+        this._app.use(cors());
         this._app.get("/image/:id", (req, res) => {
             const resType = this._resourceContentType.get(req.params.id);
             if (resType === undefined || resType.split("/")[0] !== "image") {

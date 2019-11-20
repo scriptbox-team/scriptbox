@@ -1,11 +1,11 @@
-import Aspect from "./aspect";
-import AspectModifier from "./aspect-modifier";
-import AspectSet from "./aspect-set";
-import BasicAttack from "./basic-attack";
-import Control from "./control";
-import { EntityProxy } from "./entity";
-import Position from "./position";
-import Velocity from "./velocity";
+import Aspect from "aspect";
+import AspectModifier from "aspect-modifier";
+import AspectSet from "aspect-set";
+import BasicAttack from "basic-attack";
+import Control from "control";
+import { EntityProxy } from "entity";
+import Position from "position";
+import Velocity from "velocity";
 
 export default class PlayerControl extends Control {
     public commands: AspectSet<string>
