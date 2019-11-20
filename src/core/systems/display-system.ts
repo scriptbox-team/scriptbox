@@ -76,12 +76,10 @@ export default class DisplaySystem extends System {
                 const dist = Math.sqrt(vec.x * vec.x + vec.y * vec.y);
                 const vol = soundData.volume * (1 - dist / 320);
                 if (vol > 0) {
-                    console.log("push");
                     sounds.push(new AudioObject(soundID, soundData.resource, vol, false));
                 }
             });
             if (sounds.length > 0 && this._soundDataCallback !== undefined) {
-                console.log(sounds);
                 this._soundDataCallback(sounds, new Group<Client>(GroupType.Only, [playerData.client]));
             }
         });

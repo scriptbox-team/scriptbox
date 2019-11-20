@@ -2,11 +2,12 @@ import _ from "lodash";
 import Resource from "resource-management/resource";
 import Packet from "./packet";
 
-export default class ServerResourceListingPacket extends Packet {
-    public static deserialize(obj: any): ServerResourceListingPacket | undefined {
+export default class ServerResourceRepoListPacket extends Packet {
+    public static deserialize(obj: any): ServerResourceRepoListPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
             if (
                 Array.isArray(obj.resources)
+                && typeof obj.search === "string"
             ) {
                 const resourceArray: Resource[] = [];
                 const allClear = _.every(obj.resources, (elem) => {
@@ -29,16 +30,18 @@ export default class ServerResourceListingPacket extends Packet {
                     return false;
                 });
                 if (allClear) {
-                    return new ServerResourceListingPacket(resourceArray);
+                    return new ServerResourceRepoListPacket(obj.search, resourceArray);
                 }
             }
             return undefined;
         }
     }
 
+    public search: string;
     public resources: Resource[];
-    constructor(resources: Resource[]) {
+    constructor(search: string, resources: Resource[]) {
         super();
+        this.search = search;
         this.resources = resources;
     }
     public serialize() {

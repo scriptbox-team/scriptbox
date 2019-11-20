@@ -871,11 +871,10 @@ export function setComponentEnableState(componentID: string, state: boolean) {
     }
 }
 
-export function setResourceList(playerUsername: string, resources: {[filename: string]: Resource}) {
-    const keys = Object.keys(resources);
+export function setResourceList(playerUsername: string, resources: Resource[]) {
     const resourceMap = new Map<string, Resource>();
-    for (const key of keys) {
-        resourceMap.set(key, resources[key]);
+    for (const resource of resources) {
+        resourceMap.set(resource.id, resource);
     }
     playerResources.set(playerUsername, resourceMap);
 }

@@ -16,6 +16,10 @@ interface ResourceSystemOptions {
     resourcePath: string;
 }
 
+interface TaggedResource extends Resource {
+    tags: string[];
+}
+
 interface ResourceFile {
     name: string;
     data: Buffer;
@@ -24,7 +28,7 @@ interface ResourceFile {
 
 export default class ResourceSystem extends System {
     public playerByUsername?: (username: string) => Client | undefined;
-    private _playerListingUpdateDelegates: Array<(user: Client, resources: {[filename: string]: Resource}) => void>;
+    private _playerListingUpdateDelegates: Array<(user: Client, resources: Resource[]) => void>;
     private _resourceServer: ResourceServer;
     private _playerTokens: Map<number, Client>;
     private _idGenerator: IDGenerator;
@@ -37,7 +41,7 @@ export default class ResourceSystem extends System {
         this._resourceCollection = collection;
         this._resourceDeletionQueue = [];
         this._playerListingUpdateDelegates
-            = new Array<(user: Client, resources: {[filename: string]: Resource}) => void>();
+            = new Array<(user: Client, resources: Resource[]) => void>();
         this._resourceServer = new ResourceServer({port: options.serverPort, resourcePath: options.resourcePath});
         this._playerTokens = new Map<number, Client>();
         this._resourceServer.onFileUpload = this.handleFileUpload;
@@ -56,7 +60,7 @@ export default class ResourceSystem extends System {
                 await this.addOrUpdateFile(
                     "scriptbox",
                     {
-                        name: resource.id,
+                        name: resource.filename,
                         mimetype: type !== undefined ? type.mime : "text/plain",
                         data: file
                     },
@@ -79,6 +83,7 @@ export default class ResourceSystem extends System {
                             data: file
                         },
                         id,
+                        true,
                         true
                     );
                 }
@@ -86,7 +91,12 @@ export default class ResourceSystem extends System {
         }
         console.log("Resource data loaded.");
     }
-    public async addResource(user: string, type: ResourceType, file: ResourceFile, id?: string): Promise<Resource> {
+    public async addResource(
+            user: string,
+            type: ResourceType,
+            file: ResourceFile,
+            id?: string,
+            share: boolean = false): Promise<Resource> {
         const playerResourceData = await this.getPlayerResources(user);
         const filename = this._getAvailableFilename(file.name, playerResourceData);
         const resource = new Resource(
@@ -98,7 +108,8 @@ export default class ResourceSystem extends System {
             user,
             "",
             Date.now(),
-            ""
+            "",
+            share
         );
         await this._setResource(resource);
         await this._updateResourceListing(user, playerResourceData.concat([resource]));
@@ -108,7 +119,8 @@ export default class ResourceSystem extends System {
             user: string,
             type: ResourceType,
             resourceID: string,
-            file: ResourceFile): Promise<Resource> {
+            file: ResourceFile,
+            share?: boolean): Promise<Resource> {
         const resource = await this.getResourceByID(resourceID);
         const playerResourceData = await this.getPlayerResources(user);
         if (resource === undefined) {
@@ -122,10 +134,17 @@ export default class ResourceSystem extends System {
         // Update the type just in case they uploaded something different
         resource.type = type;
         resource.time = Date.now();
-        resource.filename = this._getAvailableFilename(file.name, playerResourceData);
+
+        if (share !== undefined) {
+            resource.shared = share;
+        }
+
+        if (resource.filename !== file.name) {
+            resource.filename = this._getAvailableFilename(file.name, playerResourceData);
+        }
         await this._updateResource(resource);
         // TODO: Allow resources to have multiple contributors (owners)
-        await this._updateResourceListing(owner, playerResourceData.concat([resource]));
+        await this._updateResourceListing(owner, playerResourceData);
         return this._resourceServer.update(resource, file);
     }
     public async deleteResource(user: string, resourceID: string): Promise<void> {
@@ -144,7 +163,8 @@ export default class ResourceSystem extends System {
             username: string,
             file: ResourceFile,
             resourceID?: string,
-            alwaysCreate: boolean = false) {
+            alwaysCreate: boolean = false,
+            share?: boolean) {
         let resourceType: ResourceType | undefined;
         switch (file.mimetype) {
             case "image/bmp":
@@ -184,11 +204,11 @@ export default class ResourceSystem extends System {
         if (resourceType !== undefined) {
             if (resourceID === undefined || alwaysCreate) {
                 // Upload new resource
-                await this.addResource(username, resourceType, file, resourceID);
+                await this.addResource(username, resourceType, file, resourceID, share);
             }
             else {
                 // Update resource (overwrite)
-                await this.updateResource(username, resourceType, resourceID, file);
+                await this.updateResource(username, resourceType, resourceID, file, share);
             }
         }
     }
@@ -200,6 +220,7 @@ export default class ResourceSystem extends System {
         return await this.addOrUpdateFile(player.username, file, resourceID);
     }
     public async updateResourceData(username: string, resourceID: string, attribute: string, value: string) {
+        console.log(username + ", " + resourceID + "," + attribute + "," + value);
         const resource = await this.getResourceByID(resourceID);
         if (resource === undefined) {
             throw new Error(`Resource to modify was not found`);
@@ -217,10 +238,16 @@ export default class ResourceSystem extends System {
                 resource.description = value;
                 break;
             }
+            case "shared": {
+                resource.shared = value === "true";
+                console.log(typeof resource.shared);
+                break;
+            }
             default: {
                 throw new Error(`Resource attribute ${attribute} is not recognized as a valid modifiable attribute`);
             }
         }
+        await this._updateResource(resource);
         const resourceData = await this.getPlayerResources(owner);
         if (resourceData !== undefined) {
             await this._updateResourceListing(owner, resourceData);
@@ -244,6 +271,13 @@ export default class ResourceSystem extends System {
     public getPlayerFromToken(token: number) {
         return this._playerTokens.get(token);
     }
+    public async playerRequestResource(resourceID: string, player: Client) {
+        const resourceData = await this.getResourceByID(resourceID);
+        if (resourceData.owner !== player.username || resourceData.type !== "script") {
+            return undefined;
+        }
+        return await this.loadResource(resourceID, "utf8");
+    }
     public async loadResource(resourceID: string, encoding: string) {
         return await this._resourceServer.loadResource(resourceID, encoding);
     }
@@ -257,8 +291,12 @@ export default class ResourceSystem extends System {
         }
         this._resourceDeletionQueue = [];
     }
-    public addPlayerListingDelegate(cb: (user: Client, resources: {[filename: string]: Resource}) => void) {
+    public addPlayerListingDelegate(cb: (user: Client, resources: Resource[]) => void) {
         this._playerListingUpdateDelegates.push(cb);
+    }
+    public async sendPlayerListingUpdates(owner: string) {
+        const playerResourceData = await this.getPlayerResources(owner);
+        await this._updateResourceListing(owner, playerResourceData);
     }
     public async getResourceByFilename(username: string, filename: string): Promise<Resource> {
         return (await this._resourceCollection.getMany({owner: username, filename}))[0];
@@ -272,22 +310,39 @@ export default class ResourceSystem extends System {
     public async getPlayerResources(username: string): Promise<Resource[]> {
         return await this._resourceCollection.getMany({owner: username});
     }
+    public async searchSharedResources(search: string) {
+        const tags = search.split(/\s+/);
+        return await this._resourceCollection.getMany({
+            shared: true,
+            tags: {
+                $in: tags
+            }
+        });
+    }
+    public async cloneResource(resourceID: string, user: string) {
+        const resourceData = await this.getResourceByID(resourceID);
+        if (resourceData !== undefined) {
+            const file = Buffer.from(await this.loadResource(resourceID, "utf8"));
+            const type = fileType(file);
+            this.addOrUpdateFile(
+                user,
+                {
+                    name: resourceData.filename,
+                    data: file,
+                    mimetype: type !== undefined ? type.mime : "text/plain",
+                }
+            );
+        }
+    }
     private async _updateResourceListing(owner: string, resources: Resource[]) {
         if (this.playerByUsername !== undefined) {
             const player = this.playerByUsername(owner);
             if (player !== undefined && this._playerListingUpdateDelegates !== undefined) {
                 for (const func of this._playerListingUpdateDelegates) {
-                    func(player, await this._resourceArrayToObject(resources));
+                    func(player, resources);
                 }
             }
         }
-    }
-    private async _resourceArrayToObject(resources: Resource[]) {
-        const obj: {[filename: string]: Resource} = {};
-        for (const resource of resources) {
-            obj[resource.filename] = resource;
-        }
-        return obj;
     }
     private _resourceCreate(
             id: string,
@@ -298,8 +353,9 @@ export default class ResourceSystem extends System {
             owner: string,
             description: string,
             time: number,
-            icon: string) {
-        return new Resource(id, type, name, filename, creator, owner, description, time, icon);
+            icon: string,
+            shared: boolean) {
+        return new Resource(id, type, name, filename, creator, owner, description, time, icon, shared);
     }
     private async _onResourceDelete(resource: Resource) {
         this._resourceServer.delete(resource);
@@ -323,17 +379,28 @@ export default class ResourceSystem extends System {
         }
         return tryFilename;
     }
-    private async _getResources(): Promise<Resource[]> {
+    private async _getResources(): Promise<TaggedResource[]> {
         return await this._resourceCollection.getMany({});
     }
     private async _setResource(resourceData: Resource) {
-        await this._resourceCollection.insert(resourceData);
+        await this._resourceCollection.insert(this._tagifyResource(resourceData));
     }
     private async _updateResource(resourceData: Resource) {
-        await this._resourceCollection.update(resourceData.id, resourceData);
+        await this._resourceCollection.update(resourceData.id, this._tagifyResource(resourceData));
     }
     private async _deleteResource(id: string) {
         await this._resourceCollection.delete(id);
+    }
+    private _tagifyResource(resourceData: Resource) {
+        return Object.assign(
+            {
+                tags: Array.from(new Set([
+                    ...resourceData.name.split(/\s+/),
+                    ...resourceData.description.split(/\s+/)
+                ]).values())
+            },
+            resourceData
+        );
     }
     private _getDirsRecursive(dir: string) {
         return fs.readdirSync(dir).reduce((result, elemPath) => {

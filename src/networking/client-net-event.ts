@@ -22,7 +22,12 @@ export enum ClientEventType {
     Keybinds = 14,
     EntityInspection = 15,
     SetControl = 16,
-    SetComponentEnableState = 17
+    SetComponentEnableState = 17,
+
+    CloneResource = 18,
+    SearchResourceRepo = 19,
+    RequestEditScript = 20,
+    EditScript = 21
 }
 
 /**

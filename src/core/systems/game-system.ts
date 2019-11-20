@@ -461,7 +461,7 @@ export default class GameSystem extends System {
         );
     }
 
-    public updateResources(player: Client, resources: {[filename: string]: Resource}) {
+    public updateResources(player: Client, resources: Resource[]) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "setResourceList",
