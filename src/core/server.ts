@@ -127,7 +127,15 @@ export default class Server {
         this._gameSystem = new GameSystem(
             this._tickRate,
             path.join(process.cwd(), "__scripted__"),
-            path.join(process.cwd(), "__scripted__", "exposed"),
+            [
+                "export-values.ts",
+                "object-serializer.ts",
+                "proxy-generator.ts",
+                "quadtree-grid.ts",
+                "quadtree.ts",
+                "scripted-server-subsystem.ts",
+                "serialized-object-collection.ts"
+            ],
             this._database.getCollection("game-data")
         );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
@@ -135,6 +143,9 @@ export default class Server {
         this._gameSystem.getPlayerResources = async (user) => await this._resourceSystem.getPlayerResources(user);
         this._gameSystem.loadResource = async (resource, enc) => await this._resourceSystem.loadResource(resource, enc);
         this._gameSystem.loadResourceSync = (resource, enc) => this._resourceSystem.loadResourceSync(resource, enc);
+        this._gameSystem.addResources = async (scriptPaths: string[]) => {
+            await this._resourceSystem.addDefaultCodeResources(scriptPaths);
+        };
 
         this._networkSystem.hookup([
             this._clientManagerNetworker,
@@ -159,6 +170,7 @@ export default class Server {
                         path.join(process.cwd(), "./data/res"),
                         path.join(process.cwd(), "./data-default")
                     );
+                    await this._gameSystem.loadDefaultCodeResources();
                 }
                 catch (err) {
                     console.error(err);

@@ -99,7 +99,7 @@ export default class ResourceSystem extends System {
             type: ResourceType,
             file: ResourceFile,
             id?: string,
-            share: boolean = false): Promise<Resource> {
+            isDefault: boolean = false): Promise<Resource> {
         const playerResourceData = await this.getPlayerResources(user);
         const filename = this._getAvailableFilename(file.name, playerResourceData);
         const resource = new Resource(
@@ -109,10 +109,10 @@ export default class ResourceSystem extends System {
             filename,
             user,
             user,
-            "",
+            isDefault ? "A default resource" : "",
             Date.now(),
             "",
-            share
+            isDefault
         );
         await this._setResource(resource);
         await this._updateResourceListing(user, playerResourceData.concat([resource]));
@@ -123,7 +123,7 @@ export default class ResourceSystem extends System {
             type: ResourceType,
             resourceID: string,
             file: ResourceFile,
-            share?: boolean): Promise<Resource> {
+            isDefault: boolean = false): Promise<Resource> {
         const resource = await this.getResourceByID(resourceID);
         const playerResourceData = await this.getPlayerResources(user);
         if (resource === undefined) {
@@ -138,8 +138,8 @@ export default class ResourceSystem extends System {
         resource.type = type;
         resource.time = Date.now();
 
-        if (share !== undefined) {
-            resource.shared = share;
+        if (isDefault) {
+            resource.shared = true;
         }
 
         if (resource.filename !== file.name) {
@@ -168,7 +168,7 @@ export default class ResourceSystem extends System {
             file: ResourceFile,
             resourceID?: string,
             alwaysCreate: boolean = false,
-            share?: boolean) {
+            isDefault: boolean = false) {
         let resourceType: ResourceType | undefined;
         switch (file.mimetype) {
             case "image/bmp":
@@ -208,11 +208,11 @@ export default class ResourceSystem extends System {
         if (resourceType !== undefined) {
             if (resourceID === undefined || alwaysCreate) {
                 // Upload new resource
-                await this.addResource(username, resourceType, file, resourceID, share);
+                await this.addResource(username, resourceType, file, resourceID, isDefault);
             }
             else {
                 // Update resource (overwrite)
-                await this.updateResource(username, resourceType, resourceID, file, share);
+                await this.updateResource(username, resourceType, resourceID, file, isDefault);
             }
         }
     }
@@ -333,6 +333,28 @@ export default class ResourceSystem extends System {
                     data: file,
                     mimetype: type !== undefined ? type.mime : "text/plain",
                 }
+            );
+        }
+    }
+    public async addDefaultCodeResources(scriptPaths: string[]) {
+        let i = 0;
+        for (const scriptPath of scriptPaths) {
+            const nameWithoutPath = path.basename(scriptPath);
+            const ext = path.extname(nameWithoutPath);
+            const file = await fs.readFile(scriptPath);
+            const type = fileType(file);
+            const id = "R1" + (i++).toString().padStart(23, "0");
+            this._deleteResource(id);
+            this.addOrUpdateFile(
+                "scriptbox",
+                {
+                    name: nameWithoutPath.substr(0, nameWithoutPath.length - ext.length),
+                    data: file,
+                    mimetype: type !== undefined ? type.mime : "text/plain"
+                },
+                id,
+                true,
+                true
             );
         }
     }

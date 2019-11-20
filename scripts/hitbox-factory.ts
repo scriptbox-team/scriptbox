@@ -58,7 +58,6 @@ export default class HitboxFactory {
             };
             knockbackAngle = Math.PI - knockbackAngle;
         }
-        global.log(JSON.stringify(bounds));
         ent.add("position", "position", undefined, pos.x, pos.y);
         const collisionBox = ent.add(
             "collision-box",

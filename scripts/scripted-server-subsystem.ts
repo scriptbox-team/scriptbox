@@ -25,6 +25,7 @@ import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import SoundEmitter from "./sound-emitter";
 import WeakMap from "./weak-map";
+import ResourceGetter from "./resource-getter";
 
 //tslint:disable
 type ClassInterface = {new (...args: any[]): any};
@@ -269,6 +270,16 @@ export function initialize(initTickRate: number) {
     tickRate = initTickRate;
     Entity.externalCreate = createEntity;
     Entity.externalFromID = getEntity;
+    ResourceGetter.externalGet = (username, filename) => {
+        const playerRes = playerResources.get(username);
+        if (playerRes !== undefined) {
+            const res = playerRes.get(filename);
+            if (res !== undefined) {
+                return res.id;
+            }
+        }
+        return undefined;
+    };
     Component.externalFromID = (id: string) => {
         return componentManager.get(id);
     };
@@ -878,7 +889,7 @@ export function setComponentEnableState(componentID: string, state: boolean) {
 export function setResourceList(playerUsername: string, resources: Resource[]) {
     const resourceMap = new Map<string, Resource>();
     for (const resource of resources) {
-        resourceMap.set(resource.id, resource);
+        resourceMap.set(resource.filename, resource);
     }
     playerResources.set(playerUsername, resourceMap);
 }
