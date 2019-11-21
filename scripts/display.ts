@@ -8,6 +8,8 @@ export default class Display extends Component {
     public depth: Aspect<number> = new Aspect<number>(0);
     public textureX = new Aspect<number>(0);
     public textureY = new Aspect<number>(0);
+    public xScale = new Aspect<number>(1);
+    public yScale = new Aspect<number>(1);
     public textureWidth = new Aspect<number>(32);
     public textureHeight = new Aspect<number>(32);
     public onCreate(
