@@ -16,6 +16,7 @@ export default class ServerDisplayPacket extends Packet {
                         elem.texture,
                         elem.textureSubregion,
                         elem.position,
+                        elem.scale,
                         elem.depth,
                         elem.deleted
                     );

@@ -15,6 +15,7 @@ interface Sprite {
     texture: string;
     textureSubregion: {x: number, y: number, width: number, height: number};
     position: {x: number, y: number};
+    scale: {x: number, y: number};
     depth: number;
 }
 
@@ -199,6 +200,7 @@ export default class DisplaySystem extends System {
             sprite.texture,
             sprite.textureSubregion,
             sprite.position,
+            sprite.scale,
             sprite.depth,
             false
         );

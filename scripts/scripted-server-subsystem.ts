@@ -506,11 +506,14 @@ export function update() {
                 const depth = componentExecuteDirect(displayInfo, () => displayComponent.depth.getValue());
                 const xOffset = componentExecuteDirect(displayInfo, () => displayComponent.xOffset.getValue());
                 const yOffset = componentExecuteDirect(displayInfo, () => displayComponent.yOffset.getValue());
+                const xScale = componentExecuteDirect(displayInfo, () => displayComponent.xScale.getValue());
+                const yScale = componentExecuteDirect(displayInfo, () => displayComponent.yScale.getValue());
                 const entPosition = exportValues.entities[id].position;
                 if (typeof texX === "number" && typeof texY === "number"
                     && typeof texWidth === "number" && typeof texHeight === "number"
                     && typeof depth === "number" && typeof xOffset === "number"
                     && typeof yOffset === "number" && typeof texture === "string"
+                    && typeof xScale === "number" && typeof yScale === "number"
                     && typeof id === "string"
                     && entPosition !== undefined) {
                     exportValues.sprites[componentID] = {
@@ -518,7 +521,8 @@ export function update() {
                         texture,
                         depth,
                         textureSubregion: {x: texX, y: texY, width: texWidth, height: texHeight},
-                        position: {x: entPosition.x + xOffset, y: entPosition.y + yOffset}
+                        position: {x: entPosition.x + xOffset, y: entPosition.y + yOffset},
+                        scale: {x: xScale, y: yScale}
                     };
                 }
             }

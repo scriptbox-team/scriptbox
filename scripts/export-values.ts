@@ -39,6 +39,7 @@ export default interface Exports {
         texture: string,
         textureSubregion: {x: number, y: number, width: number, height: number};
         position: {x: number, y: number};
+        scale: {x: number, y: number};
         depth: number;
     }};
     players: {[id: string]: {

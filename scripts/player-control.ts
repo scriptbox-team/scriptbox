@@ -6,6 +6,7 @@ import Control from "control";
 import { EntityProxy } from "entity";
 import Position from "position";
 import Velocity from "velocity";
+import Display from "display";
 
 export default class PlayerControl extends Control {
     public commands: AspectSet<string>
@@ -92,6 +93,11 @@ export default class PlayerControl extends Control {
                 basicAttack.execute();
             });
         }
+
+        this.with<Display>("display", (display) => {
+            display.xScale.base = this.facing.getValue();
+            display.xOffset.base = this.facing.getValue() < 0 ? 32 : 0;
+        });
     }
     public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {
         this.with<Velocity>("velocity", (v) => {
