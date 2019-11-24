@@ -53,6 +53,7 @@ export default class DisplaySystem extends System {
     }
 
     public broadcastDisplay(exportValues: Exports) {
+        const time = Date.now();
         const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
         const updatesToSend = this._dataToDisplayObjects(changes);
         this._broadcastDisplayObjects(updatesToSend);
@@ -125,7 +126,7 @@ export default class DisplaySystem extends System {
                     return new ComponentOption(attribute.name, attribute.name, optionType, attribute.value, true);
                 });
                 return new ComponentInfo(component.id, component.name,
-                    "", component.description, 0, "", component.enabled, attributes);
+                    "", 0, "", component.enabled, attributes);
             });
             const player = exportValues.players![playerID];
             if (player !== undefined) {

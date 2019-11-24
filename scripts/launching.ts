@@ -30,7 +30,7 @@ export default class Launching extends Component {
     public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {
         if (!this.immunePlayers.getValue().has(other.id)
                 && !this._launchCooldownTimers.has(other.id)
-                && !other.get("collision-box").static.getValue()) {
+                && !other.get("collision-box").static) {
             other.add(
                 "launched",
                 "launched" + Date.now(),

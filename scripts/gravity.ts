@@ -22,8 +22,8 @@ export default class Gravity extends Component {
     }
     public onUpdate(delta: number) {
         this.with<Position>("position", (position) => {
-            position.x.base += this._xVelPortion * delta * delta;
-            position.y.base += this._yVelPortion * delta * delta;
+            position.x += this._xVelPortion * delta * delta;
+            position.y += this._yVelPortion * delta * delta;
         });
     }
     public onPostUpdate(delta: number) {
@@ -61,6 +61,9 @@ export default class Gravity extends Component {
                 case "right":
                     normalVec = [-1, 0];
                     break;
+                default:
+                    normalVec = [0, 1];
+                    break;
             }
             const gravDir = this.direction.getValue();
             const dot = normalVec[0] * Math.cos(gravDir) + normalVec[1] * Math.sin(gravDir);
@@ -70,7 +73,11 @@ export default class Gravity extends Component {
         }
     }
     public onUnload() {
-        this._xModifier.delete();
-        this._yModifier.delete();
+        if (this._xModifier !== undefined) {
+            this._xModifier.delete();
+        }
+        if (this._yModifier !== undefined) {
+            this._yModifier.delete();
+        }
     }
 }

@@ -2,33 +2,33 @@ import Aspect from "aspect";
 import Component from "component";
 
 export default class Position extends Component {
-    public x: Aspect<number> = new Aspect(0);
-    public y: Aspect<number> = new Aspect(0);
+    public x = 0;
+    public y = 0;
 
     public onCreate(x?: number, y?: number) {
         if (typeof x === "number") {
-            this.x.base = x;
+            this.x = x;
         }
         if (typeof y === "number") {
-            this.y.base = y;
+            this.y = y;
         }
     }
 
     public move(xOffset: number, yOffset: number) {
-        this.x.base += xOffset;
-        this.y.base += yOffset;
+        this.x += xOffset;
+        this.y += yOffset;
     }
 
     public set(x: number, y: number) {
-        this.x.base = x;
-        this.y.base = y;
+        this.x = x;
+        this.y = y;
     }
 
     public setX(value: number) {
-        this.x.base = value;
+        this.x = value;
     }
 
     public setY(value: number) {
-        this.y.base = value;
+        this.y = value;
     }
 }

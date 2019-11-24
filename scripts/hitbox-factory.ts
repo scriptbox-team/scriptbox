@@ -25,14 +25,14 @@ export default class HitboxFactory {
         const knockback = options.knockback ? options.knockback : 0;
         let knockbackAngle = options.knockbackAngle ? options.knockbackAngle : -0.767945;
         options.origin.with<Position>("position", (position) => {
-            pos = {x: position.x.getValue(), y: position.y.getValue()};
+            pos = {x: position.x, y: position.y};
         });
         options.origin.with<CollisionBox>("collision-box", (box) => {
             originBounds = {
-                x1: box.x1.getValue(),
-                y1: box.y1.getValue(),
-                x2: box.x2.getValue(),
-                y2: box.y2.getValue()
+                x1: box.x1,
+                y1: box.y1,
+                x2: box.x2,
+                y2: box.y2
             };
         });
         let bounds = {
@@ -68,7 +68,7 @@ export default class HitboxFactory {
             bounds.x2,
             bounds.y2
         );
-        collisionBox.dense.base = false;
+        collisionBox.dense = false;
         ent.add("damaging", "damaging", undefined, options.damage, [options.origin.id]);
         ent.add("launching", "launching", undefined, knockback, knockbackAngle, [options.origin.id]);
         ent.add("timed-destroy", "timed-destroy", undefined, options.lifetime);

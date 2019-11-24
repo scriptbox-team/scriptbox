@@ -6,7 +6,7 @@ import Control from "control";
 import Hurtable from "hurtable";
 
 export default class DeathSequence extends ActionInstance {
-    public currentFrame: Aspect<string>;
+    public currentFrame: Aspect<string> = new Aspect<string>("");
     public onCreate(respawnTime: number = 3) {
         super.onCreate();
         let canControlModifier: AspectModifier<boolean> | undefined;

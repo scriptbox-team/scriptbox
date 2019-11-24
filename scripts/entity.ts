@@ -78,14 +78,13 @@ export default class Entity {
         "_create"
     ]);
     public static externalCreate: (creatorID: string | undefined) => string;
-    public static externalFromID: (id: string) => EntityProxy;
+    public static externalFromID: (id: string) => EntityProxy | undefined;
     public static create(prefabID: string, owner?: PlayerProxy) {
-        return this.fromID(this.externalCreate(owner !== undefined ? owner.id : owner));
+        return this.fromID(this.externalCreate(owner !== undefined ? owner.id : owner))!;
     }
     public static fromID(id: string) {
         return this.externalFromID(id);
     }
-    public tags: AspectSet<string>;
     private _delete!: (entityID: string) => void;
     private _add!: (
         entityID: string,
@@ -132,7 +131,6 @@ export default class Entity {
         this._delete = methods.delete;
         this._add = methods.add;
         this._remove = methods.remove;
-        this.tags = new AspectSet<string>([]);
     }
     public delete() {
         this._delete(this._id);

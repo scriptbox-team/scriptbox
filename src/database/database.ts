@@ -30,7 +30,8 @@ export default class Database {
             delete: (id) => this.delete(name, id),
             get: (id) => this.get(name, id),
             getMany: (getBy) => this.getMany(name, getBy),
-            drop: () => this.drop(name)
+            drop: () => this.drop(name),
+            insertMany: (documents) => this.insertMany(name, documents)
         });
     }
 
@@ -44,16 +45,22 @@ export default class Database {
         return await collection.findOne({id});
     }
 
-    private async getMany(collectionName: string, getBy: object) {
+    private async getMany(collectionName: string, getBy: object, sort: object = {}) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
-        return await collection.find(getBy).toArray();
+        return await collection.find(getBy).sort(sort).toArray();
     }
 
     private async insert(collectionName: string, document: object) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.insertOne(document);
+    }
+
+    private async insertMany(collectionName: string, documents: object[]) {
+        const database = this._client.db("scriptbox");
+        const collection = database.collection(collectionName);
+        await collection.insertMany(documents);
     }
 
     private async update(collectionName: string, id: string, document: object) {

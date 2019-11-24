@@ -1,5 +1,3 @@
-import Aspect from "aspect";
-import AspectSet from "aspect-set";
 import ComponentInfo from "component-info";
 import { EntityProxy } from "entity";
 
@@ -8,7 +6,6 @@ export default class Component {
     public static fromID(id: string) {
         return this.externalFromID(id);
     }
-    public tags = new AspectSet<string>([]);
     private _data: ComponentInfo;
     constructor(data: ComponentInfo) {
         this._data = data;

@@ -1,19 +1,21 @@
 interface CollectionFunctions {
     insert: (document: object) => Promise<void>;
+    insertMany: (document: object[]) => Promise<void>;
     update: (id: string, document: object) => Promise<void>;
     delete: (id: string) => Promise<void>;
     get: (id: string) => Promise<any>;
-    getMany: (getBy: object) => Promise<any[]>;
+    getMany: (getBy: object, sort: object) => Promise<any[]>;
     drop: () => Promise<void>;
 }
 
 export default class Collection {
     private _name: string;
     private _insert: (document: object) => Promise<void>;
+    private _insertMany: (document: object[]) => Promise<void>;
     private _update: (id: string, document: object) => Promise<void>;
     private _delete: (id: string) => Promise<void>;
     private _get: (id: string) => Promise<any>;
-    private _getMany: (getBy: object) => Promise<any[]>;
+    private _getMany: (getBy: object, sort: object) => Promise<any[]>;
     private _drop: () => Promise<void>;
     constructor(name: string, funcs: CollectionFunctions) {
         this._name = name;
@@ -24,9 +26,13 @@ export default class Collection {
         this._getMany = funcs.getMany;
         this._drop = funcs.drop;
         this._update = funcs.update;
+        this._insertMany = funcs.insertMany;
     }
     public async insert(document: object) {
         await this._insert(document);
+    }
+    public async insertMany(document: object[]) {
+        await this._insertMany(document);
     }
     public async update(id: string, document: object) {
         await this._update(id, document);
@@ -37,8 +43,8 @@ export default class Collection {
     public async get(id: string) {
         return await this._get(id);
     }
-    public async getMany(getBy: object) {
-        return await this._getMany(getBy);
+    public async getMany(getBy: object, sort: object = {}) {
+        return await this._getMany(getBy, sort);
     }
     public async drop() {
         await this._drop();

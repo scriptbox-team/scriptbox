@@ -1,7 +1,6 @@
 export interface ComponentExportInfo {
     id: string;
     name: string;
-    description: string;
     enabled: boolean;
     attributes: Array<{name: string, kind: string, value: string}>;
     lastFrameTime: number;

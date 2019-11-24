@@ -1,5 +1,6 @@
 import Client from "core/client";
 import Group, { GroupType } from "core/group";
+import SerializedObjectCollection from "core/serialized-map";
 import Collection from "database/collection";
 import fs from "fs-extra";
 import IVM from "isolated-vm";
@@ -16,7 +17,7 @@ export default class GameSystem extends System {
     // Both for compilation and for module resolution
     public static readonly scriptedServerSubsystemDir = path.join(
         process.cwd(),
-        "./__scripted__/",
+        "./scripts/",
         "./scripted-server-subsystem.ts"
     );
     public getResourceByID?: (id: string) => Promise<Resource | undefined>;
@@ -30,19 +31,23 @@ export default class GameSystem extends System {
     private _scriptDir: string;
     private _playerFileDirs: string[];
     private _validPlayerModules: {[name: string]: string};
-    private _mapDBCollection: Collection;
+    private _collections: {[name: string]: Collection};
+    private _generatedChunkCollection: Collection;
     private _mapLoaded: boolean = false;
     constructor(
             tickRate: number,
             systemScriptDirectory: string,
             playerExcludeFiles: string[],
-            mapCollection: Collection) {
+            collections: {[name: string]: Collection},
+            generatedChunkCollection: Collection
+            ) {
         super();
         this._resolveModule = this._resolveModule.bind(this);
         this.updateResources = this.updateResources.bind(this);
         this._messageQueue = [];
         this._scriptDir = systemScriptDirectory;
-        this._mapDBCollection = mapCollection;
+        this._collections = collections;
+        this._generatedChunkCollection = generatedChunkCollection;
         this._cachedPlayerScripts = new Map<string, {time: number, script: Script}>();
 
         const fileDirs = this._getDirsRecursive(this._scriptDir);
@@ -82,9 +87,14 @@ export default class GameSystem extends System {
         }
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", [tickRate]);
     }
-    public update() {
+    public update(mapJustLoaded: boolean) {
         const profile = process.hrtime();
-        this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "update");
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "update",
+            [],
+            mapJustLoaded ? 30000 : 500
+        );
         const result = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
         `
             new IVM.ExternalCopy(global.exportValues).copyInto();
@@ -493,26 +503,59 @@ export default class GameSystem extends System {
     }
 
     public async saveMap() {
+        this.addMessageToQueue([], `Saving map...`);
         await this._scriptCollection.executeAsync(
             GameSystem.scriptedServerSubsystemDir,
-            "serializeGameState"
+            "serializeGameState",
+            [],
+            600000
         );
-        const map = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
+        const saveData = this._scriptCollection.runIVMScript(GameSystem.scriptedServerSubsystemDir,
             `
                 new IVM.ExternalCopy(global.serializedMap).copyInto();
-            `).result.serializedData;
-        await this._mapDBCollection.drop();
-        await this._mapDBCollection.insert({id: "scriptbox-map", map});
+            `).result;
+        const map = saveData.serializedData as SerializedObjectCollection;
+
+        const keys = Object.keys(this._collections);
+        for (const key of keys) {
+            if ((map as any)[key] !== undefined && (map as any)[key].length > 0) {
+                const collection = this._collections[key];
+                await collection.drop();
+                let num = 0;
+                for (const object of (map as any)[key]) {
+                    object._id = num++;
+                }
+                await collection.insertMany((map as any)[key]);
+            }
+            else {
+                if ((map as any)[key] === undefined) {
+                    console.log(`${key} element of map was undefined`);
+                }
+                else {
+                    console.log(`${key} element of map was empty`);
+                }
+            }
+        }
+        await this._generatedChunkCollection.drop();
+        await this._generatedChunkCollection.insert({id: "generated-sections", data: saveData.generatedSections});
         this.addMessageToQueue([], `Map saved at ${new Date().toString()}. (${map.objects.length} objects)`);
         console.log(`Map saved at ${new Date().toString()}. (${map.objects.length} objects)`);
     }
 
     public async loadMap() {
         this._mapLoaded = true;
-        const query = await this._mapDBCollection.get("scriptbox-map");
-        if (query !== undefined && query !== null) {
+        const fullMap = {} as SerializedObjectCollection;
+        console.log(`Retrieving map information...`);
+        const generatedSections = (await this._generatedChunkCollection.get("generated-sections")).data;
+        const keys = Object.keys(this._collections);
+        for (const key of keys) {
+            const collection = this._collections[key];
+            (fullMap as any)[key] = (await collection.getMany({}, {_id: 1}));
+        }
+
+        if (fullMap.objects !== undefined && fullMap.objects !== null && fullMap.objects.length > 0) {
             const skip = new Set<string>(["array"]);
-            const modulesToLoad = query.map.objects.reduce((acc: Set<string>, obj: any) => {
+            const modulesToLoad = fullMap.objects.reduce((acc: Set<string>, obj: any) => {
                 if (!acc.has(obj.module) && !skip.has(obj.module)) {
                     if (obj.module !== undefined) {
                         const tryLoadDir = path.join(this._scriptDir, obj.module);
@@ -565,242 +608,28 @@ export default class GameSystem extends System {
                 }
             }
             console.log(`Modules built.`);
+            console.log(`Loading map data... This may take a while`);
+            await this._scriptCollection.execute(
+                GameSystem.scriptedServerSubsystemDir,
+                "setGeneratedSections",
+                [new IVM.ExternalCopy(generatedSections).copyInto()]
+            );
             await this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "deserializeGameState",
-                [new IVM.ExternalCopy(query.map).copyInto()],
-                18000
+                [new IVM.ExternalCopy(fullMap).copyInto()],
+                1800000
             );
-            this.addMessageToQueue([], `Map loaded. (${query.map.objects.length} objects)`);
-            console.log(`Map loaded. (${query.map.objects.length} objects)`);
+            this.addMessageToQueue([], `Map loaded. (${fullMap.objects.length} objects)`);
+            console.log(`Map loaded. (${fullMap.objects.length} objects)`);
         }
         else {
-            console.log(`No map available to load. Generating default map.`);
-            this._generateMap();
-        }
-    }
-
-    private _generateMap() {
-        // Generate the regular ground tiles
-        for (let i = -25; i < 25; i++) {
-            const entID = this._generateBox(i * 32, 32);
-            this._scriptCollection.execute(
+            console.log(`No map available to load.`);
+            await this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "display",
-                    "display",
-                    undefined,
-                    "R000000000000000000000003",
-                    32,
-                    0,
-                    32,
-                    32
-                ]
-            );
-            for (let j = 2; j < 8; j++) {
-                const entID2 = this._generateBox(i * 32, j * 32);
-                this._scriptCollection.execute(
-                    GameSystem.scriptedServerSubsystemDir,
-                    "createComponent",
-                    [
-                        entID2,
-                        "display",
-                        "display",
-                        undefined,
-                        "R000000000000000000000003",
-                        32,
-                        32,
-                        32,
-                        32
-                    ]
-                );
-            }
-        }
-        // Generate a pool of water in a steel box
-        for (let i = -40; i < -26; i++) {
-            for (let j = 2; j < 8; j++) {
-                if (j === 7 || i === -40 || i === -27) {
-                    const ent = this._generateBox(i * 32, j * 32);
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "display",
-                            "display",
-                            undefined,
-                            "R000000000000000000000003",
-                            96,
-                            0,
-                            32,
-                            32
-                        ]
-                    );
-                }
-                else if (j === 2) {
-                    const ent = this._generateBox(i * 32, j * 32, false);
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "display",
-                            "display",
-                            undefined,
-                            "R000000000000000000000005",
-                            0,
-                            0,
-                            32,
-                            32
-                        ]
-                    );
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "water",
-                            "water",
-                            undefined,
-                        ]
-                    );
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "water-animation",
-                            "water-animation",
-                            undefined,
-                        ]
-                    );
-                }
-                else {
-                    const ent = this._generateBox(i * 32, j * 32, false);
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "display",
-                            "display",
-                            undefined,
-                            "R000000000000000000000005",
-                            256,
-                            0,
-                            32,
-                            32
-                        ]
-                    );
-                    this._scriptCollection.execute(
-                        GameSystem.scriptedServerSubsystemDir,
-                        "createComponent",
-                        [
-                            ent,
-                            "water",
-                            "water",
-                            undefined,
-                        ]
-                    );
-                }
-            }
-        }
-        // Generate a platform of ice
-        for (let i = 26; i < 40; i++) {
-            const entID = this._generateBox(i * 32, 32);
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "display",
-                    "display",
-                    undefined,
-                    "R000000000000000000000003",
-                    128,
-                    0,
-                    32,
-                    32
-                ]
-            );
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "ice",
-                    "ice",
-                    undefined
-                ]
+                "generateInitialMap"
             );
         }
-        // Generate a platform of lava
-        for (let i = 41; i < 50; i++) {
-            const entID = this._generateBox(i * 32, 32);
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "display",
-                    "display",
-                    undefined,
-                    "R000000000000000000000003",
-                    160,
-                    0,
-                    32,
-                    32
-                ]
-            );
-            this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "createComponent",
-                [
-                    entID,
-                    "lava",
-                    "lava",
-                    undefined
-                ]
-            );
-        }
-    }
-
-    private _generateBox(x: number, y: number, solid: boolean = true) {
-        const entID = this._scriptCollection.execute(
-            GameSystem.scriptedServerSubsystemDir,
-            "createEntity",
-        );
-        this._scriptCollection.execute(
-            GameSystem.scriptedServerSubsystemDir,
-            "createComponent",
-            [
-                entID,
-                "position",
-                "position",
-                undefined,
-                x,
-                y
-            ]
-        );
-        this._scriptCollection.execute(
-            GameSystem.scriptedServerSubsystemDir,
-            "createComponent",
-            [
-                entID,
-                "collision-box",
-                "collision-box",
-                undefined,
-                0,
-                0,
-                32,
-                32,
-                true,
-                solid
-            ]
-        );
-        return entID;
     }
 
     private _preresolveModule(modulePath: string, resourcesByFilename: {[filename: string]: Resource}) {

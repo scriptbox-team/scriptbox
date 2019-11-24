@@ -2,7 +2,6 @@ import { PlayerProxy } from "player";
 
 export interface MetaInfoProxy {
     name: string;
-    description: string;
     owner?: PlayerProxy;
     enabled: boolean;
     readonly exists: boolean;

@@ -4,8 +4,8 @@ import { EntityProxy } from "entity";
 import Position from "position";
 
 export default class Velocity extends Component {
-    public x: Aspect<number> = new Aspect(0);
-    public y: Aspect<number> = new Aspect(0);
+    public x: Aspect<number> = new Aspect<number>(0);
+    public y: Aspect<number> = new Aspect<number>(0);
 
     public onCreate(x?: number, y?: number) {
         this.x.base = 0;

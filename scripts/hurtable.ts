@@ -4,10 +4,10 @@ import Component from "component";
 import Position from "position";
 
 export default class Hurtable extends Component {
-    public maxHP: Aspect<number> = new Aspect(100);
-    public currentHP: Aspect<number> = new Aspect(100);
-    public respawnLocationX: Aspect<number> = new Aspect(0);
-    public respawnLocationY: Aspect<number> = new Aspect(0);
+    public maxHP: Aspect<number> = new Aspect<number>(100);
+    public currentHP: Aspect<number> = new Aspect<number>(100);
+    public respawnLocationX: Aspect<number> = new Aspect<number>(0);
+    public respawnLocationY: Aspect<number> = new Aspect<number>(0);
     private _hpLimitModifier?: AspectModifier<number>;
     public onLoad() {
         this.currentHP.addModifier((hp) => {
@@ -35,8 +35,8 @@ export default class Hurtable extends Component {
     public respawn() {
         this.currentHP.base = this.maxHP.getValue();
         this.with<Position>("position", (position) => {
-            position.x.base = this.respawnLocationX.getValue();
-            position.y.base = this.respawnLocationY.getValue();
+            position.x = this.respawnLocationX.getValue();
+            position.y = this.respawnLocationY.getValue();
         });
     }
     public onUnload() {

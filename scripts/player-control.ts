@@ -3,10 +3,10 @@ import AspectModifier from "aspect-modifier";
 import AspectSet from "aspect-set";
 import BasicAttack from "basic-attack";
 import Control from "control";
+import Display from "display";
 import { EntityProxy } from "entity";
 import Position from "position";
 import Velocity from "velocity";
-import Display from "display";
 
 export default class PlayerControl extends Control {
     public commands: AspectSet<string>
@@ -95,8 +95,8 @@ export default class PlayerControl extends Control {
         }
 
         this.with<Display>("display", (display) => {
-            display.xScale.base = this.facing.getValue();
-            display.xOffset.base = this.facing.getValue() < 0 ? 32 : 0;
+            display.xScale = Math.abs(display.xScale) * this.facing.getValue();
+            display.xOffset = this.facing.getValue() < 0 ? 32 : 0;
         });
     }
     public onCollision(other: EntityProxy, dense: boolean, direction?: "up" | "down" | "left" | "right") {

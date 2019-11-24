@@ -1,5 +1,12 @@
 import Quadtree from "./quadtree";
 
+// TODO: Quadtree Grid Updating
+// TODO: Fix the collision resolution so that it won't have problems if it can't find the collision box info by ID
+
+interface IDBoundingBox extends BoundingBox {
+    id: string;
+}
+
 interface BoundingBox {
     x1: number;
     y1: number;
@@ -7,12 +14,12 @@ interface BoundingBox {
     y2: number;
 }
 
-export default class QuadtreeGrid<T extends BoundingBox> {
-    private _cells: {[x: number]: {[y: number]: Quadtree<T>}};
+export default class QuadtreeGrid<T extends IDBoundingBox> {
+    private _cells: Map<number, Map<number, Quadtree<T>>>;
     private _cellSize: number;
     private _treeDepth: number;
     constructor(elems: T[] = [], cellSize: number, treeDepth: number) {
-        this._cells = {};
+        this._cells = new Map<number, Map<number, Quadtree<T>>>();
         this._cellSize = cellSize;
         this._treeDepth = treeDepth;
         for (const e of elems) {
@@ -25,23 +32,45 @@ export default class QuadtreeGrid<T extends BoundingBox> {
         const cellX2 = this._getCellCoordinate(elem.x2);
         const cellY2 = this._getCellCoordinate(elem.y2);
         for (let i = cellX1; i <= cellX2; i++) {
-            if (this._cells[i] === undefined) {
-                this._cells[i] = {};
+            if (!this._cells.has(i)) {
+                this._cells.set(i, new Map<number, Quadtree<T>>());
             }
+            const col = this._cells.get(i)!;
             for (let j = cellY1; j <= cellY2; j++) {
-                if (this._cells[i][j] === undefined) {
-                    this._cells[i][j] = new Quadtree<T>([elem], {
+                if (!col.has(j)) {
+                    col.set(j, new Quadtree<T>([elem], {
                         x1: i * this._cellSize,
                         y1: j * this._cellSize,
                         x2: (i + 1) * this._cellSize,
                         y2: (i + 1) * this._cellSize
-                    }, this._treeDepth);
+                    }, this._treeDepth));
                 }
                 else {
-                    this._cells[i][j].add(elem);
+                    col.get(j)!.add(elem);
                 }
             }
         }
+    }
+    public remove(elem: T) {
+        const cellX1 = this._getCellCoordinate(elem.x1);
+        const cellY1 = this._getCellCoordinate(elem.y1);
+        const cellX2 = this._getCellCoordinate(elem.x2);
+        const cellY2 = this._getCellCoordinate(elem.y2);
+        for (let i = cellX1; i <= cellX2; i++) {
+            if (!this._cells.has(i)) {
+                this._cells.set(i, new Map<number, Quadtree<T>>());
+            }
+            const col = this._cells.get(i)!;
+            for (let j = cellY1; j <= cellY2; j++) {
+                if (col.has(j)) {
+                    col.get(j)!.remove(elem);
+                }
+            }
+        }
+    }
+    public update(elem: T) {
+        this.remove(elem);
+        this.add(elem);
     }
     public test<R>(box: BoundingBox, testFunc: (box2: T) => R | undefined) {
         const cellX1 = this._getCellCoordinate(box.x1);
@@ -51,10 +80,11 @@ export default class QuadtreeGrid<T extends BoundingBox> {
         const checkedSet = new Set<T>();
         let collisions = [] as Array<{box: T, result: R}>;
         for (let i = cellX1; i <= cellX2; i++) {
-            if (this._cells[i] !== undefined) {
+            if (this._cells.has(i)) {
+                const col = this._cells.get(i)!;
                 for (let j = cellY1; j <= cellY2; j++) {
-                    if (this._cells[i][j] !== undefined) {
-                        const cell = this._cells[i][j];
+                    if (col.get(j) !== undefined) {
+                        const cell = col.get(j)!;
                         collisions = collisions.concat(cell.test(box, (box2: T) => {
                             if (!checkedSet.has(box2)) {
                                 checkedSet.add(box2);
@@ -76,8 +106,8 @@ export default class QuadtreeGrid<T extends BoundingBox> {
         const cellY2 = this._getCellCoordinate(elem.y2);
         for (let i = cellX1; i <= cellX2; i++) {
             for (let j = cellY1; j <= cellY2; j++) {
-                if (this._cells[i] !== undefined && this._cells[i][j] !== undefined) {
-                    cells.push(this._cells[i][j]);
+                if (this._cells.get(i) !== undefined && this._cells.get(i)!.get(j) !== undefined) {
+                    cells.push(this._cells.get(i)!.get(j)!);
                 }
             }
         }

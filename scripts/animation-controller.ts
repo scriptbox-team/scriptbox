@@ -27,10 +27,10 @@ export default abstract class AnimationController extends Component {
             this.with<Display>("display", (display) => {
                 const frame = this.frames[animation.currentFrame.getValue()];
                 if (frame !== undefined) {
-                    display.textureX.base = frame.x;
-                    display.textureY.base = frame.y;
-                    display.textureWidth.base = frame.width;
-                    display.textureHeight.base = frame.height;
+                    display.textureX = frame.x;
+                    display.textureY = frame.y;
+                    display.textureWidth = frame.width;
+                    display.textureHeight = frame.height;
                 }
             });
         }

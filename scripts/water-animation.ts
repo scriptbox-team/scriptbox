@@ -22,10 +22,10 @@ export default abstract class WaterAnimation extends Component {
     public onUpdate() {
         const frame = this._frames[Math.floor(Date.now() / 50) % 8];
         this.with<Display>("display", (display) => {
-            display.textureX.base = frame.x;
-            display.textureY.base = frame.y;
-            display.textureWidth.base = frame.width;
-            display.textureHeight.base = frame.height;
+            display.textureX = frame.x;
+            display.textureY = frame.y;
+            display.textureWidth = frame.width;
+            display.textureHeight = frame.height;
         });
     }
 }

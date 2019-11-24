@@ -47,7 +47,11 @@ export default class DefaultControl extends Control {
         }
     }
     public onUnload() {
-        this._xModifier.delete();
-        this._yModifier.delete();
+        if (this._xModifier !== undefined) {
+            this._xModifier.delete();
+        }
+        if (this._yModifier !== undefined) {
+            this._yModifier.delete();
+        }
     }
 }

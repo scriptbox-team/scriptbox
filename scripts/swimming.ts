@@ -6,7 +6,7 @@ import Gravity from "gravity";
 import PlayerControl from "player-control";
 
 export default class Swimming extends Component {
-    public density: Aspect<number> = new Aspect(2);
+    public density: Aspect<number> = new Aspect<number>(2);
     private _continue: boolean = true;
     private _frictionModifier?: AspectModifier<number>;
     private _forceModifier?: AspectModifier<number>;
@@ -14,6 +14,7 @@ export default class Swimming extends Component {
     private _jumpImpulseModifier?: AspectModifier<number>;
     private _dashImpulseModifier?: AspectModifier<number>;
     private _gravityModifier?: AspectModifier<number>;
+    private _fallSpeedModifier?: AspectModifier<number>;
     public onLoad() {
         const density = this.density.getValue();
         this.with<PlayerControl>("control", (pc) => {
@@ -25,6 +26,7 @@ export default class Swimming extends Component {
         });
         this.with<Gravity>("gravity", (grav) => {
             this._gravityModifier = grav.strength.addModifier((n) => n / density ** 2);
+            this._fallSpeedModifier = grav.cap.addModifier((n) => n / density);
         });
     }
     public onUnload() {
@@ -45,6 +47,9 @@ export default class Swimming extends Component {
         }
         if (this._gravityModifier) {
             this._gravityModifier.delete();
+        }
+        if (this._fallSpeedModifier) {
+            this._fallSpeedModifier.delete();
         }
     }
     public onPostUpdate() {

@@ -45,21 +45,22 @@ export default class BasicAttack extends Attack {
         const ai = this.entity.add("action-instance", "attack" + Date.now(), this.owner);
         for (const frame of this.frameData) {
             ai.do(() => {
-                if (frame.attackData) {
+                const attackData = frame.attackData;
+                if (attackData !== undefined) {
                     let facing = 1;
                     this.with<PlayerControl>("control", (playerControl) => {
                         facing = playerControl.facing.getValue();
                     });
                     this.with<SoundEmitter>("sound-emitter", (soundEmitter) => {
-                        soundEmitter.play(frame.attackData.sound, 1);
+                        soundEmitter.play(attackData.sound, 1);
                     });
                     HitboxFactory.createHitbox({
                         origin: this.entity,
-                        damage: frame.attackData.damage,
-                        bounds: frame.attackData.hitbox,
+                        damage: attackData.damage,
+                        bounds: attackData.hitbox,
                         lifetime: frame.duration,
-                        knockback: frame.attackData.knockback,
-                        knockbackAngle: frame.attackData.knockbackAngle,
+                        knockback: attackData.knockback,
+                        knockbackAngle: attackData.knockbackAngle,
                         facing
                     });
                 }

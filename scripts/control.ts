@@ -6,7 +6,7 @@ export default abstract class Control extends Component {
     public abstract commands: AspectSet<string>;
     public inputStates: {[key: string]: boolean} = {};
     public pastInputStates: {[key: string]: boolean} = {};
-    public canControl: Aspect<boolean> = new Aspect(true);
+    public canControl: Aspect<boolean> = new Aspect<boolean>(true);
     public onUpdate(delta: number) {
         super.onUpdate(delta);
         // If we can't control it, all inputs should be dropped

@@ -78,9 +78,9 @@ export default class ScriptCollection {
         const script = this.getScript(scriptPath);
         return script.execute(name, params, timeout);
     }
-    public async executeAsync(scriptPath: string, name: string, ...params: any) {
+    public async executeAsync(scriptPath: string, name: string, params: any[] = [], timeout: number = 500) {
         const script = this.getScript(scriptPath);
-        return await script.executeAsync(name, ...params);
+        return await script.executeAsync(name, params, timeout);
     }
     public executeReturnRef(scriptPath: string, name: string, ...params: any) {
         const funcRef = this.getScript(scriptPath).getReference(name);
