@@ -51,6 +51,7 @@ interface IServerConstructorOptions {
      * @memberof IServerConstructorOptions
      */
     tickRate?: number;
+    useLoginServer?: boolean;
 }
 
 /**
@@ -80,6 +81,7 @@ export default class Server {
     private _database: Database;
     private _nextSave: number = 0;
     private _saveTime: number = 120000;
+    private _useLoginServer: boolean = true;
 
     private _loop: GameLoop;
     private _mapJustLoaded = false;
@@ -111,6 +113,10 @@ export default class Server {
         if (options.tickRate !== undefined) {
             this._tickRate = options.tickRate;
         }
+        if (options.useLoginServer !== undefined) {
+            this._useLoginServer = options.useLoginServer;
+        }
+
         this._clientManager = new Manager<Client>(this._createPlayer, this._deletePlayer);
         this._clientManagerNetworker = new ClientManagerNetworker(this._clientManager, this._idGenerator);
         this._usernameToPlayer = new Map<string, Client>();
