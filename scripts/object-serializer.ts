@@ -28,9 +28,9 @@ export default class ObjectSerializer {
             getComponentID: (object: any) => string | undefined
         ) {
         const collect = {
-            objects: [],
-            references: []
-        };
+            objects: [] as SerializedObject[],
+            references: [] as SerializedReference[]
+        } as T;
         const objectQueue = [...objects];
         const refSet = new WeakMap<object, number>(objectQueue.map((obj, index) => [obj, index]));
         // tslint:disable-next-line: prefer-for-of
@@ -112,7 +112,7 @@ export default class ObjectSerializer {
             handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
             getComponentID: (object: any) => string | undefined
         ) {
-        const serializedObject = {} as object;
+        const serializedObject = {} as any;
         const props = Object.keys(obj);
         let module: undefined | string;
         const prototype = Object.getPrototypeOf(obj);
@@ -138,7 +138,7 @@ export default class ObjectSerializer {
                         objectQueue.push(obj[prop]);
                         refSet.set(obj[prop], id);
                     }
-                    collect.references.push({objID: refSet.get(obj[prop]), parentID: loc, name: prop});
+                    collect.references.push({objID: refSet.get(obj[prop])!, parentID: loc, name: prop});
                     break;
                 }
                 case "function": {
@@ -191,7 +191,7 @@ export default class ObjectSerializer {
         handleSkip: (collect: T, parentID: number, obj: any, name: string) => void,
         getComponentID: (object: any) => string | undefined
     ) {
-        const serializedObject = {} as object;
+        const serializedObject = {} as any;
         const iterator = obj.values();
         let module: undefined | string;
         const prototype = Object.getPrototypeOf(obj);
@@ -217,7 +217,7 @@ export default class ObjectSerializer {
                         objectQueue.push(elem);
                         refSet.set(elem, id);
                     }
-                    collect.references.push({objID: refSet.get(elem), parentID: loc, name: "" + i});
+                    collect.references.push({objID: refSet.get(elem)!, parentID: loc, name: "" + i});
                     break;
                 }
                 case "function": {
@@ -242,7 +242,7 @@ export default class ObjectSerializer {
         const custom = customClassHandler(id, data);
         if (custom === undefined) {
             if (data.module !== undefined && classList.has(data.module)) {
-                revivedObj = new (classList.get(data.module))();
+                revivedObj = new (classList.get(data.module)!)();
             }
             return Object.assign(revivedObj, data.object);
         }

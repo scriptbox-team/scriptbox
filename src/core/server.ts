@@ -78,10 +78,11 @@ export default class Server {
     private _gameSystemNetworker: GameSystemNetworker;
     private _idGenerator: IDGenerator;
     private _database: Database;
-    private _nextSave: number;
+    private _nextSave: number = 0;
     private _saveTime: number = 120000;
 
     private _loop: GameLoop;
+    private _mapJustLoaded = false;
     /**
      * Creates the instance of the game server.
      * This does not start the server, but can be used to configure options before starting.
@@ -94,7 +95,15 @@ export default class Server {
         this._deletePlayer = this._deletePlayer.bind(this);
         this._getResourceServerIP = this._getResourceServerIP.bind(this);
 
-        this._database = new Database("mongodb://localhost:27017", ["resources", "game-data"]);
+        this._database = new Database("mongodb://localhost:27017", [
+            "resources",
+            "game-objects",
+            "game-references",
+            "game-entity-references",
+            "game-player-references",
+            "game-component-info-references",
+            "game-generated-chunks"
+        ]);
 
         this._idGenerator = new IDGenerator(Math.random());
 
@@ -126,7 +135,7 @@ export default class Server {
         this._resourceSystemNetworker = new ResourceSystemNetworker(this._resourceSystem);
         this._gameSystem = new GameSystem(
             this._tickRate,
-            path.join(process.cwd(), "__scripted__"),
+            path.join(process.cwd(), "scripts"),
             [
                 "export-values.ts",
                 "object-serializer.ts",
@@ -136,7 +145,14 @@ export default class Server {
                 "scripted-server-subsystem.ts",
                 "serialized-object-collection.ts"
             ],
-            this._database.getCollection("game-data")
+            {
+                objects: this._database.getCollection("game-objects"),
+                references: this._database.getCollection("game-references"),
+                entityReferences: this._database.getCollection("game-entity-references"),
+                playerReferences: this._database.getCollection("game-player-references"),
+                componentInfoReferences: this._database.getCollection("game-component-info-references")
+            },
+            this._database.getCollection("game-generated-chunks")
         );
         this._gameSystemNetworker = new GameSystemNetworker(this._gameSystem);
         this._gameSystem.getResourceByID = async (id) => await this._resourceSystem.getResourceByID(id);
@@ -178,6 +194,7 @@ export default class Server {
                 }
                 try {
                     await this._gameSystem.loadMap();
+                    this._mapJustLoaded = true;
                 }
                 catch (err) {
                     console.error(err);
@@ -185,8 +202,6 @@ export default class Server {
                 }
                 this.start();
             });
-
-        this._nextSave = Date.now() + this._saveTime;
     }
 
     /**
@@ -195,6 +210,7 @@ export default class Server {
      * @memberof Server
      */
     public start() {
+        this._nextSave = Date.now() + this._saveTime;
         this._networkSystem.host();
         this._resourceSystem.host();
         this._loop.start();
@@ -209,7 +225,7 @@ export default class Server {
      */
     private _tick() {
         try {
-            const exportValues = this._gameSystem.update();
+            const exportValues = this._gameSystem.update(this._mapJustLoaded);
             _.each(exportValues.players, (playerDataObj, id) => {
                 playerDataObj.client = this._clientManager.get(id);
             });
@@ -245,6 +261,8 @@ export default class Server {
                 this._gameSystem.saveMap();
                 this._nextSave += this._saveTime;
             }
+
+            this._mapJustLoaded = false;
 
         }
         catch (error) {

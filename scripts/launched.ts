@@ -5,11 +5,11 @@ import { EntityProxy } from "entity";
 import Velocity from "velocity";
 
 export default class Launched extends Component {
-    public launchDeterioration: Aspect<number> = new Aspect(550);
+    public launchDeterioration: Aspect<number> = new Aspect<number>(550);
     private _launchXVel: number = 0;
     private _launchYVel: number = 0;
-    private _velXModifier: AspectModifier<number>;
-    private _velYModifier: AspectModifier<number>;
+    private _velXModifier?: AspectModifier<number>;
+    private _velYModifier?: AspectModifier<number>;
     public onCreate(launchPower: number = 0, launchDirection: number = 0) {
         this._launchXVel = Math.cos(launchDirection) * launchPower;
         this._launchYVel = Math.sin(launchDirection) * launchPower;

@@ -5,15 +5,15 @@ interface SubEventOptions {
 }
 
 export default class SubEvent {
-    private _update: (time: number) => number;
-    private _start: () => void;
-    private _end: () => void;
+    private _update?: (time: number) => number;
+    private _start?: () => void;
+    private _end?: () => void;
     private _next?: SubEvent;
     constructor(options?: SubEventOptions) {
         if (options !== undefined) {
             for (const option of ["start", "update", "end"]) {
-                if (options[option] !== undefined) {
-                    (this as any)["_" + option] = options[option];
+                if ((options as any)[option] !== undefined) {
+                    (this as any)["_" + option] = (options as any)[option];
                 }
             }
         }
@@ -23,7 +23,7 @@ export default class SubEvent {
             this._start();
         }
     }
-    public proceed(delta: number) {
+    public proceed(delta: number): SubEvent | undefined {
         const res = this._update !== undefined ? this._update(delta) : 0;
         return this._nextEventIfNegative(res);
     }
@@ -61,7 +61,7 @@ export default class SubEvent {
     public setNext(event: SubEvent) {
         return this._next = event;
     }
-    private _nextEventIfNegative(result: number) {
+    private _nextEventIfNegative(result: number): SubEvent | undefined {
         const ceilPrecision = 100000;
         const ceilResult = this._ceilTo(result, ceilPrecision);
         if (ceilResult <= 0) {

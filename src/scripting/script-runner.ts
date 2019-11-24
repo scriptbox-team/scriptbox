@@ -19,7 +19,7 @@ export default class ScriptRunner {
      * @memberof ScriptRunner
      */
     constructor() {
-        this._isolate = new IVM.Isolate({inspector: true, memoryLimit: 2000});
+        this._isolate = new IVM.Isolate({inspector: true, memoryLimit: 4096});
     }
 
     /**
@@ -57,7 +57,7 @@ export default class ScriptRunner {
         else {
             await module.instantiate(context, async (modulePath) => {
                 return this._defaultModuleInstantiation(
-                    path.join(process.cwd(), "__scripted__", "code.ts"),
+                    path.join(process.cwd(), "scripts", "code.ts"),
                     modulePath,
                     moduleList
                 );

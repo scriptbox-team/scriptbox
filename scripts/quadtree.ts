@@ -1,3 +1,7 @@
+interface IDBoundingBox extends BoundingBox {
+    id: string;
+}
+
 interface BoundingBox {
     x1: number;
     y1: number;
@@ -6,7 +10,7 @@ interface BoundingBox {
 }
 
 interface TreeNode<T extends BoundingBox> {
-    data: T[];
+    data: {[id: string]: T};
     bounds: BoundingBox;
     branches: {
         topLeft?: TreeNode<T>;
@@ -16,11 +20,13 @@ interface TreeNode<T extends BoundingBox> {
     };
 }
 
-export default class Quadtree<T extends BoundingBox> {
+export default class Quadtree<T extends IDBoundingBox> {
     private _root: TreeNode<T>;
     private _depth: number;
+    private _inverseMap: {[id: string]: TreeNode<T>};
 
     constructor(elems: T[] = [], bounds: BoundingBox, depth: number) {
+        this._inverseMap = {};
         this._root = this._makeEmptyNode(bounds);
         this._depth = depth;
         for (const e of elems) {
@@ -32,20 +38,30 @@ export default class Quadtree<T extends BoundingBox> {
         this._addTo(this._root, elem, 1);
     }
 
+    public remove(elem: T) {
+        const node = this._inverseMap[elem.id];
+        if (node !== undefined) {
+            delete node.data[elem.id];
+            delete this._inverseMap[elem.id];
+        }
+    }
+
     public test<R>(box: BoundingBox, testFunc: (box2: T) => R | undefined) {
         return this._testNode(this._root, box, testFunc);
     }
 
     private _addTo(node: TreeNode<T>, elem: T, currentDepth: number) {
         if (currentDepth >= this._depth) {
-            node.data.push(elem);
+            node.data[elem.id] = elem;
+            this._inverseMap[elem.id] = node;
         }
         else {
             const {left, above, right, below, midX, midY} = this._calcQuadrant(node, elem);
             if (!left && !right || !below && !above) {
                 // This bounding box is on a border
                 // Put it in the parent
-                node.data.push(elem);
+                node.data[elem.id] = elem;
+                this._inverseMap[elem.id] = node;
                 return;
             }
             if (left && above) {
@@ -107,7 +123,7 @@ export default class Quadtree<T extends BoundingBox> {
             }, [] as Array<{box: T, result: R}>);
         }
         // Otherwise take everything from the current node and go to the next branch down
-        const currentNodeChecks = node.data.reduce((acc, box2) => {
+        const currentNodeChecks = Object.keys(node.data).map((k) => node.data[k]).reduce((acc, box2) => {
             const res = testFunc(box2);
             if (res !== undefined) {
                 acc.push({box: box2, result: res});
@@ -137,7 +153,7 @@ export default class Quadtree<T extends BoundingBox> {
             ...this._getChildNodeContents(node.branches.topRight),
             ...this._getChildNodeContents(node.branches.bottomLeft),
             ...this._getChildNodeContents(node.branches.bottomRight),
-            ...node.data
+            ...Object.keys(node.data).map((k) => node.data[k])
         ];
     }
 
@@ -150,12 +166,12 @@ export default class Quadtree<T extends BoundingBox> {
         if (parent.branches[branch] === undefined) {
             parent.branches[branch] = this._makeEmptyNode(bounds);
         }
-        this._addTo(parent.branches[branch], elem, currentDepth + 1);
+        this._addTo(parent.branches[branch]!, elem, currentDepth + 1);
     }
 
     private _makeEmptyNode(bounds: BoundingBox) {
         return {
-            data: [],
+            data: {},
             bounds,
             branches: {}
         };

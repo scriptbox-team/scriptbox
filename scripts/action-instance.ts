@@ -3,11 +3,11 @@ import Component from "component";
 import SubEvent from "sub-event";
 
 export default class ActionInstance extends Component {
-    public loopAtEnd: Aspect<boolean>;
-    private _startSubEvent: SubEvent;
-    private _subEvent: SubEvent;
-    private _endSubEvent: SubEvent;
-    private _always?: Array<() => void> = [];
+    public loopAtEnd: Aspect<boolean> = new Aspect<boolean>(false);
+    private _startSubEvent?: SubEvent;
+    private _subEvent?: SubEvent;
+    private _endSubEvent?: SubEvent;
+    private _always: Array<() => void> = [];
     public onCreate() {
         this.loopAtEnd = new Aspect<boolean>(false);
         this._startSubEvent = new SubEvent({});
@@ -29,26 +29,36 @@ export default class ActionInstance extends Component {
         }
     }
     public wait(time: number) {
-        this._endSubEvent = this._endSubEvent.wait(time);
+        if (this._endSubEvent) {
+            this._endSubEvent = this._endSubEvent.wait(time);
+        }
         return this;
     }
     public do(func: () => void) {
-        this._endSubEvent = this._endSubEvent.do(func);
+        if (this._endSubEvent) {
+            this._endSubEvent = this._endSubEvent.do(func);
+        }
         return this;
     }
     public repeat(repeat: (delta: number) => boolean) {
-        this._endSubEvent = this._endSubEvent.repeat(repeat);
+        if (this._endSubEvent) {
+            this._endSubEvent = this._endSubEvent.repeat(repeat);
+        }
         return this;
     }
     public hold() {
-        this._endSubEvent = this._endSubEvent.hold();
+        if (this._endSubEvent) {
+            this._endSubEvent = this._endSubEvent.hold();
+        }
         return this;
     }
     public always(func: () => void) {
         this._always.push(func);
     }
     public holdRepeat(repeat: (delta: number) => boolean) {
-        this._endSubEvent = this._endSubEvent.holdRepeat(repeat);
+        if (this._endSubEvent) {
+            this._endSubEvent = this._endSubEvent.holdRepeat(repeat);
+        }
         return this;
     }
     public cancel() {

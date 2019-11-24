@@ -1,6 +1,7 @@
 import Aspect from "aspect";
 import Entity, { EntityProxy } from "entity";
 import PlayerSoul from "player-soul";
+import Position from "position";
 
 export interface PlayerProxy {
     readonly id: string;
@@ -37,7 +38,7 @@ export default class Player {
         "trueEntityFromEntity",
         "proxy"
     ]);
-    public trueEntityFromEntity!: (entity: EntityProxy) => Entity;
+    public trueEntityFromEntity!: (entity: EntityProxy) => Entity | undefined;
     public camera: {
         x: Aspect<number>,
         y: Aspect<number>,
@@ -111,13 +112,15 @@ export default class Player {
         this._removeControl();
     }
     public control(entity: EntityProxy) {
-        if (entity.controller === undefined) {
+        if (entity.controller === undefined || !entity.controller.exists) {
             this._removeControl();
             this._controllingEntity = entity;
             const trueEntity = this.trueEntityFromEntity(entity);
-            trueEntity.controller = this._proxy;
-            this._locked = false;
-            return true;
+            if (trueEntity !== undefined) {
+                trueEntity.controller = this._proxy;
+                this._locked = false;
+                return true;
+            }
         }
         return false;
     }
@@ -132,22 +135,24 @@ export default class Player {
         }
     }
     private _removeControl() {
-        if (this._controllingEntity !== undefined) {
+        if (this._controllingEntity !== undefined && this._controllingEntity.exists) {
             const trueControllingEntity = this.trueEntityFromEntity(this._controllingEntity);
-            trueControllingEntity.with("position", (position) => {
-                this._soulData.setPosition(position.x.getValue(), position.y.getValue());
-            });
-            if (typeof this._soulData.position.x !== "number" || typeof this._soulData.position.y !== "number") {
-                this._soulData.position = {x: 0, y: 0};
+            if (trueControllingEntity !== undefined) {
+                this._controllingEntity.with<Position>("position", (position) => {
+                    this._soulData.setPosition(position.x, position.y);
+                });
+                if (typeof this._soulData.position.x !== "number" || typeof this._soulData.position.y !== "number") {
+                    this._soulData.position = {x: 0, y: 0};
+                }
+                this._soulData.setVelocity(-10, -10);
+                this.camera = {
+                    x: new Aspect<number>(this._soulData.position.x),
+                    y: new Aspect<number>(this._soulData.position.y),
+                    scale: new Aspect<number>(2)
+                };
+                this._soulData.facing = 1;
+                trueControllingEntity.controller = undefined;
             }
-            this._soulData.setVelocity(-10, -10);
-            this.camera = {
-                x: new Aspect<number>(this._soulData.position.x),
-                y: new Aspect<number>(this._soulData.position.y),
-                scale: new Aspect<number>(2)
-            };
-            this._soulData.facing = 1;
-            trueControllingEntity.controller = undefined;
         }
         this._locked = true;
         this._controllingEntity = undefined;

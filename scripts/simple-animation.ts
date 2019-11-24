@@ -7,10 +7,9 @@ interface FrameData {
 }
 
 export default class SimpleAnimation extends ActionInstance {
-    public currentFrame: Aspect<string>;
+    public currentFrame: Aspect<string> = new Aspect<string>("");
     public onCreate(frames: FrameData[] = []) {
         super.onCreate();
-        this.currentFrame = new Aspect<string>("");
         for (const frameData of frames) {
             this
                 .do(() => {

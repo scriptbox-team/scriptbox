@@ -16,7 +16,6 @@ export default class ServerEntityInspectionListingPacket extends Packet {
                         elem.id,
                         elem.name,
                         elem.creator,
-                        elem.description,
                         elem.time,
                         elem.icon,
                         elem.enabled,

@@ -5,8 +5,8 @@ import { EntityProxy } from "entity";
 import Hurtable from "hurtable";
 
 export default class Burning extends Component {
-    public damage: Aspect<number> = new Aspect(20);
-    public tickTime: Aspect<number> = new Aspect(1);
+    public damage: Aspect<number> = new Aspect<number>(20);
+    public tickTime: Aspect<number> = new Aspect<number>(1);
     private _timer: number = 0;
     private _continue: boolean = true;
     public onCreate() {
