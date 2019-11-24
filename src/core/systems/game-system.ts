@@ -546,7 +546,7 @@ export default class GameSystem extends System {
         this._mapLoaded = true;
         const fullMap = {} as SerializedObjectCollection;
         console.log(`Retrieving map information...`);
-        const generatedSections = (await this._generatedChunkCollection.get("generated-sections")).data;
+        const generatedSections = await this._generatedChunkCollection.get("generated-sections");
         const keys = Object.keys(this._collections);
         for (const key of keys) {
             const collection = this._collections[key];
@@ -609,11 +609,13 @@ export default class GameSystem extends System {
             }
             console.log(`Modules built.`);
             console.log(`Loading map data... This may take a while`);
-            await this._scriptCollection.execute(
-                GameSystem.scriptedServerSubsystemDir,
-                "setGeneratedSections",
-                [new IVM.ExternalCopy(generatedSections).copyInto()]
-            );
+            if (generatedSections !== undefined && generatedSections !== null) {
+                await this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "setGeneratedSections",
+                    [new IVM.ExternalCopy(generatedSections.data).copyInto()]
+                );
+            }
             await this._scriptCollection.execute(
                 GameSystem.scriptedServerSubsystemDir,
                 "deserializeGameState",
