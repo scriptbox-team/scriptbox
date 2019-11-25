@@ -116,7 +116,11 @@ export default class Server {
         this._usernameToPlayer = new Map<string, Client>();
 
         this._networkSystem = new NetworkSystem(
-            {maxPlayers: options.maxPlayers, port: options.port, resourceServerIPGetter: this._getResourceServerIP},
+            {
+                maxPlayers: options.maxPlayers,
+                port: options.port,
+                loginValidationURL: "http://[::1]:9000/validate",
+                resourceServerIPGetter: this._getResourceServerIP},
             this._clientManager
         );
         this._messageSystem = new MessageSystem();
