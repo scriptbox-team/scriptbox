@@ -49,7 +49,7 @@ export default class NetHost {
     private _nextID: number;
     private _clients: Map<number, NetClient>;
     private _validEvents: Set<string | ClientEventType>;
-    private _timeoutMap: Map<string, ReturnType<typeof setTimeout>>;
+    private _timeoutMap: WeakMap<WebSocket, ReturnType<typeof setTimeout>>;
 
     /**
      * Creates an instance of NetHost.
@@ -96,7 +96,7 @@ export default class NetHost {
             this._hookHandshakeCallback(socket, request);
             const packet = new ServerConnectionInfoRequestPacket();
             socket.send(new ServerNetEvent(ServerEventType.ConnectionInfoRequest, packet.serialize()).serialize());
-            this._timeoutMap.set(socket.url, setTimeout(() => {
+            this._timeoutMap.set(socket, setTimeout(() => {
                 console.log("Pre-client connection from " + socket.url + " timed out.");
                 // The client did not reply quickly enough with connection info
                 socket.close();
@@ -131,7 +131,7 @@ export default class NetHost {
                 const packetData = ClientNetEvent.deserialize(data);
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
-                        clearTimeout(this._timeoutMap.get(socket.url)!);
+                        clearTimeout(this._timeoutMap.get(socket)!);
                         this._addClient(
                             socket,
                             request.connection.remoteAddress,

@@ -84,6 +84,8 @@ const playerResources = new Map<string, Map<string, Resource>>();
 
 let executingUser: PlayerProxy | undefined;
 
+let mapGen: boolean = true;
+
 const classList = new Map<string, ClassInterface>();
 const classPrototypeLookup = new WeakMap<ClassInterface, string>();
 let tickRate!: number;
@@ -348,7 +350,11 @@ export function initialize(initTickRate: number) {
 }
 
 export function generateInitialMap() {
-    handleMapGen([{x: 0, y: 0}]);
+    handleMapGen([{x: 0, y: 0}, {x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: -1}]);
+}
+
+export function setMapGen(value: boolean) {
+    mapGen = value;
 }
 
 const getRelevantEntities = (playerPositions: Array<{x: number, y: number}>) => {
@@ -461,18 +467,20 @@ export function update() {
 }
 
 const handleMapGen = (positions: Array<{x: number, y: number}>) => {
-    const mapGenSize = 4096;
-    for (const position of positions) {
-        const x = Math.floor(position.x / mapGenSize);
-        const y = Math.floor(position.y / mapGenSize);
-        for (let i = x - 1; i < x + 2; i++) {
-            for (let j = y - 1; j < y + 2; j++) {
-                if (generatedSections[i] === undefined) {
-                    generatedSections[i] = {};
-                }
-                if (!generatedSections[i][j]) {
-                    generatedSections[i][j] = true;
-                    generateIslands(i, j, mapGenSize);
+    if (mapGen) {
+        const mapGenSize = 4096;
+        for (const position of positions) {
+            const x = Math.floor(position.x / mapGenSize);
+            const y = Math.floor(position.y / mapGenSize);
+            for (let i = x - 1; i < x + 2; i++) {
+                for (let j = y - 1; j < y + 2; j++) {
+                    if (generatedSections[i] === undefined) {
+                        generatedSections[i] = {};
+                    }
+                    if (!generatedSections[i][j]) {
+                        generatedSections[i][j] = true;
+                        generateIslands(i, j, mapGenSize);
+                    }
                 }
             }
         }

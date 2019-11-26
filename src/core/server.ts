@@ -52,6 +52,7 @@ interface IServerConstructorOptions {
      */
     tickRate?: number;
     useLoginServer?: boolean;
+    useMapGen?: boolean;
 }
 
 /**
@@ -80,8 +81,9 @@ export default class Server {
     private _idGenerator: IDGenerator;
     private _database: Database;
     private _nextSave: number = 0;
-    private _saveTime: number = 120000;
+    private _saveTime: number = 1200000;
     private _useLoginServer: boolean = true;
+    private _useMapGen: boolean = true;
 
     private _loop: GameLoop;
     private _mapJustLoaded = false;
@@ -115,6 +117,9 @@ export default class Server {
         }
         if (options.useLoginServer !== undefined) {
             this._useLoginServer = options.useLoginServer;
+        }
+        if (options.useMapGen !== undefined) {
+            this._useMapGen = options.useMapGen;
         }
 
         this._clientManager = new Manager<Client>(this._createPlayer, this._deletePlayer);
@@ -206,6 +211,7 @@ export default class Server {
                     console.error(err);
                     console.error("Map loading failed.");
                 }
+                this._gameSystem.setMapGenState(this._useMapGen);
                 this.start();
             });
     }
