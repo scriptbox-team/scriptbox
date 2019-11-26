@@ -17,6 +17,7 @@ import ClientExecuteScriptPacket from "./packets/client-execute-script-packet";
 import ClientKeybindsPacket from "./packets/client-keybinds-packet";
 import ClientModifyComponentMetaPacket from "./packets/client-modify-component-meta-packet";
 import ClientModifyMetadataPacket from "./packets/client-modify-metadata-packet";
+import ClientPrefabCreationPacket from "./packets/client-prefab-creation-packet";
 import ClientRemoveComponentPacket from "./packets/client-remove-component-packet";
 import ClientRequestEditScriptPacket from "./packets/client-request-edit-script-packet";
 import ClientSearchResourceRepoPacket from "./packets/client-search-resource-repo-packet";
@@ -58,6 +59,7 @@ export default class NetEventHandler {
     private _editScriptDelegates: Array<(packet: ClientEditScriptPacket, player: Client) => void>;
     private _modifyComponentMetaDelegates:
         Array<(packet: ClientModifyComponentMetaPacket, player: Client) => void>;
+    private _prefabCreationDelegates: Array<(packet: ClientPrefabCreationPacket, player: Client) => void>;
     private _connectionIDToPlayer: Map<number, Client> = new Map<number, Client>();
     /**
      * Creates an instance of NetEventHandler.
@@ -89,6 +91,7 @@ export default class NetEventHandler {
         this._editScriptDelegates = new Array<(packet: ClientEditScriptPacket, player: Client) => void>();
         this._modifyComponentMetaDelegates
             = new Array<(packet: ClientModifyComponentMetaPacket, player: Client) => void>();
+        this._prefabCreationDelegates = new Array<(packet: ClientPrefabCreationPacket, player: Client) => void>();
 
     }
     /**
@@ -188,6 +191,9 @@ export default class NetEventHandler {
     }
     public addModifyComponentMetaDelegate(func: (packet: ClientModifyComponentMetaPacket, player: Client) => void) {
         this._modifyComponentMetaDelegates.push(func);
+    }
+    public addPrefabCreationDelegate(func: (packet: ClientPrefabCreationPacket, player: Client) => void) {
+        this._prefabCreationDelegates.push(func);
     }
     /**
      * Handles a ClientNetEvent, deserializing it and routing it to the correct delegate.
@@ -376,6 +382,14 @@ export default class NetEventHandler {
                     ClientModifyComponentMetaPacket.deserialize(event.data),
                     this._getPlayerFromConnectionID(connectionID),
                     this._modifyComponentMetaDelegates
+                );
+                break;
+            }
+            case ClientEventType.CreatePrefab: {
+                this._sendToDelegates(
+                    ClientPrefabCreationPacket.deserialize(event.data),
+                    this._getPlayerFromConnectionID(connectionID),
+                    this._prefabCreationDelegates
                 );
                 break;
             }

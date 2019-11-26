@@ -2,6 +2,7 @@ import Database from "database/database";
 import _ from "lodash";
 import NetworkSystem from "networking/network-system";
 import path from "path";
+import { ResourceType } from "resource-management/resource";
 
 import Client from "./client";
 import ClientManagerNetworker from "./client-manager-networker";
@@ -165,6 +166,20 @@ export default class Server {
         this._gameSystem.loadResourceSync = (resource, enc) => this._resourceSystem.loadResourceSync(resource, enc);
         this._gameSystem.addResources = async (scriptPaths: string[]) => {
             await this._resourceSystem.addDefaultCodeResources(scriptPaths);
+        };
+        this._gameSystem.makePrefabResource = async (prefabName, prefabData, username) => {
+            this._resourceSystem.addOrUpdateFile(
+                username,
+                {
+                    name: prefabName,
+                    data: Buffer.from(prefabData, "utf8"),
+                    mimetype: "text/plain"
+                },
+                undefined,
+                true,
+                false,
+                ResourceType.Prefab
+            );
         };
 
         this._networkSystem.hookup([

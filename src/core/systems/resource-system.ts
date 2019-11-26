@@ -66,7 +66,10 @@ export default class ResourceSystem extends System {
                         mimetype: type !== undefined ? type.mime : "text/plain",
                         data: file
                     },
-                    resource.id
+                    resource.id,
+                    undefined,
+                    undefined,
+                    resource.type
                 );
             }
         }
@@ -168,41 +171,43 @@ export default class ResourceSystem extends System {
             file: ResourceFile,
             resourceID?: string,
             alwaysCreate: boolean = false,
-            isDefault: boolean = false) {
-        let resourceType: ResourceType | undefined;
-        switch (file.mimetype) {
-            case "image/bmp":
-            case "image/png":
-            case "image/jpeg":
-            case "image/gif": {
-                resourceType = ResourceType.Image;
-                break;
-            }
-            case "audio/midi audio/x-midi":
-            case "audio/mpeg":
-            case "audio/mp3":
-            case "audio/ogg":
-            case "audio/wav":
-            case "audio/wave":
-            case "audio/vnd.wave":
-            case "audio/x-wav": {
-                // Change mimetype to mpeg if it's mp3
-                if (file.mimetype === "audio/mp3") {
-                    file.mimetype = "audio/mpeg";
+            isDefault: boolean = false,
+            resourceType?: ResourceType) {
+        if (resourceType === undefined) {
+            switch (file.mimetype) {
+                case "image/bmp":
+                case "image/png":
+                case "image/jpeg":
+                case "image/gif": {
+                    resourceType = ResourceType.Image;
+                    break;
                 }
-                if (file.mimetype === "audio/vnd.wave" || file.mimetype === "audio/wave") {
-                    file.mimetype = "audio/wav";
+                case "audio/midi audio/x-midi":
+                case "audio/mpeg":
+                case "audio/mp3":
+                case "audio/ogg":
+                case "audio/wav":
+                case "audio/wave":
+                case "audio/vnd.wave":
+                case "audio/x-wav": {
+                    // Change mimetype to mpeg if it's mp3
+                    if (file.mimetype === "audio/mp3") {
+                        file.mimetype = "audio/mpeg";
+                    }
+                    if (file.mimetype === "audio/vnd.wave" || file.mimetype === "audio/wave") {
+                        file.mimetype = "audio/wav";
+                    }
+                    resourceType = ResourceType.Sound;
+                    break;
                 }
-                resourceType = ResourceType.Sound;
-                break;
-            }
-            case "text/plain":
-            case "text/javascript": {
-                resourceType = ResourceType.Script;
-                break;
-            }
-            default: {
-                throw new Error(`File of media type ${file.mimetype} not supported.`);
+                case "text/plain":
+                case "text/javascript": {
+                    resourceType = ResourceType.Script;
+                    break;
+                }
+                default: {
+                    throw new Error(`File of media type ${file.mimetype} not supported.`);
+                }
             }
         }
         if (resourceType !== undefined) {
@@ -344,7 +349,11 @@ export default class ResourceSystem extends System {
                     name: resourceData.filename,
                     data: file,
                     mimetype: type !== undefined ? type.mime : "text/plain",
-                }
+                },
+                undefined,
+                undefined,
+                undefined,
+                resourceData.type
             );
         }
     }
