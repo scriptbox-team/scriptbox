@@ -2,6 +2,7 @@ import Attack from "attack";
 import HitboxFactory from "hitbox-factory";
 import PlayerControl from "player-control";
 import SoundEmitter from "sound-emitter";
+import AnimationController from "animation-controller";
 
 interface FrameData {
     frame: string;
@@ -43,6 +44,9 @@ export default class BasicAttack extends Attack {
     }
     public attack() {
         const ai = this.entity.add("action-instance", "attack" + Date.now(), this.owner);
+        this.with<AnimationController>("animation-controller", (ac) => {
+            ac.animate(this.frameData, false);
+        });
         for (const frame of this.frameData) {
             ai.do(() => {
                 const attackData = frame.attackData;

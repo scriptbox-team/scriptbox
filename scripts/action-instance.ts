@@ -4,6 +4,7 @@ import SubEvent from "sub-event";
 
 export default class ActionInstance extends Component {
     public loopAtEnd: Aspect<boolean> = new Aspect<boolean>(false);
+    public finished: boolean = false;
     private _startSubEvent?: SubEvent;
     private _subEvent?: SubEvent;
     private _endSubEvent?: SubEvent;
@@ -67,10 +68,16 @@ export default class ActionInstance extends Component {
     public loop() {
         this.loopAtEnd.base = true;
     }
+    public onUnload() {
+        if (this.entity.exists) {
+            this.entity.remove(this);
+        }
+    }
     private _end() {
         for (const func of this._always) {
             func();
         }
+        this.finished = true;
         this.destroy();
     }
 }

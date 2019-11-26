@@ -35,7 +35,7 @@ export default class MapGenerator {
                 // global.log(`[${i}, ${j}] => ${lakeLeft} - ${lakeRight}, < ${lakeBottom}`);
                 if (i > lakeLeft && i < lakeRight && j < lakeBottom) {
                     const ent2 = this._generateBox(i, j, false);
-                    ent2.add(
+                    const display = ent2.add(
                         "display",
                         "display",
                         undefined,
@@ -45,6 +45,7 @@ export default class MapGenerator {
                         32,
                         32
                     );
+                    display.depth = -1;
                     ent2.add(
                         "water",
                         "water",
