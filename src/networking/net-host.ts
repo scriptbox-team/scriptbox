@@ -4,7 +4,7 @@ import * as WebSocket from "ws";
 
 import ClientNetEvent, { ClientEventType } from "./client-net-event";
 import NetClient from "./net-client";
-import ClientConnectionPacket from "./packets/client-connection-packet";
+import ClientConnectionTokenPacket from "./packets/client-connection-packet";
 import ClientDisconnectPacket from "./packets/client-disconnect-packet";
 import ServerConnectionAcknowledgementPacket from "./packets/server-connection-acknowledgement-packet";
 import ServerConnectionInfoRequestPacket from "./packets/server-connection-info-request-packet";
@@ -43,6 +43,7 @@ interface NetHostConstructionOptions {
  */
 export default class NetHost {
     public resourceServerIPGetter!: (localAddress: string) => string;
+    public validateToken!: (token: string) => Promise<string>;
     private _emitter: EventEmitter;
     private _port: number;
     private _webSocketServer: WebSocket.Server | null;
@@ -132,13 +133,21 @@ export default class NetHost {
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
                         clearTimeout(this._timeoutMap.get(socket.url)!);
-                        this._addClient(
-                            socket,
-                            request.connection.remoteAddress,
-                            request.connection.localAddress,
-                            packetData
-                        );
-                        socket.removeListener("message", cb);
+                        this.validateToken(packetData.data.token)
+                            .then((username) => {
+                                console.log("Validated: " + username);
+                                this._addClient(
+                                    socket,
+                                    request.connection.remoteAddress,
+                                    request.connection.localAddress,
+                                    username
+                                );
+                                socket.removeListener("message", cb);
+                            })
+                            .catch((err) => {
+                                console.log(err);
+                                socket.removeListener("message", cb);
+                            });
                     }
                 }
             }
@@ -158,7 +167,7 @@ export default class NetHost {
      * @param {ClientNetEvent} dataEvent the NetEvent containing client connection information
      * @memberof NetHost
      */
-    private _addClient(socket: WebSocket, clientIP: string | undefined, serverIP: string, dataEvent: ClientNetEvent) {
+    private _addClient(socket: WebSocket, clientIP: string | undefined, serverIP: string, username: string) {
         const id = this._nextID;
         if (clientIP === undefined) {
             clientIP = "undefined";
@@ -197,7 +206,7 @@ export default class NetHost {
         );
         this._emitter.emit("connection", id, new ClientNetEvent(
             ClientEventType.Connection,
-            new ClientConnectionPacket(id, clientIP, dataEvent.data.token))
+            new ClientConnectionTokenPacket(id, clientIP, username))
         );
     }
 }
