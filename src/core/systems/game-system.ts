@@ -6,7 +6,7 @@ import fs from "fs-extra";
 import IVM from "isolated-vm";
 import _ from "lodash";
 import path from "path";
-import Resource from "resource-management/resource";
+import Resource, { ResourceType } from "resource-management/resource";
 import Script from "scripting/script";
 import ScriptCollection from "scripting/script-collection";
 
@@ -25,6 +25,7 @@ export default class GameSystem extends System {
     public loadResource?: (resourceID: string, encoding: string) => Promise<string>;
     public loadResourceSync?: (resourceID: string, encoding: string) => string;
     public addResources?: (dirs: string[]) => Promise<void>;
+    public makePrefabResource?: (prefabName: string, prefabData: string, user: string) => Promise<void>;
     private _messageQueue: Array<{recipient: string[], message: string}>;
     private _scriptCollection: ScriptCollection;
     private _cachedPlayerScripts: Map<string, {time: number, script: Script}>;
@@ -80,7 +81,8 @@ export default class GameSystem extends System {
                     [
                         script.getReference("default").derefInto(),
                         scriptNameNoExt,
-                        false
+                        false,
+                        true
                     ]
                 );
             }
@@ -266,7 +268,34 @@ export default class GameSystem extends System {
             ]
         );
     }
+    public async createPrefab(entityID: string, client: Client) {
+        const prefab = this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "createPrefab",
+            [entityID]
+        );
+        if (prefab !== undefined) {
+            this.makePrefabResource!("New Prefab", prefab, client.username);
+        }
+    }
     public async createEntityAt(prefabID: string, x: number, y: number, client: Client) {
+        if (prefabID !== "") {
+            const res = await this.getResourceByID!(prefabID);
+            if (res !== undefined && res.type === ResourceType.Prefab) {
+                const prefab = await this.loadResource!(prefabID, "utf8");
+                await this._scriptCollection.execute(
+                    GameSystem.scriptedServerSubsystemDir,
+                    "createEntityFromPrefab",
+                    [
+                        prefab,
+                        x,
+                        y,
+                        client.id
+                    ]
+                );
+                return;
+            }
+        }
         const entID = this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
             "createEntity",
@@ -438,7 +467,7 @@ export default class GameSystem extends System {
                     [
                         entityID,
                         className,
-                        className,
+                        undefined,
                         client.id
                     ]
                 );

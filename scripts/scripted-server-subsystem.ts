@@ -1,5 +1,7 @@
 import CollisionDetector from "collision-detector";
+import MapGenerator from "map-generator";
 import QuadtreeGrid from "quadtree-grid";
+import Random from "random";
 import Stringifier from "stringifier";
 
 import ActionInstance from "./action-instance";
@@ -30,8 +32,6 @@ import SerializedObjectCollection from "./serialized-object-collection";
 import Set from "./set";
 import SoundEmitter from "./sound-emitter";
 import WeakMap from "./weak-map";
-import MapGenerator from "map-generator";
-import Random from "random";
 
 interface CollisionBoxInfo {
     id: string;
@@ -87,7 +87,10 @@ let executingUser: PlayerProxy | undefined;
 let mapGen: boolean = true;
 
 const classList = new Map<string, ClassInterface>();
+const defaultClassSet = new WeakSet<ClassInterface>();
 const classPrototypeLookup = new WeakMap<ClassInterface, string>();
+const componentInstances = new WeakMap<ClassInterface, Set<string>>();
+
 let tickRate!: number;
 
 const collisionResolver = new CollisionResolver();
@@ -201,6 +204,13 @@ const componentManager = new Manager<Component>((
             }
             componentExecute(component, "onCreate", ...args);
             componentExecute(component, "onLoad", ...args);
+
+            if (!defaultClassSet.has(componentClass.prototype)) {
+                if (!componentInstances.has(componentClass.prototype)) {
+                    componentInstances.set(componentClass.prototype, new Set());
+                }
+                componentInstances.get(componentClass.prototype)!.add(componentID);
+            }
         }
         catch (err) {
             if (component !== undefined) {
@@ -217,18 +227,24 @@ const componentManager = new Manager<Component>((
     (component: Component) => {
         const info = componentInfoMap.get(component);
         if (info !== undefined) {
-            try {
-                componentExecute(component, "onDestroy");
-                componentExecute(component, "onUnload");
-            }
-            catch (err) {
-                handleComponentError(component, err);
-            }
             const trueEntity = entityUnproxiedMap.get(info.entity);
             if (trueEntity !== undefined) {
+                try {
+                    componentExecute(component, "onDestroy");
+                    componentExecute(component, "onUnload");
+                }
+                catch (err) {
+                    handleComponentError(component, err);
+                }
                 const localID = trueEntity.getComponentLocalID(component);
                 if (localID !== undefined) {
                     trueEntity.directRemove(localID);
+                }
+            }
+            const proto = Object.getPrototypeOf(component);
+            if (proto !== undefined && !defaultClassSet.has(proto)) {
+                if (componentInstances.has(proto)) {
+                    componentInstances.get(proto)!.delete(component.id);
                 }
             }
         }
@@ -991,12 +1007,18 @@ export function deleteEntity(id: string) {
 const _createComponent = (
     entID: string,
     classID: string,
-    localID: string,
+    localID?: string,
     creatorID?: string,
     ...params: any[]) => {
     const classToCreate = classList.get(classID);
     const entity = entityManager.get(entID);
     const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
+    if (localID === undefined) {
+        localID = (classToCreate as any).className;
+    }
+    if (typeof localID !== "string") {
+        localID = classID;
+    }
     if (entity !== undefined) {
         const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
         return component.id;
@@ -1082,11 +1104,67 @@ export function handleInput(playerID: string, input: number, state: InputType) {
     }
 }
 
-export function setComponentClass(classObj: ClassInterface, id: string, overwrite: boolean = true) {
+export function setComponentClass(
+        classObj: ClassInterface,
+        id: string,
+        overwrite: boolean = true,
+        isDefault: boolean = false) {
     if (classObj !== undefined) {
         if (overwrite || !classList.has(id)) {
+            if (classList.has(id)) {
+                const oldClass = classList.get(id)!;
+                if (componentInstances.has(oldClass.prototype)) {
+                    const iterator = componentInstances.get(oldClass.prototype)!.values();
+                    for (const componentID of iterator) {
+                        const component = componentManager.get(componentID);
+                        if (component !== undefined && component.exists) {
+                            const info = componentInfoMap.get(component);
+                            if (info !== undefined) {
+                                const tmp = {} as any;
+                                const tmpInfo = {} as any;
+                                Object.assign(tmp, component);
+                                Object.assign(tmpInfo, info);
+                                const entity = info.entity;
+
+                                const trueEntity = entityUnproxiedMap.get(info.entity);
+                                let newLocalID = id;
+                                if (trueEntity !== undefined) {
+                                    try {
+                                        componentExecute(component, "onUnload");
+                                    }
+                                    catch (err) {
+                                        handleComponentError(component, err);
+                                    }
+                                    const localID = trueEntity.getComponentLocalID(component);
+                                    if (localID !== undefined) {
+                                        trueEntity.directRemove(localID);
+                                        newLocalID = localID;
+                                    }
+                                }
+                                const proto = Object.getPrototypeOf(component);
+                                if (proto !== undefined && !defaultClassSet.has(proto)) {
+                                    if (componentInstances.has(proto)) {
+                                        componentInstances.get(proto)!.delete(component.id);
+                                    }
+                                }
+                                const newComponent = componentManager.create(
+                                    tmpInfo.id,
+                                    classObj,
+                                    entity,
+                                    newLocalID,
+                                    tmpInfo.owner
+                                );
+                                entity.reload();
+                            }
+                        }
+                    }
+                }
+            }
             classList.set(id, classObj);
             classPrototypeLookup.set(classObj.prototype, id);
+            if (isDefault) {
+                defaultClassSet.add(classObj.prototype);
+            }
         }
     }
 }
@@ -1182,7 +1260,7 @@ function looseProfile(func: () => void): number {
 
 export function recoverFromTimeout() {
     const expectedFrameTime = 1 / tickRate;
-    const cutoffTime = expectedFrameTime * 0.3;
+    const cutoffTime = expectedFrameTime;
     let timeAccountedFor = 0;
     const componentIterator = componentManager.entries();
     for (const [componentID, component] of componentIterator) {
@@ -1194,7 +1272,7 @@ export function recoverFromTimeout() {
             if (info.enabled) {
                 if (time > cutoffTime || time === -1) {
                     // tslint:disable-next-line: max-line-length
-                    const err = new Error(`During global error, max frame time was exceeded (${Math.round(cutoffTime * 1000)}ms)`);
+                    const err = new Error(`The server encountered a problem during your component's execution.`);
                     handleComponentError(component, err);
                     return;
                 }
@@ -1282,6 +1360,69 @@ export function serializeGameState() {
     ) as GameObjectCollection;
     serializedMap.serializedData = serializedObj;
     serializedMap.generatedSections = generatedSections;
+}
+
+export function createPrefab(entityID: string): string | undefined {
+    const entity = entityManager.get(entityID);
+    if (entity !== undefined && entity.exists) {
+        const componentInfo = [] as ComponentInfo[];
+        const componentIterator = entity.componentIterator();
+        for (const component of componentIterator) {
+            const info = componentInfoMap.get(component);
+            if (info !== undefined) {
+                componentInfo.push(info);
+            }
+        }
+        const pureEntity = entityUnproxiedMap.get(entity)!;
+        const serializedObj = ObjectSerializer.serialize<GameObjectCollection>(
+            classPrototypeLookup,
+            [pureEntity, ...componentInfo],
+            (obj) => {
+                return entityUnproxiedMap.has(obj)
+                || playerUnproxiedMap.has(obj)
+                || componentInfoUnproxiedMap.has(obj);
+            },
+            (collect, parentID, obj, name) => {
+                if (collect.entityReferences === undefined) {
+                    collect.entityReferences = [];
+                }
+                if (collect.playerReferences === undefined) {
+                    collect.playerReferences = [];
+                }
+                if (collect.componentInfoReferences === undefined) {
+                    collect.componentInfoReferences = [];
+                }
+                if (entityUnproxiedMap.has(obj)) {
+                    collect.entityReferences.push({
+                        entID: entityUnproxiedMap.get(obj)!.id,
+                        parentID,
+                        name
+                    });
+                }
+                else if (playerUnproxiedMap.has(obj)) {
+                    collect.playerReferences.push({
+                        playerID: playerUnproxiedMap.get(obj)!.id,
+                        parentID,
+                        name
+                    });
+                }
+                else if (componentInfoUnproxiedMap.has(obj)) {
+                    collect.componentInfoReferences.push({
+                        componentID: componentInfoUnproxiedMap.get(obj)!.id,
+                        parentID,
+                        name
+                    });
+                }
+            },
+            (obj) => {
+                if (componentInfoMap.has(obj)) {
+                    return componentInfoMap.get(obj)!.id;
+                }
+                return undefined;
+            }
+        ) as GameObjectCollection;
+        return JSON.stringify(serializedObj);
+    }
 }
 
 export function setGeneratedSections(newGeneratedSections: {[x: number]: {[y: number]: boolean}}) {
@@ -1388,6 +1529,149 @@ export function deserializeGameState(gameState: GameObjectCollection) {
     const entities = entityManager.entries();
     for (const [id, e] of entities) {
         e.reload();
+    }
+}
+
+export function createEntityFromPrefab(gameStateJson: string, x: number, y: number, ownerID: string) {
+    const owner = playerManager.get(ownerID);
+    const entState: GameObjectCollection = JSON.parse(gameStateJson);
+    const maps = [] as number[];
+    const componentInfoList = [] as ComponentInfo[];
+    const componentProxies = new Map<string, ComponentInfoProxy>();
+    const entityRemap = new Map<string, string>();
+    const componentIDRemap = new Map<string, string>();
+    const entities = [] as Entity[];
+    const revivedObjects = ObjectSerializer.deserialize(classList, entState, (id: number, data: SerializedObject) => {
+        switch (data.module) {
+            case "entity": {
+                if (!entityRemap.has(data.object.entity)) {
+                    entityRemap.set(data.object.entity, makeID("E"));
+                }
+                const newEntityID = entityRemap.get(data.object.entity)!;
+                entityRemap.set(data.object._id, newEntityID);
+                data.object._id = newEntityID;
+                data.object._owner = owner;
+                const entity = entityManager.create(newEntityID, owner);
+                const pureEntity = entityUnproxiedMap.get(entity)!;
+                Object.assign(pureEntity, data.object);
+                entities.push(pureEntity);
+                return pureEntity;
+            }
+            case "component-info": {
+                if (!componentIDRemap.has(data.object.id)) {
+                    componentIDRemap.set(data.object.id, makeID("C"));
+                }
+                const newID = componentIDRemap.get(data.object.id)!;
+                data.object.id = newID;
+                data.object.owner = owner;
+                const componentInfo = new ComponentInfo(
+                    data.object.id,
+                    data.object.entity,
+                    data.object.name,
+                    data.object.description,
+                    data.object._enabled,
+                    data.object.exists,
+                    data.object.owner
+                );
+                Object.assign(componentInfo, data.object);
+                const infoProxy = ProxyGenerator.make<ComponentInfoProxy>(
+                    componentInfo,
+                    ["id", "entity", "exists"],
+                    ["_enabled"]
+                );
+                componentProxies.set(newID, infoProxy);
+                componentInfoUnproxiedMap.set(infoProxy, componentInfo);
+                componentInfoList.push(componentInfo);
+                return componentInfo;
+            }
+            case "player": {
+                // Do nothing with players being loaded in
+                return undefined;
+            }
+            case "map": {
+                maps.push(id);
+                return new Map<any, any>();
+            }
+            case "set": {
+                const arr = Object.keys(data.object).reduce((acc, key) => {
+                    acc.push(data.object[key]);
+                    return acc;
+                }, [] as any[]);
+                return new Set<any>(arr);
+            }
+            case "array": {
+                return Object.assign([], data.object);
+            }
+            default: {
+                let revivedObj = {} as any;
+                if (data.module !== undefined && classList.has(data.module)) {
+                    revivedObj = new (classList.get(data.module)!)();
+                }
+                if (data.componentID !== undefined) {
+                    if (!componentIDRemap.has(data.componentID)) {
+                        componentIDRemap.set(data.componentID, makeID("C"));
+                    }
+                    const newID = componentIDRemap.get(data.componentID)!;
+                    componentManager.add(newID, revivedObj);
+                }
+                return Object.assign(revivedObj, data.object);
+            }
+        }
+    });
+    // Put component info in the manager
+    for (const componentInfo of componentInfoList) {
+        const component = componentManager.get(componentInfo.id);
+        if (component !== undefined) {
+            componentInfoMap.set(component, componentInfo);
+        }
+    }
+    // Fix references
+    for (const ref of entState.entityReferences) {
+        let entity!: EntityProxy | undefined;
+        if (entityRemap.has(ref.entID)) {
+            entity = entityManager.get(entityRemap.get(ref.entID)!)!;
+        }
+        else {
+            entity = entityManager.get(ref.entID);
+        }
+        if (revivedObjects[ref.parentID] instanceof Set) {
+            revivedObjects[ref.parentID].add(entity);
+        }
+        else {
+            revivedObjects[ref.parentID][ref.name] = entity;
+        }
+    }
+    for (const ref of entState.componentInfoReferences) {
+        let componentInfo!: ComponentInfoProxy | undefined;
+        if (componentIDRemap.has(ref.componentID)) {
+            componentInfo = componentProxies.get(componentIDRemap.get(ref.componentID)!);
+        }
+        else {
+            componentInfo = componentProxies.get(ref.componentID);
+        }
+        if (revivedObjects[ref.parentID] instanceof Set) {
+            revivedObjects[ref.parentID].add(componentInfo);
+        }
+        else {
+            revivedObjects[ref.parentID][ref.name] = componentInfo;
+        }
+    }
+    // Handle maps
+    for (const mapID of maps) {
+        const map = revivedObjects[mapID];
+        const refs = entState.references.filter((ref) => ref.parentID === mapID);
+        for (const ref of refs) {
+            const arr = revivedObjects[ref.objID];
+            map.set(arr[0], arr[1]);
+        }
+    }
+    // Reload the entity
+    for (const ent of entities) {
+        ent.with<Position>("position", (pos) => {
+            pos.x = x;
+            pos.y = y;
+        });
+        ent.reload();
     }
 }
 
