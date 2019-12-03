@@ -15,11 +15,13 @@ export default class NetworkReceivingSubsystem {
     private _netEventHandler: NetEventHandler;
     private _netHost: NetHost;
     private _loginServerURL: string;
-    constructor(netHost: NetHost, loginServerURL: string) {
+    private _doValidateLoginToken: boolean;
+    constructor(netHost: NetHost, loginServerURL: string, useLoginServer: boolean = true) {
         this._netHost = netHost;
         this._loginServerURL = loginServerURL;
-        this._validateLoginToken = this._validateLoginToken.bind(this);
-        this._netHost.validateToken = this._validateLoginToken;
+        this._validateLogin = this._validateLogin.bind(this);
+        this._netHost.validateToken = this._validateLogin;
+        this._doValidateLoginToken = useLoginServer;
         this._netEventHandler = new NetEventHandler();
 
         this._netHost.on("connection", async (connectionID: number, event: ClientNetEvent) => {
@@ -35,14 +37,22 @@ export default class NetworkReceivingSubsystem {
     public hookupNetworkers(networkers: Networker[]) {
         networkers.forEach((networker) => networker.hookupInput(this._netEventHandler));
     }
-    private _validateLoginToken(token: string) {
-        return new Promise<string>((resolve, reject) => {
-            request.post({url: this._loginServerURL, formData: {token}, json: true}, (err, response, body) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(body.username);
+    private _validateLogin(username: string, token: string) {
+        if (this._doValidateLoginToken) {
+            return new Promise<string>((resolve, reject) => {
+                request.post({url: this._loginServerURL, formData: {token}, json: true}, (err, response, body) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    if (username !== body.username) {
+                        reject("Username and token username do not match");
+                    }
+                    resolve(body.username);
+                });
             });
-        });
+        }
+        else {
+            return Promise.resolve(username);
+        }
     }
 }

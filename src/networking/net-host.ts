@@ -43,7 +43,7 @@ interface NetHostConstructionOptions {
  */
 export default class NetHost {
     public resourceServerIPGetter!: (localAddress: string) => string;
-    public validateToken!: (token: string) => Promise<string>;
+    public validateToken!: (username: string, token: string) => Promise<string>;
     private _emitter: EventEmitter;
     private _port: number;
     private _webSocketServer: WebSocket.Server | null;
@@ -133,7 +133,7 @@ export default class NetHost {
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
                         clearTimeout(this._timeoutMap.get(socket)!);
-                        this.validateToken(packetData.data.token)
+                        this.validateToken(packetData.data.username, packetData.data.token)
                             .then((username) => {
                                 console.log("Validated: " + username);
                                 this._addClient(

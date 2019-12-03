@@ -12,6 +12,7 @@ interface NetworkSystemConstructorOptions {
     port?: number;
     maxPlayers?: number;
     loginValidationURL: string;
+    useLoginServer: boolean;
     resourceServerIPGetter: (localAddress: string) => string;
 }
 
@@ -48,7 +49,10 @@ export default class NetworkSystem {
         this._netHost = new NetHost({port: this._port, maxClients: this._maxPlayers});
         this._netHost.resourceServerIPGetter = options.resourceServerIPGetter;
 
-        this._networkReceivingSubsystem = new NetworkReceivingSubsystem(this._netHost, options.loginValidationURL);
+        this._networkReceivingSubsystem = new NetworkReceivingSubsystem(
+            this._netHost,
+            options.loginValidationURL,
+            options.useLoginServer);
         this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, playerManager);
     }
     /**

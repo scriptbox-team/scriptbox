@@ -131,6 +131,7 @@ export default class Server {
             {
                 maxPlayers: options.maxPlayers,
                 port: options.port,
+                useLoginServer: this._useLoginServer,
                 loginValidationURL: "http://[::1]:9000/validate",
                 resourceServerIPGetter: this._getResourceServerIP},
             this._clientManager
