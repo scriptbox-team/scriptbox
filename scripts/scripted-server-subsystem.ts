@@ -228,7 +228,7 @@ const componentManager = new Manager<Component>((
         const info = componentInfoMap.get(component);
         if (info !== undefined) {
             const trueEntity = entityUnproxiedMap.get(info.entity);
-            if (trueEntity !== undefined) {
+            if (trueEntity !== undefined && trueEntity.exists) {
                 try {
                     componentExecute(component, "onDestroy");
                     componentExecute(component, "onUnload");
@@ -1011,17 +1011,19 @@ const _createComponent = (
     creatorID?: string,
     ...params: any[]) => {
     const classToCreate = classList.get(classID);
-    const entity = entityManager.get(entID);
-    const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
-    if (localID === undefined) {
-        localID = (classToCreate as any).className;
-    }
-    if (typeof localID !== "string") {
-        localID = classID;
-    }
-    if (entity !== undefined) {
-        const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
-        return component.id;
+    if (classToCreate !== undefined) {
+        const entity = entityManager.get(entID);
+        const creator = creatorID !== undefined ? playerManager.get(creatorID) : undefined;
+        if (localID === undefined && classToCreate.prototype !== undefined) {
+            localID = classToCreate.prototype.className;
+        }
+        if (typeof localID !== "string") {
+            localID = classID;
+        }
+        if (entity !== undefined) {
+            const component = componentManager.create(makeID("C"), classToCreate, entity, localID, creator, ...params);
+            return component.id;
+        }
     }
     return undefined;
 };
