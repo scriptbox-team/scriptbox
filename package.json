@@ -16,7 +16,8 @@
     "build": "tsc --p \"./src\" && npm run copy-scripts && npm run copy-data-default",
     "copy-scripts": "cpx \"./scripts/**/*.ts\" dist/scripts",
     "copy-data-default": "cpx \"./data-default/**/*\" dist/data-default",
-    "start": "cd dist && node main.js"
+    "start": "cd dist && node main.js",
+    "start-test": "cd dist && node main-test.js"
   },
   "repository": {
     "type": "git",

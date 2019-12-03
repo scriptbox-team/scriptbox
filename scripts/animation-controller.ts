@@ -19,7 +19,7 @@ export default abstract class AnimationController extends Component {
     public abstract frames: {[name: string]: TextureRegion};
     private _animations: SimpleAnimation[] = [];
     public onUpdate() {
-        while (this._animations.length > 0 && !this._animations[this._animations.length - 1].exists) {
+        while (this._animations.length > 0 && this._animations[this._animations.length - 1].finished) {
             this._animations.pop();
         }
         if (this._animations.length > 0) {
