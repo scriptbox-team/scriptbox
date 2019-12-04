@@ -41,7 +41,7 @@ export default class NetworkReceivingSubsystem {
         if (this._doValidateLoginToken) {
             return new Promise<string>((resolve, reject) => {
                 request.post({url: this._loginServerURL, formData: {token}, json: true}, (err, response, body) => {
-                    if (err) {
+                    if (err || response.statusCode !== 200) {
                         reject(err);
                     }
                     if (username !== body.username) {
