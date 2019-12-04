@@ -663,6 +663,14 @@ export default class GameSystem extends System {
         }
     }
 
+    public setMapGenState(value: boolean) {
+        this._scriptCollection.execute(
+            GameSystem.scriptedServerSubsystemDir,
+            "setMapGen",
+            [value]
+        );
+    }
+
     private _preresolveModule(modulePath: string, resourcesByFilename: {[filename: string]: Resource}) {
         let pathsToTry = [modulePath];
         const extension = path.extname(modulePath);
