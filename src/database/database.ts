@@ -25,13 +25,13 @@ export default class Database {
 
     public getCollection(name: string) {
         return new Collection(name, {
-            insert: (document) => this.insert(name, document),
-            update: (id, document) => this.update(name, id, document),
-            delete: (id) => this.delete(name, id),
-            get: (id) => this.get(name, id),
-            getMany: (getBy) => this.getMany(name, getBy),
-            drop: () => this.drop(name),
-            insertMany: (documents) => this.insertMany(name, documents)
+            insert: (document) => this._insert(name, document),
+            update: (id, document) => this._update(name, id, document),
+            delete: (id) => this._delete(name, id),
+            get: (id) => this._get(name, id),
+            getMany: (getBy) => this._getMany(name, getBy),
+            drop: () => this._drop(name),
+            insertMany: (documents) => this._insertMany(name, documents)
         });
     }
 
@@ -39,43 +39,43 @@ export default class Database {
         await this._client.close();
     }
 
-    private async get(collectionName: string, id: string) {
+    private async _get(collectionName: string, id: string) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         return await collection.findOne({id});
     }
 
-    private async getMany(collectionName: string, getBy: object, sort: object = {}) {
+    private async _getMany(collectionName: string, getBy: object, sort: object = {}) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         return await collection.find(getBy).sort(sort).toArray();
     }
 
-    private async insert(collectionName: string, document: object) {
+    private async _insert(collectionName: string, document: object) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.insertOne(document);
     }
 
-    private async insertMany(collectionName: string, documents: object[]) {
+    private async _insertMany(collectionName: string, documents: object[]) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.insertMany(documents);
     }
 
-    private async update(collectionName: string, id: string, document: object) {
+    private async _update(collectionName: string, id: string, document: object) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.replaceOne({id}, document);
     }
 
-    private async delete(collectionName: string, id: string) {
+    private async _delete(collectionName: string, id: string) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.deleteOne({id});
     }
 
-    private async drop(collectionName: string) {
+    private async _drop(collectionName: string) {
         const database = this._client.db("scriptbox");
         const collection = database.collection(collectionName);
         await collection.drop();

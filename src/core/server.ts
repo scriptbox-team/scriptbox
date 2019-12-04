@@ -27,14 +27,14 @@ import ResourceSystemNetworker from "./systems/resource-system-networker";
 /**
  * The options for the server constructor.
  *
- * @interface IServerConstructorOptions
+ * @interface ServerConstructorOptions
  */
-interface IServerConstructorOptions {
+interface ServerConstructorOptions {
     /**
      * The port to host the server on.
      *
      * @type {number}
-     * @memberof IServerConstructorOptions
+     * @memberof ServerConstructorOptions
      */
     port: number;
     resourcePort: number;
@@ -42,14 +42,14 @@ interface IServerConstructorOptions {
      * The maximum number of players that can connect to the server.
      *
      * @type {number}
-     * @memberof IServerConstructorOptions
+     * @memberof ServerConstructorOptions
      */
     maxPlayers?: number;
     /**
      * The tick rate of the server.
      *
      * @type {number}
-     * @memberof IServerConstructorOptions
+     * @memberof ServerConstructorOptions
      */
     tickRate?: number;
     useLoginServer?: boolean;
@@ -91,10 +91,10 @@ export default class Server {
     /**
      * Creates the instance of the game server.
      * This does not start the server, but can be used to configure options before starting.
-     * @param {IServerConstructorOptions} options
+     * @param {ServerConstructorOptions} options
      * @memberof Server
      */
-    constructor(options: IServerConstructorOptions) {
+    constructor(options: ServerConstructorOptions) {
         this._tick = this._tick.bind(this);
         this._createPlayer = this._createPlayer.bind(this);
         this._deletePlayer = this._deletePlayer.bind(this);
