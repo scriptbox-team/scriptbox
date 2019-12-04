@@ -43,14 +43,14 @@ interface NetHostConstructionOptions {
  */
 export default class NetHost {
     public resourceServerIPGetter!: (localAddress: string) => string;
-    public validateToken!: (token: string) => Promise<string>;
+    public validateToken!: (username: string, token: string) => Promise<string>;
     private _emitter: EventEmitter;
     private _port: number;
     private _webSocketServer: WebSocket.Server | null;
     private _nextID: number;
     private _clients: Map<number, NetClient>;
     private _validEvents: Set<string | ClientEventType>;
-    private _timeoutMap: Map<string, ReturnType<typeof setTimeout>>;
+    private _timeoutMap: WeakMap<WebSocket, ReturnType<typeof setTimeout>>;
 
     /**
      * Creates an instance of NetHost.
@@ -97,7 +97,7 @@ export default class NetHost {
             this._hookHandshakeCallback(socket, request);
             const packet = new ServerConnectionInfoRequestPacket();
             socket.send(new ServerNetEvent(ServerEventType.ConnectionInfoRequest, packet.serialize()).serialize());
-            this._timeoutMap.set(socket.url, setTimeout(() => {
+            this._timeoutMap.set(socket, setTimeout(() => {
                 console.log("Pre-client connection from " + socket.url + " timed out.");
                 // The client did not reply quickly enough with connection info
                 socket.close();
@@ -132,8 +132,8 @@ export default class NetHost {
                 const packetData = ClientNetEvent.deserialize(data);
                 if (packetData !== undefined) {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
-                        clearTimeout(this._timeoutMap.get(socket.url)!);
-                        this.validateToken(packetData.data.token)
+                        clearTimeout(this._timeoutMap.get(socket)!);
+                        this.validateToken(packetData.data.username, packetData.data.token)
                             .then((username) => {
                                 console.log("Validated: " + username);
                                 this._addClient(
