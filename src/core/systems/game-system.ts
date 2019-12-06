@@ -11,6 +11,7 @@ import Script from "scripting/script";
 import ScriptCollection from "scripting/script-collection";
 
 import System from "./system";
+import Exports from "core/export-values";
 
 export default class GameSystem extends System {
     // TODO: Make this automatically query the scripts folder
@@ -89,7 +90,7 @@ export default class GameSystem extends System {
         }
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", [tickRate]);
     }
-    public update(mapJustLoaded: boolean) {
+    public update(mapJustLoaded: boolean = false) {
         const profile = process.hrtime();
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -109,7 +110,7 @@ export default class GameSystem extends System {
         this._messageQueue = [];
         const totalTime = process.hrtime(profile);
 
-        return result;
+        return result as Exports;
     }
     public recover() {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "recoverFromTimeout");

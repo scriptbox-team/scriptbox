@@ -1,6 +1,7 @@
 import GameSystem from "core/systems/game-system";
 import _Collection from "database/collection";
 import path from "path";
+import Client from "core/client";
 
 jest.mock("database/collection");
 
@@ -36,5 +37,13 @@ describe("GameSystem", () => {
             collections,
             generatedChunkCollection
         );
+        gameSystem.setMapGenState(false);
+    });
+    test("can create a player", async () => {
+        const client = new Client("P123456789012345678901234", 0, "testclient", "test client");
+        gameSystem.createPlayer(client);
+        const updateResult = gameSystem.update();
+        expect(Object.keys(updateResult.entities).length).toBe(1);
+        expect(Object.keys(updateResult.players).length).toBe(1);
     });
 });
