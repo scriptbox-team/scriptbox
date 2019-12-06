@@ -1,12 +1,6 @@
 import Client from "core/client";
 import Group, { GroupType } from "core/group";
 import MessageSystem from "core/systems/message-system";
-import ServerChatMessagePacket from "networking/packets/server-chat-message-packet";
-import ServerMessage from "networking/server-messages/server-message";
-import ServerNetEvent, { ServerEventType } from "networking/server-net-event";
-
-// Note: These imported classes are only really used for data purposes
-// Their functionality is not used in this class
 
 let messageSystem!: MessageSystem;
 const messageSendCallback = jest.fn((message: string, clientGroup: Group<Client>) => {});

@@ -16,6 +16,10 @@ const displayPackage = [
             x: 10,
             y: 10
         },
+        {
+            x: 1,
+            y: 1
+        },
         -1,
         false
     ),
@@ -28,6 +32,10 @@ const displayPackage = [
             y: 50,
             width: 2,
             height: 2
+        },
+        {
+            x: 1,
+            y: 1
         },
         {
             x: 102,

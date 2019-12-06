@@ -1,4 +1,4 @@
-import ServerResourceListingPacket from "networking/packets/server-resource-listing-packet";
+import ServerResourceRepoListingPacket from "networking/packets/server-resource-repo-list-packet";
 import Resource, { ResourceType } from "resource-management/resource";
 
 const resources = [
@@ -29,7 +29,7 @@ const resources = [
     new Resource(
         "789",
         ResourceType.Script,
-        "game breaking script",
+        "game breaking resource script",
         "gamebreakingscript.ts",
         "not aaron",
         "somebody evil",
@@ -40,8 +40,8 @@ const resources = [
     ),
 ];
 
-const serializedPacket = {resources};
-const packet = new ServerResourceListingPacket(resources);
+const serializedPacket = {search: "resource", resources};
+const packet = new ServerResourceRepoListingPacket("resource", resources);
 
 describe("ServerResourceListingPacket", () => {
     test("serializes", () => {
@@ -50,7 +50,7 @@ describe("ServerResourceListingPacket", () => {
     });
 
     test("deserializes", () => {
-        const packetTest = ServerResourceListingPacket.deserialize(serializedPacket);
+        const packetTest = ServerResourceRepoListingPacket.deserialize(serializedPacket);
         expect(packetTest).toEqual(packet);
     });
 });

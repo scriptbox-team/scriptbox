@@ -2,9 +2,9 @@ import ServerSoundPacket from "networking/packets/server-sound-packet";
 import AudioObject from "resource-management/audio-object";
 
 const audioPackage = [
-    new AudioObject("sound1", 1, true, false),
-    new AudioObject("sound2", 2, true, true),
-    new AudioObject("sound3", 4, false, false)
+    new AudioObject("sound1", "R1234567890123456789012", 1, false),
+    new AudioObject("sound2", "R2234567890123456789012", 0.5, true),
+    new AudioObject("sound3", "R3234567890123456789012", 0.2, false)
 ];
 
 const serializedPacket = {audioPackage};

@@ -163,8 +163,6 @@ export default class DisplaySystem extends System {
     }
 
     private _getDisplayDifferences(lastExportValues: Exports, exportValues: Exports) {
-        // Lodash type annotations are really restrictive
-        // So please ignore the following casting shenanigans
         const diffs = _.transform(exportValues.sprites, (acc, sprite, key) => {
             const result = acc;
             const prevSprite = lastExportValues.sprites[key];
@@ -189,8 +187,6 @@ export default class DisplaySystem extends System {
                 diffs.removed[key] = this._convertToRenderObject(key, sprite);
             }
         });
-        // console.log(exportValues.sprites);
-        // console.log(diffs);
         return diffs;
     }
 
@@ -212,6 +208,8 @@ export default class DisplaySystem extends System {
             prevSprite: Sprite) {
         return currSprite.position.x === prevSprite.position.x
             && currSprite.position.y === prevSprite.position.y
+            && currSprite.scale.x === prevSprite.scale.x
+            && currSprite.scale.y === prevSprite.scale.y
             && currSprite.depth === prevSprite.depth
             && currSprite.ownerID === prevSprite.ownerID
             && currSprite.texture === prevSprite.texture
