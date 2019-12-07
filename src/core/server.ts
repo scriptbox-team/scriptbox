@@ -271,6 +271,7 @@ export default class Server {
                     let group = new Group<Client>(
                         GroupType.Only,
                         msg.recipient.map((pID) => exportValues.players[pID].client)
+                            .filter((p) => p !== undefined) as Client[]
                     );
                     if (msg.recipient.length === 0) {
                         group = new Group<Client>(
@@ -315,7 +316,7 @@ export default class Server {
     private _deletePlayer(player: Client) {
         this._usernameToPlayer.delete(player.username);
     }
-    private _getResourceServerIP(serverIP: string) {
-        return `${serverIP}:${this._resourceSystem.port}`;
+    private _getResourceServerIP() {
+        return `${this._resourceSystem.port}`;
     }
 }

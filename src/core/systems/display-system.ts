@@ -62,7 +62,9 @@ export default class DisplaySystem extends System {
     public sendCameraData(exportValues: Exports) {
         _.each(exportValues.players, (playerData, id) => {
             if (this._cameraDataCallback !== undefined) {
-                this._cameraDataCallback(playerData.client, playerData.camera);
+                if (playerData.client !== undefined) {
+                    this._cameraDataCallback(playerData.client, playerData.camera);
+                }
             }
         });
     }
@@ -82,7 +84,9 @@ export default class DisplaySystem extends System {
                 }
             });
             if (sounds.length > 0 && this._soundDataCallback !== undefined) {
-                this._soundDataCallback(sounds, new Group<Client>(GroupType.Only, [playerData.client]));
+                if (playerData.client !== undefined) {
+                    this._soundDataCallback(sounds, new Group<Client>(GroupType.Only, [playerData.client]));
+                }
             }
         });
     }
@@ -129,7 +133,7 @@ export default class DisplaySystem extends System {
                     "", 0, "", component.enabled, attributes);
             });
             const player = exportValues.players![playerID];
-            if (player !== undefined) {
+            if (player !== undefined && player.client !== undefined) {
                 this._entityInspectionCallback!(
                     entityInfo.id,
                     components,

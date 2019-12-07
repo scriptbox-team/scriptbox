@@ -1,9 +1,9 @@
+import Client from "core/client";
+import IDGenerator from "core/id-generator";
 import ResourceSystem from "core/systems/resource-system";
+import _Collection from "database/collection";
 import _ResourceServer from "networking/resource-server";
 import Resource, { ResourceType } from "resource-management/resource";
-import _Collection from "database/collection";
-import IDGenerator from "core/id-generator";
-import Client from "core/client";
 
 jest.mock("networking/resource-server");
 // tslint:disable-next-line: variable-name

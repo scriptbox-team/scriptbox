@@ -13,7 +13,7 @@ interface NetworkSystemConstructorOptions {
     maxPlayers?: number;
     loginValidationURL: string;
     useLoginServer: boolean;
-    resourceServerIPGetter: (localAddress: string) => string;
+    resourceServerIPGetter: () => string;
 }
 
 /**
