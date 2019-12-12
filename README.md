@@ -1,5 +1,5 @@
 # Scriptbox
-A networked sandbox game where you can upload [Typescript](http://www.github.com/microsoft/typescript) code and resources to create anything.
+A networked sandbox game where you can upload assets and [Typescript](http://www.github.com/microsoft/typescript) code to create anything.
 
 
 ## Hosting a Server
