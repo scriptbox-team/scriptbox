@@ -2,26 +2,26 @@
 
 #### Table of Contents   
 [**Gameplay**](#gameplay)  
-&nbsp;&nbsp;&nbsp;&nbsp;[Account Creation](#user-guide)  
+&nbsp;&nbsp;&nbsp;&nbsp;[Account Creation](#account-creation)  
 &nbsp;&nbsp;&nbsp;&nbsp;[Resources](#resources)    
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Uploading Resources](#uploading-resources)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Cloning Resources](#cloning-resources)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Editing Resources](#editing-resources)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Sharing Resources](#editing-resources)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Viewing and Editing Resources](#viewing-and-editing-resources)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Sharing Resources](#sharing-resources)  
 &nbsp;&nbsp;&nbsp;&nbsp;[World Editing](#world-editing)    
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Creating Entities](#creating-entities)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Deleting Entities](#deleting-entities)    
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Editing Entities](#adding-components)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Editing Entities](#editing-entities)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Adding Components](#adding-components)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Removing Components](#removing-components)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Renaming Components](#renaming-components)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Enabling/Disabling Components](#enabling/disabling-components)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Controlling Entities](#controlling/releasing-entities)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Enabling/Disabling Components](#enablingdisabling-components)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Controlling/Releasing Entities](#controllingreleasing-entities)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Creating Prefabs](#creating-prefabs)  
 &nbsp;&nbsp;&nbsp;&nbsp;[Script Running](#script-running)    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[REPL-Style Script Execution](#repl-style-script-execution)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Resource Script Execution](#resource-script-execution)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Applied Resource Script Execution](#applied-resource-script-execution)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[REPL-Style Script Execution](#repl-style-script-execution)  
 [**Scripting**](#scripting)    
 &nbsp;&nbsp;&nbsp;&nbsp;[Basics](#basics)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Default Resources](#default-resources)  
@@ -51,7 +51,7 @@ To upload a resource, click on "Upload..." inside of your resource window. A win
 - Shared items are tagged based on their name and description
 
 To clone an item from the repository, click on the item in the left side of the repository. From there, scroll down on the right side and click "Clone" to clone the resource into your personal resource listing. Once a resource is cloned, you can modify and use it freely.
-#### Resource Information
+#### Viewing and Editing Resources
 
 When you inspect a resource in your resource listing, you will see multiple fields on every resource. Some of these fields will be text entries which you will be able to modify.
 
