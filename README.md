@@ -20,5 +20,5 @@ Please check out the [user guide](./user-guide.md) to learn how to play and make
 
 ## Credits
 
-[Raymond Hammarling](https://github.com/raymond-h) - Original concept, creator of predecessor The People's Sandbox  
+[Raymond Hammarling](https://github.com/raymond-h) - Original concept, creator of predecessor "The People's Sandbox"  
 [Aaron Freytag](https://github.com/AaronCFreytag) - Sole Developer
