@@ -6,31 +6,37 @@ const resources = [
         "123",
         ResourceType.Image,
         "test resource",
+        "testresource.png",
         "aaron",
         "not aaron",
         "a test resource",
         10525892184,
-        "iconID"
+        "iconID",
+        false
     ),
     new Resource(
         "456",
         ResourceType.Sound,
         "test resource 2",
+        "testresource2.png",
         "aaron",
         "aaron",
         "a test sound",
         10525235184,
-        "iconID2"
+        "iconID2",
+        true
     ),
     new Resource(
         "789",
         ResourceType.Script,
         "game breaking script",
+        "gamebreakingscript.ts",
         "not aaron",
         "somebody evil",
         "blows up the world",
         10525892184,
-        "iconID"
+        "iconID",
+        false
     ),
 ];
 

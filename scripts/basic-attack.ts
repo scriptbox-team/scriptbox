@@ -1,8 +1,8 @@
+import AnimationController from "animation-controller";
 import Attack from "attack";
 import HitboxFactory from "hitbox-factory";
 import PlayerControl from "player-control";
 import SoundEmitter from "sound-emitter";
-import AnimationController from "animation-controller";
 
 interface FrameData {
     frame: string;

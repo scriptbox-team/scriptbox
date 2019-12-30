@@ -24,12 +24,27 @@ interface SoundInfo {
     volume: number;
 }
 
+/**
+ * The information of a single message exported from GameSystem.
+ * This includes the message itself along with the recipients and the kind of message.
+ * @export
+ * @interface MessageExportInfo
+ * @module core
+ */
 export interface MessageExportInfo {
     message: string;
     kind: "Chat" | "Announcement" | "Error";
     recipient: string[];
 }
 
+/**
+ * The information exported from the scripted segment of GameSystem.
+ * This differs slightly from the version within the scripted segment, as the player
+ * information is populated with the client before it exits GameSystem.
+ *
+ * @export
+ * @interface Exports
+ */
 export default interface Exports {
     entities: {[id: string]: {
         position: {x: number, y: number},
@@ -46,7 +61,7 @@ export default interface Exports {
     inspectedEntityInfo: {[playerID: string]: EntityExportInfo};
     messages: MessageExportInfo[];
     players: {[id: string]: {
-        client: Client,
+        client?: Client,
         camera: {x: number, y: number, scale: number}
     }};
     sounds: {[id: string]: SoundInfo};

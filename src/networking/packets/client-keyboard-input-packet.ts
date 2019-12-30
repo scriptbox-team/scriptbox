@@ -31,6 +31,7 @@ enum DeviceType {
  * @export
  * @class ClientInputPacket
  * @extends {Packet}
+ * @module networking
  */
 export default class ClientKeyboardInputPacket extends Packet {
     public static readonly InputType = InputType;
@@ -42,6 +43,12 @@ export default class ClientKeyboardInputPacket extends Packet {
                 && typeof obj.state === "number"
                 && typeof obj.device === "number"
             ) {
+                if (!("" + obj.state in InputType)) {
+                    throw new Error("Invalid enum value " + obj.state);
+                }
+                if (!("" + obj.device in DeviceType)) {
+                    throw new Error("Invalid enum value " + obj.device);
+                }
                 return new ClientKeyboardInputPacket(obj.key, obj.state, obj.device);
             }
             return undefined;

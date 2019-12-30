@@ -13,6 +13,7 @@ import ServerNetEvent from "./server-net-event";
  *
  * @export
  * @class NetworkSendingSubsystem
+ * @module networking
  */
 export default class NetworkSendingSubsystem {
     private _netHost: NetHost;

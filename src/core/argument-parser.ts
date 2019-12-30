@@ -1,4 +1,21 @@
+/**
+ * A static class which takes a string representing a list of string arguments, and separates it
+ * into an array of strings. This will also handle spaces within these strings through the use
+ * of surrounding quotations around the substring.
+ *
+ * @export
+ * @class ArgumentParser
+ * @module core
+ */
 export default class ArgumentParser {
+    /**
+     * Convert a string to a list of arguments
+     *
+     * @static
+     * @param {string} args The string to convert.
+     * @returns The arguments split into an array of strings.
+     * @memberof ArgumentParser
+     */
     public static parse(args: string) {
         // Some very C-style, imperative, gross code coming up
         // Figuring out a regex to accomplish this sufficiently seemed like more work than it was worth

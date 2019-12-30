@@ -40,9 +40,10 @@ interface NetHostConstructionOptions {
  *
  * @export
  * @class NetHost
+ * @module networking
  */
 export default class NetHost {
-    public resourceServerIPGetter!: (localAddress: string) => string;
+    public resourceServerIPGetter!: () => string;
     public validateToken!: (username: string, token: string) => Promise<string>;
     private _emitter: EventEmitter;
     private _port: number;
@@ -51,6 +52,7 @@ export default class NetHost {
     private _clients: Map<number, NetClient>;
     private _validEvents: Set<string | ClientEventType>;
     private _timeoutMap: WeakMap<WebSocket, ReturnType<typeof setTimeout>>;
+    private _packetCount: Map<number, number> = new Map<number, number>();
 
     /**
      * Creates an instance of NetHost.
@@ -119,6 +121,12 @@ export default class NetHost {
         }
     }
 
+    public clearLimit() {
+        for (const [id, num] of this._packetCount) {
+            this._packetCount.set(id, 0);
+        }
+    }
+
     /**
      * Creates a callback associated with a socket for the sole purpose of completing a connection handshake.
      *
@@ -134,12 +142,11 @@ export default class NetHost {
                     if (packetData.type === ClientEventType.ConnectionInfo) {
                         clearTimeout(this._timeoutMap.get(socket)!);
                         this.validateToken(packetData.data.username, packetData.data.token)
-                            .then((username) => {
+                            .then(async (username) => {
                                 console.log("Validated: " + username);
                                 this._addClient(
                                     socket,
                                     request.connection.remoteAddress,
-                                    request.connection.localAddress,
                                     username
                                 );
                                 socket.removeListener("message", cb);
@@ -167,7 +174,7 @@ export default class NetHost {
      * @param {ClientNetEvent} dataEvent the NetEvent containing client connection information
      * @memberof NetHost
      */
-    private _addClient(socket: WebSocket, clientIP: string | undefined, serverIP: string, username: string) {
+    private _addClient(socket: WebSocket, clientIP: string | undefined, username: string) {
         const id = this._nextID;
         if (clientIP === undefined) {
             clientIP = "undefined";
@@ -176,7 +183,14 @@ export default class NetHost {
         this._nextID++;
         this._clients.set(id, client);
 
+        this._packetCount.set(id, 0);
+
         client.on("event", async (event: ClientNetEvent) => {
+            const packets = this._packetCount.get(id);
+            if (packets === undefined || packets > 100) {
+                return;
+            }
+            this._packetCount.set(id, packets + 1);
             if (event.type === ClientEventType.DisconnectionRequest) {
                 this._emitter.emit("disconnect", id, event);
                 client.disconnect();
@@ -202,7 +216,7 @@ export default class NetHost {
         });
         client.send(new ServerNetEvent(
             ServerEventType.ConnectionAcknowledgement,
-            new ServerConnectionAcknowledgementPacket(this.resourceServerIPGetter(serverIP)))
+            new ServerConnectionAcknowledgementPacket(this.resourceServerIPGetter()))
         );
         this._emitter.emit("connection", id, new ClientNetEvent(
             ClientEventType.Connection,

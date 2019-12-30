@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing camera position and scale information from the server.
+ *
+ * @export
+ * @class ServerCameraUpdatePacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerCameraUpdatePacket extends Packet {
     public static deserialize(obj: any): ServerCameraUpdatePacket | undefined {
         if (typeof obj === "object" && obj !== null) {

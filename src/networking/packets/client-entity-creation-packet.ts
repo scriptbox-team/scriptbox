@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing the creation of an entity using a prefab and a position.
+ *
+ * @export
+ * @class ClientEntityCreationPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientEntityCreationPacket extends Packet {
     public static deserialize(obj: any): ClientEntityCreationPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

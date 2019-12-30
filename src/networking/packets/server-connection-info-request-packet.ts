@@ -6,6 +6,7 @@ import Packet from "./packet";
  * @export
  * @class ServerConnectionInfoRequestPacket
  * @extends {Packet}
+ * @module networking
  */
 export default class ServerConnectionInfoRequestPacket extends Packet {
     public static deserialize(obj: any): ServerConnectionInfoRequestPacket | undefined {

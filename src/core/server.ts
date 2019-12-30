@@ -20,10 +20,6 @@ import MessageSystemNetworker from "./systems/message-system-networker";
 import ResourceSystem from "./systems/resource-system";
 import ResourceSystemNetworker from "./systems/resource-system-networker";
 
-// TODO: Refactor stuff out of Server and Game (Client-side)
-// TODO: Make private functions begin with an underscore
-// TODO: Convert variable/function names to be more consistent with terminology
-
 /**
  * The options for the server constructor.
  *
@@ -52,16 +48,18 @@ interface ServerConstructorOptions {
      * @memberof ServerConstructorOptions
      */
     tickRate?: number;
-    useLoginServer?: boolean;
     useMapGen?: boolean;
+    loginValidationURL?: string;
 }
 
 /**
  * An object representing the game in its entirety
- * This is created when the server is launched.
+ * This is created when the server is launched, and ties together all
+ * of the server logic.
  *
  * @export
  * @class Server
+ * @module core
  */
 export default class Server {
     private _tickRate: number;
@@ -83,7 +81,7 @@ export default class Server {
     private _database: Database;
     private _nextSave: number = 0;
     private _saveTime: number = 1200000;
-    private _useLoginServer: boolean = true;
+    private _loginServerIP?: string;
     private _useMapGen: boolean = true;
 
     private _loop: GameLoop;
@@ -91,7 +89,7 @@ export default class Server {
     /**
      * Creates the instance of the game server.
      * This does not start the server, but can be used to configure options before starting.
-     * @param {ServerConstructorOptions} options
+     * @param {ServerConstructorOptions} options The options to use for configuring the server.
      * @memberof Server
      */
     constructor(options: ServerConstructorOptions) {
@@ -116,9 +114,7 @@ export default class Server {
         if (options.tickRate !== undefined) {
             this._tickRate = options.tickRate;
         }
-        if (options.useLoginServer !== undefined) {
-            this._useLoginServer = options.useLoginServer;
-        }
+        this._loginServerIP = options.loginValidationURL;
         if (options.useMapGen !== undefined) {
             this._useMapGen = options.useMapGen;
         }
@@ -131,7 +127,7 @@ export default class Server {
             {
                 maxPlayers: options.maxPlayers,
                 port: options.port,
-                useLoginServer: this._useLoginServer,
+                loginServerIP: this._loginServerIP,
                 loginValidationURL: "http://[::1]:9000/validate",
                 resourceServerIPGetter: this._getResourceServerIP},
             this._clientManager
@@ -241,7 +237,7 @@ export default class Server {
      *
      * @memberof Server
      */
-    public start() {
+    public async start() {
         this._nextSave = Date.now() + this._saveTime;
         this._networkSystem.host();
         this._resourceSystem.host();
@@ -271,6 +267,7 @@ export default class Server {
                     let group = new Group<Client>(
                         GroupType.Only,
                         msg.recipient.map((pID) => exportValues.players[pID].client)
+                            .filter((p) => p !== undefined) as Client[]
                     );
                     if (msg.recipient.length === 0) {
                         group = new Group<Client>(
@@ -305,17 +302,43 @@ export default class Server {
         }
         finally {
             this._networkSystem.sendMessages();
+            this._networkSystem.update();
         }
     }
+    /**
+     * Create a client.
+     *
+     * @private
+     * @param {string} id The ID of the client to create.
+     * @param {number} clientID The net client ID to use.
+     * @param {string} username The username of the client.
+     * @param {string} displayName The display name of the client.
+     * @returns The created client.
+     * @memberof Server
+     */
     private _createPlayer(id: string, clientID: number, username: string, displayName: string) {
         const player = new Client(id, clientID, username, displayName);
         this._usernameToPlayer.set(username, player);
         return player;
     }
+    /**
+     * Delete a player.
+     *
+     * @private
+     * @param {Client} player The player to delete.
+     * @memberof Server
+     */
     private _deletePlayer(player: Client) {
         this._usernameToPlayer.delete(player.username);
     }
-    private _getResourceServerIP(serverIP: string) {
-        return `${serverIP}:${this._resourceSystem.port}`;
+    /**
+     * Get the IP used for the resource server.
+     *
+     * @private
+     * @returns The IP for the resource server.
+     * @memberof Server
+     */
+    private _getResourceServerIP() {
+        return `${this._resourceSystem.port}`;
     }
 }

@@ -1,6 +1,14 @@
 import _ from "lodash";
 import Packet from "./packet";
 
+/**
+ * A packet containing keybinding information from the client.
+ *
+ * @export
+ * @class ClientKeybindsPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientKeybindsPacket extends Packet {
     public static deserialize(obj: any): ClientKeybindsPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

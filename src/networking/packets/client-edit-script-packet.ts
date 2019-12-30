@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing changes to be made to a script of a particular ID.
+ *
+ * @export
+ * @class ClientEditScriptPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientEditScriptPacket extends Packet {
     public static deserialize(obj: any): ClientEditScriptPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

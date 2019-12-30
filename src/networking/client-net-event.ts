@@ -1,8 +1,9 @@
 /**
- * The kind of event the client event is
+ * The type of event a client event can be
  *
  * @export
  * @enum {number}
+ * @module networking
  */
 export enum ClientEventType {
     ConnectionInfo = 0,
@@ -37,6 +38,7 @@ export enum ClientEventType {
  *
  * @export
  * @class ClientNetEvent
+ * @module networking
  */
 export default class ClientNetEvent {
     public static deserialize(str: any): ClientNetEvent | undefined {

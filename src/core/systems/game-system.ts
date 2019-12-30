@@ -1,5 +1,5 @@
 import Client from "core/client";
-import Group, { GroupType } from "core/group";
+import Exports from "core/export-values";
 import SerializedObjectCollection from "core/serialized-map";
 import Collection from "database/collection";
 import fs from "fs-extra";
@@ -12,9 +12,17 @@ import ScriptCollection from "scripting/script-collection";
 
 import System from "./system";
 
+/**
+ * A system of the server which handles all of the gameplay logic that is executed on the server. This
+ * executes the gameplay logic within a separate isolate, so that player scripting is able to interact
+ * with it easily.
+ *
+ * @export
+ * @class GameSystem
+ * @extends {System}
+ * @module core
+ */
 export default class GameSystem extends System {
-    // TODO: Make this automatically query the scripts folder
-    // Both for compilation and for module resolution
     public static readonly scriptedServerSubsystemDir = path.join(
         process.cwd(),
         "./scripts/",
@@ -35,6 +43,16 @@ export default class GameSystem extends System {
     private _collections: {[name: string]: Collection};
     private _generatedChunkCollection: Collection;
     private _mapLoaded: boolean = false;
+    private _playersExecutedThisFrame: Set<string>;
+    /**
+     * Creates an instance of GameSystem.
+     * @param {number} tickRate The tick rate to sent to the game portion.
+     * @param {string} systemScriptDirectory The directory where the game scripts are located.
+     * @param {string[]} playerExcludeFiles A list of files to exclude from the shared resource list
+     * @param {{[name: string]: Collection}} collections The database collections to use
+     * @param {Collection} generatedChunkCollection The collection to use for retrieving already generated chunks
+     * @memberof GameSystem
+     */
     constructor(
             tickRate: number,
             systemScriptDirectory: string,
@@ -50,6 +68,7 @@ export default class GameSystem extends System {
         this._collections = collections;
         this._generatedChunkCollection = generatedChunkCollection;
         this._cachedPlayerScripts = new Map<string, {time: number, script: Script}>();
+        this._playersExecutedThisFrame = new Set<string>();
 
         const fileDirs = this._getDirsRecursive(this._scriptDir);
 
@@ -89,7 +108,14 @@ export default class GameSystem extends System {
         }
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "initialize", [tickRate]);
     }
-    public update(mapJustLoaded: boolean) {
+    /**
+     * Update the GameSystem's game state by one tick
+     *
+     * @param {boolean} [mapJustLoaded=false] Whether a map was just loaded or not.
+     * @returns The exported values resulting from the game state change.
+     * @memberof GameSystem
+     */
+    public update(mapJustLoaded: boolean = false) {
         const profile = process.hrtime();
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -108,12 +134,24 @@ export default class GameSystem extends System {
         result.messages = result.messages.concat(this._messageQueue);
         this._messageQueue = [];
         const totalTime = process.hrtime(profile);
+        this._playersExecutedThisFrame.clear();
 
-        return result;
+        return result as Exports;
     }
+    /**
+     * Recover the GameSystem after a timeout was encountered.
+     *
+     * @memberof GameSystem
+     */
     public recover() {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "recoverFromTimeout");
     }
+    /**
+     * Create a player within the game isolate that is attached to a particular client.
+     *
+     * @param {Client} client The client to create the player of
+     * @memberof GameSystem
+     */
     public async createPlayer(client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -250,6 +288,12 @@ export default class GameSystem extends System {
             ]
         );
     }
+    /**
+     * Delete the game-side player of a particular client
+     *
+     * @param {Client} client The client to delete the player of
+     * @memberof GameSystem
+     */
     public deletePlayer(client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -257,6 +301,14 @@ export default class GameSystem extends System {
             [client.id]
         );
     }
+    /**
+     * Pass a key input to the game isolate
+     *
+     * @param {number} key The key code to pass
+     * @param {number} state The state of the key
+     * @param {Client} client The client the key press comes from
+     * @memberof GameSystem
+     */
     public handleKeyInput(key: number, state: number, client: Client) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -268,6 +320,13 @@ export default class GameSystem extends System {
             ]
         );
     }
+    /**
+     * Create a prefab from an entity within the game isolate
+     *
+     * @param {string} entityID The ID of the entity to create the prefab from
+     * @param {Client} client The client to create the prefab for
+     * @memberof GameSystem
+     */
     public async createPrefab(entityID: string, client: Client) {
         const prefab = this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -278,6 +337,16 @@ export default class GameSystem extends System {
             this.makePrefabResource!("New Prefab", prefab, client.username);
         }
     }
+    /**
+     * Create an entity at a particular position.
+     *
+     * @param {string} prefabID The prefab resource ID to create the entity from. Empty string is no prefab.
+     * @param {number} x The x coordinate to create the entity at.
+     * @param {number} y The y coordinate to create the entity at.
+     * @param {Client} client The client creating the entity.
+     * @returns
+     * @memberof GameSystem
+     */
     public async createEntityAt(prefabID: string, x: number, y: number, client: Client) {
         if (prefabID !== "") {
             const res = await this.getResourceByID!(prefabID);
@@ -340,12 +409,31 @@ export default class GameSystem extends System {
             ]
         );
     }
+    /**
+     * Delete a game entity of a particular ID
+     *
+     * @param {string} id The ID of the entity to delete.
+     * @memberof GameSystem
+     */
     public deleteEntity(id: string) {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "deleteEntity", [id]);
     }
+    /**
+     * Set a player's inspected entity
+     *
+     * @param {Client} player The client to set the player's inspected entity for.
+     * @param {string} [entityID] The entity to inspect. Undefined is for inspecting no entity.
+     * @memberof GameSystem
+     */
     public setPlayerEntityInspection(player: Client, entityID?: string) {
         this._scriptCollection.execute(GameSystem.scriptedServerSubsystemDir, "inspectEntity", [player.id, entityID]);
     }
+    /**
+     * Remove a component from its entity
+     *
+     * @param {string} componentID The component ID of the component to remove.
+     * @memberof GameSystem
+     */
     public removeComponent(componentID: string) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -353,6 +441,15 @@ export default class GameSystem extends System {
             [componentID]
         );
     }
+    /**
+     * Execute an existing resource script.
+     *
+     * @param {string} resourceID The ID of the script resource to execute.
+     * @param {string} args The execution arguments to send to the resource.
+     * @param {Client} client The client to execute the resource under.
+     * @param {string} [entityID] The entity the script is being executed on. Undefined if there is no entity.
+     * @memberof GameSystem
+     */
     public async runResourcePlayerScript(
             resourceID: string,
             args: string,
@@ -387,13 +484,21 @@ export default class GameSystem extends System {
             );
         }
     }
+    /**
+     * Execute a generic script from a string.
+     *
+     * @param {string} script The script to execute.
+     * @param {Client} client The client to execute the script under.
+     * @memberof GameSystem
+     */
     public async runGenericPlayerScript(script: string, client: Client) {
+        let scriptArray;
         try {
-            const result = (await this.runPlayerScript("", script, "", client))[""].result;
-            if (result !== undefined) {
+            scriptArray = (await this.runPlayerScript("", script, "", client));
+            if (scriptArray !== undefined && scriptArray[""].result !== undefined) {
                 this.addMessageToQueue(
                     [client.id],
-                    `${script} Result: ${result}`
+                    `${script} Result: ${scriptArray[""].result}`
                 );
             }
         }
@@ -401,9 +506,26 @@ export default class GameSystem extends System {
             this.addMessageToQueue([client.id],
                 `<${err.stack}>`
             );
-            console.log(err);
+        }
+        finally {
+            if (scriptArray !== undefined) {
+                scriptArray[""].release();
+            }
         }
     }
+    /**
+     * Run a script using a code string.
+     * If the code exports a component, it will add it to the entity.
+     *
+     * @param {string} filename The file name to use for the script.
+     * @param {string} code The code to execute.
+     * @param {string} args The arguments to pass to the code.
+     * @param {Client} client The client that is executing the code.
+     * @param {string} [entityID] The entity the code is executing on. Undefined if there's no entity.
+     * @param {string} [className] The class name to use for anything exported from the code.
+     * @returns The list of scripts that were built on success, undefined on failure.
+     * @memberof GameSystem
+     */
     public async runPlayerScript(
             filename: string,
             code: string,
@@ -411,6 +533,10 @@ export default class GameSystem extends System {
             client: Client,
             entityID?: string,
             className?: string) {
+        if (this._playersExecutedThisFrame.has(client.id)) {
+            return;
+        }
+        this._playersExecutedThisFrame.add(client.id);
         let apply = true;
         let entityValue: IVM.Reference<any> | undefined;
         if (entityID === undefined) {
@@ -476,16 +602,35 @@ export default class GameSystem extends System {
         return scripts;
     }
 
+    /**
+     * Add a chat message to the chat message queue to send to the message system.
+     *
+     * @param {string[]} clients The clients to send the chat message to.
+     * @param {string} message The chat message to send.
+     * @memberof GameSystem
+     */
     public addMessageToQueue(clients: string[], message: string) {
         this._messageQueue.push({recipient: clients, message});
     }
 
+    /**
+     * Send out the default code resources to be added to a shared resource listing.
+     *
+     * @memberof GameSystem
+     */
     public async loadDefaultCodeResources() {
         if (this.addResources !== undefined) {
             await this.addResources(this._playerFileDirs);
         }
     }
 
+    /**
+     * Set the entity that a player is controlling.
+     *
+     * @param {Client} client The client to set the player's control state for.
+     * @param {string} [entityID] The entity to control, undefined to not control any entity.
+     * @memberof GameSystem
+     */
     public setPlayerControl(client: Client, entityID?: string) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -497,6 +642,14 @@ export default class GameSystem extends System {
         );
     }
 
+    /**
+     * Change a component's meta info.
+     *
+     * @param {string} componentID The ID of the component to change the meta information for.
+     * @param {string} property The name of the meta info property to change.
+     * @param {string} value The value to set the meta info property to.
+     * @memberof GameSystem
+     */
     public changeComponentMeta(componentID: string, property: string, value: string) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -509,6 +662,13 @@ export default class GameSystem extends System {
         );
     }
 
+    /**
+     * Set a component's enable state.
+     *
+     * @param {string} componentID The ID of the component to set the enable state for.
+     * @param {boolean} state Whether to enable or disable the component.
+     * @memberof GameSystem
+     */
     public setComponentEnableState(componentID: string, state: boolean) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -520,6 +680,13 @@ export default class GameSystem extends System {
         );
     }
 
+    /**
+     * Update the internal code resource list kept in the game isolate.
+     *
+     * @param {Client} player The client to update the resource of.
+     * @param {Resource[]} resources The resources belonging to that client.
+     * @memberof GameSystem
+     */
     public updateResources(player: Client, resources: Resource[]) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -531,6 +698,11 @@ export default class GameSystem extends System {
         );
     }
 
+    /**
+     * Store the game map inside of a database.
+     *
+     * @memberof GameSystem
+     */
     public async saveMap() {
         this.addMessageToQueue([], `Saving map...`);
         await this._scriptCollection.executeAsync(
@@ -571,6 +743,11 @@ export default class GameSystem extends System {
         console.log(`Map saved at ${new Date().toString()}. (${map.objects.length} objects)`);
     }
 
+    /**
+     * Load the map data from a database
+     *
+     * @memberof GameSystem
+     */
     public async loadMap() {
         this._mapLoaded = true;
         const fullMap = {} as SerializedObjectCollection;
@@ -663,6 +840,12 @@ export default class GameSystem extends System {
         }
     }
 
+    /**
+     * Set whether the map should auto generate or not.
+     *
+     * @param {boolean} value True if the map should auto generate, false if it shouldn't
+     * @memberof GameSystem
+     */
     public setMapGenState(value: boolean) {
         this._scriptCollection.execute(
             GameSystem.scriptedServerSubsystemDir,
@@ -671,6 +854,16 @@ export default class GameSystem extends System {
         );
     }
 
+    /**
+     * A callback used for preliminary module resolution.
+     * This is used to determine if other scripts also need to be executed.
+     *
+     * @private
+     * @param {string} modulePath The path of the module being resolved
+     * @param {{[filename: string]: Resource}} resourcesByFilename The list of resources by their paths
+     * @returns
+     * @memberof GameSystem
+     */
     private _preresolveModule(modulePath: string, resourcesByFilename: {[filename: string]: Resource}) {
         let pathsToTry = [modulePath];
         const extension = path.extname(modulePath);
@@ -699,6 +892,17 @@ export default class GameSystem extends System {
         }
     }
 
+    /**
+     * A callback used for module resolution.
+     * This is used to give cached modules during execution.
+     *
+     * @private
+     * @param {{[path: string]: IVM.Module}} buildingScripts The scripts that are currently being built
+     * @param {string} modulePath The path of the module being resolved
+     * @param {{[filename: string]: Resource}} resourcesByFilename A list of resources by their paths
+     * @returns
+     * @memberof GameSystem
+     */
     private _resolveModule(
             buildingScripts: {[path: string]: IVM.Module},
             modulePath: string,
@@ -741,6 +945,15 @@ export default class GameSystem extends System {
         throw new Error("No module \"" + modulePath + "\" is available.");
     }
 
+    /**
+     * Get all of the files recursively included in a file system directory
+     *
+     * @private
+     * @param {string} dir The directory to check
+     * @param {string[]} [exclude=[]] Files to exclude
+     * @returns A list of files
+     * @memberof GameSystem
+     */
     private _getDirsRecursive(dir: string, exclude: string[] = []) {
         return fs.readdirSync(dir).reduce((result, elemPath) => {
             const fullPath = path.join(dir, elemPath);
@@ -755,14 +968,36 @@ export default class GameSystem extends System {
         }, [] as string[]);
     }
 
+    /**
+     * Retrieve a script resource using the loadResource callback
+     *
+     * @private
+     * @param {string} id The ID of the resource to retrieve
+     * @returns The retrieved resource
+     * @memberof GameSystem
+     */
     private async _loadScriptResource(id: string) {
         return await this.loadResource!(id, "utf8");
     }
 
+    /**
+     * Retrieve a script resource synchronously using the loadResourceSync callback
+     *
+     * @private
+     * @param {string} id The ID of the resource to retrieve
+     * @returns The retrieved resource
+     * @memberof GameSystem
+     */
     private _loadScriptResourceSync(id: string) {
         return this.loadResourceSync!(id, "utf8");
     }
 
+    /**
+     * Whether the map had been loaded or not
+     *
+     * @readonly
+     * @memberof GameSystem
+     */
     get mapLoaded() {
         return this._mapLoaded;
     }

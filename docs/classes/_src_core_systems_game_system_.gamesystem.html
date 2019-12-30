@@ -1,0 +1,1809 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>GameSystem | scriptbox - v0.0.1</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">scriptbox - v0.0.1</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="../modules/_src_core_systems_game_system_.html">&quot;src/core/systems/game-system&quot;</a>
+				</li>
+				<li>
+					<a href="_src_core_systems_game_system_.gamesystem.html">GameSystem</a>
+				</li>
+			</ul>
+			<h1>Class GameSystem</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A system of the server which handles all of the gameplay logic that is executed on the server. This
+							executes the gameplay logic within a separate isolate, so that player scripting is able to interact
+						with it easily.</p>
+					</div>
+					<dl class="tsd-comment-tags">
+						<dt>export</dt>
+						<dd></dd>
+						<dt>class</dt>
+						<dd><p>GameSystem</p>
+						</dd>
+						<dt>extends</dt>
+						<dd><p>{System}</p>
+						</dd>
+					</dl>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<a href="_src_core_systems_system_.system.html" class="tsd-signature-type">System</a>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">GameSystem</span>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_cachedplayerscripts" class="tsd-kind-icon">_cached<wbr>Player<wbr>Scripts</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_collections" class="tsd-kind-icon">_collections</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_generatedchunkcollection" class="tsd-kind-icon">_generated<wbr>Chunk<wbr>Collection</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_maploaded" class="tsd-kind-icon">_map<wbr>Loaded</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_messagequeue" class="tsd-kind-icon">_message<wbr>Queue</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_playerfiledirs" class="tsd-kind-icon">_player<wbr>File<wbr>Dirs</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_playersexecutedthisframe" class="tsd-kind-icon">_players<wbr>Executed<wbr>This<wbr>Frame</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_scriptcollection" class="tsd-kind-icon">_script<wbr>Collection</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_scriptdir" class="tsd-kind-icon">_script<wbr>Dir</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_validplayermodules" class="tsd-kind-icon">_valid<wbr>Player<wbr>Modules</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#addresources" class="tsd-kind-icon">add<wbr>Resources</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#getplayerresources" class="tsd-kind-icon">get<wbr>Player<wbr>Resources</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#getresourcebyid" class="tsd-kind-icon">get<wbr>Resource<wbr>ByID</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#loadresource" class="tsd-kind-icon">load<wbr>Resource</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#loadresourcesync" class="tsd-kind-icon">load<wbr>Resource<wbr>Sync</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#makeprefabresource" class="tsd-kind-icon">make<wbr>Prefab<wbr>Resource</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><a href="_src_core_systems_game_system_.gamesystem.html#scriptedserversubsystemdir" class="tsd-kind-icon">scripted<wbr>Server<wbr>Subsystem<wbr>Dir</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#maploaded" class="tsd-kind-icon">map<wbr>Loaded</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_getdirsrecursive" class="tsd-kind-icon">_get<wbr>Dirs<wbr>Recursive</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_loadscriptresource" class="tsd-kind-icon">_load<wbr>Script<wbr>Resource</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_loadscriptresourcesync" class="tsd-kind-icon">_load<wbr>Script<wbr>Resource<wbr>Sync</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_preresolvemodule" class="tsd-kind-icon">_preresolve<wbr>Module</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="_src_core_systems_game_system_.gamesystem.html#_resolvemodule" class="tsd-kind-icon">_resolve<wbr>Module</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#addmessagetoqueue" class="tsd-kind-icon">add<wbr>Message<wbr>ToQueue</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#changecomponentmeta" class="tsd-kind-icon">change<wbr>Component<wbr>Meta</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#createentityat" class="tsd-kind-icon">create<wbr>Entity<wbr>At</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#createplayer" class="tsd-kind-icon">create<wbr>Player</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#createprefab" class="tsd-kind-icon">create<wbr>Prefab</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#deleteentity" class="tsd-kind-icon">delete<wbr>Entity</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#deleteplayer" class="tsd-kind-icon">delete<wbr>Player</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#handlekeyinput" class="tsd-kind-icon">handle<wbr>Key<wbr>Input</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#loaddefaultcoderesources" class="tsd-kind-icon">load<wbr>Default<wbr>Code<wbr>Resources</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#loadmap" class="tsd-kind-icon">load<wbr>Map</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#recover" class="tsd-kind-icon">recover</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#removecomponent" class="tsd-kind-icon">remove<wbr>Component</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#rungenericplayerscript" class="tsd-kind-icon">run<wbr>Generic<wbr>Player<wbr>Script</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#runplayerscript" class="tsd-kind-icon">run<wbr>Player<wbr>Script</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#runresourceplayerscript" class="tsd-kind-icon">run<wbr>Resource<wbr>Player<wbr>Script</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#savemap" class="tsd-kind-icon">save<wbr>Map</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#setcomponentenablestate" class="tsd-kind-icon">set<wbr>Component<wbr>Enable<wbr>State</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#setmapgenstate" class="tsd-kind-icon">set<wbr>Map<wbr>Gen<wbr>State</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#setplayercontrol" class="tsd-kind-icon">set<wbr>Player<wbr>Control</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#setplayerentityinspection" class="tsd-kind-icon">set<wbr>Player<wbr>Entity<wbr>Inspection</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#update" class="tsd-kind-icon">update</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_src_core_systems_game_system_.gamesystem.html#updateresources" class="tsd-kind-icon">update<wbr>Resources</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Game<wbr>System<span class="tsd-signature-symbol">(</span>tickRate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, systemScriptDirectory<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, playerExcludeFiles<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, collections<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, generatedChunkCollection<span class="tsd-signature-symbol">: </span><a href="_src_database_collection_.collection.html" class="tsd-signature-type">Collection</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_src_core_systems_game_system_.gamesystem.html" class="tsd-signature-type">GameSystem</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L46">src/core/systems/game-system.ts:46</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates an instance of GameSystem.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>tickRate: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The tick rate to sent to the game portion.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>systemScriptDirectory: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The directory where the game scripts are located.</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>playerExcludeFiles: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>A list of files to exclude from the shared resource list</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5>collections: <span class="tsd-signature-type">object</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The database collections to use</p>
+										</div>
+									</div>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-index-signature">
+											<h5><span class="tsd-signature-symbol">[</span>name: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="_src_database_collection_.collection.html" class="tsd-signature-type">Collection</a></h5>
+										</li>
+									</ul>
+								</li>
+								<li>
+									<h5>generatedChunkCollection: <a href="_src_database_collection_.collection.html" class="tsd-signature-type">Collection</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The collection to use for retrieving already generated chunks</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="_src_core_systems_game_system_.gamesystem.html" class="tsd-signature-type">GameSystem</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_cachedplayerscripts" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _cached<wbr>Player<wbr>Scripts</h3>
+					<div class="tsd-signature tsd-kind-icon">_cached<wbr>Player<wbr>Scripts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L39">src/core/systems/game-system.ts:39</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_collections" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _collections</h3>
+					<div class="tsd-signature tsd-kind-icon">_collections<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L43">src/core/systems/game-system.ts:43</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>name: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="_src_database_collection_.collection.html" class="tsd-signature-type">Collection</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_generatedchunkcollection" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _generated<wbr>Chunk<wbr>Collection</h3>
+					<div class="tsd-signature tsd-kind-icon">_generated<wbr>Chunk<wbr>Collection<span class="tsd-signature-symbol">:</span> <a href="_src_database_collection_.collection.html" class="tsd-signature-type">Collection</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L44">src/core/systems/game-system.ts:44</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_maploaded" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _map<wbr>Loaded</h3>
+					<div class="tsd-signature tsd-kind-icon">_map<wbr>Loaded<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L45">src/core/systems/game-system.ts:45</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_messagequeue" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _message<wbr>Queue</h3>
+					<div class="tsd-signature tsd-kind-icon">_message<wbr>Queue<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L37">src/core/systems/game-system.ts:37</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_playerfiledirs" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _player<wbr>File<wbr>Dirs</h3>
+					<div class="tsd-signature tsd-kind-icon">_player<wbr>File<wbr>Dirs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L41">src/core/systems/game-system.ts:41</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_playersexecutedthisframe" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _players<wbr>Executed<wbr>This<wbr>Frame</h3>
+					<div class="tsd-signature tsd-kind-icon">_players<wbr>Executed<wbr>This<wbr>Frame<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L46">src/core/systems/game-system.ts:46</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_scriptcollection" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _script<wbr>Collection</h3>
+					<div class="tsd-signature tsd-kind-icon">_script<wbr>Collection<span class="tsd-signature-symbol">:</span> <a href="_src_scripting_script_collection_.scriptcollection.html" class="tsd-signature-type">ScriptCollection</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L38">src/core/systems/game-system.ts:38</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_scriptdir" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _script<wbr>Dir</h3>
+					<div class="tsd-signature tsd-kind-icon">_script<wbr>Dir<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L40">src/core/systems/game-system.ts:40</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_validplayermodules" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _valid<wbr>Player<wbr>Modules</h3>
+					<div class="tsd-signature tsd-kind-icon">_valid<wbr>Player<wbr>Modules<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L42">src/core/systems/game-system.ts:42</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>name: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="addresources" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> add<wbr>Resources</h3>
+					<div class="tsd-signature tsd-kind-icon">add<wbr>Resources<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L35">src/core/systems/game-system.ts:35</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="getplayerresources" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> get<wbr>Player<wbr>Resources</h3>
+					<div class="tsd-signature tsd-kind-icon">get<wbr>Player<wbr>Resources<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L32">src/core/systems/game-system.ts:32</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="getresourcebyid" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> get<wbr>Resource<wbr>ByID</h3>
+					<div class="tsd-signature tsd-kind-icon">get<wbr>Resource<wbr>ByID<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L31">src/core/systems/game-system.ts:31</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="loadresource" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> load<wbr>Resource</h3>
+					<div class="tsd-signature tsd-kind-icon">load<wbr>Resource<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L33">src/core/systems/game-system.ts:33</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="loadresourcesync" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> load<wbr>Resource<wbr>Sync</h3>
+					<div class="tsd-signature tsd-kind-icon">load<wbr>Resource<wbr>Sync<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L34">src/core/systems/game-system.ts:34</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="makeprefabresource" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> make<wbr>Prefab<wbr>Resource</h3>
+					<div class="tsd-signature tsd-kind-icon">make<wbr>Prefab<wbr>Resource<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L36">src/core/systems/game-system.ts:36</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-static">
+					<a name="scriptedserversubsystemdir" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> scripted<wbr>Server<wbr>Subsystem<wbr>Dir</h3>
+					<div class="tsd-signature tsd-kind-icon">scripted<wbr>Server<wbr>Subsystem<wbr>Dir<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;path.join(process.cwd(),&quot;./scripts/&quot;,&quot;./scripted-server-subsystem.ts&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L26">src/core/systems/game-system.ts:26</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="maploaded" class="tsd-anchor"></a>
+					<h3>map<wbr>Loaded</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> mapLoaded<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L1001">src/core/systems/game-system.ts:1001</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Whether the map had been loaded or not</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>readonly</dt>
+									<dd></dd>
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_getdirsrecursive" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _get<wbr>Dirs<wbr>Recursive</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_get<wbr>Dirs<wbr>Recursive<span class="tsd-signature-symbol">(</span>dir<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, exclude<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L957">src/core/systems/game-system.ts:957</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get all of the files recursively included in a file system directory</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>dir: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The directory to check</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> exclude: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h4>
+							<p>A list of files</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_loadscriptresource" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _load<wbr>Script<wbr>Resource</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_load<wbr>Script<wbr>Resource<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L979">src/core/systems/game-system.ts:979</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Retrieve a script resource using the loadResource callback</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the resource to retrieve</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>The retrieved resource</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_loadscriptresourcesync" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _load<wbr>Script<wbr>Resource<wbr>Sync</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_load<wbr>Script<wbr>Resource<wbr>Sync<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L991">src/core/systems/game-system.ts:991</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Retrieve a script resource synchronously using the loadResourceSync callback</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the resource to retrieve</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+							<p>The retrieved resource</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_preresolvemodule" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _preresolve<wbr>Module</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_preresolve<wbr>Module<span class="tsd-signature-symbol">(</span>modulePath<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, resourcesByFilename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L867">src/core/systems/game-system.ts:867</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A callback used for preliminary module resolution.
+									This is used to determine if other scripts also need to be executed.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>modulePath: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The path of the module being resolved</p>
+									</div>
+								</li>
+								<li>
+									<h5>resourcesByFilename: <span class="tsd-signature-type">object</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The list of resources by their paths</p>
+									</div>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-index-signature">
+											<h5><span class="tsd-signature-symbol">[</span>filename: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="_src_resource_management_resource_.resource.html" class="tsd-signature-type">Resource</a></h5>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]</span>
+							</h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_resolvemodule" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _resolve<wbr>Module</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_resolve<wbr>Module<span class="tsd-signature-symbol">(</span>buildingScripts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, modulePath<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, resourcesByFilename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Module</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L906">src/core/systems/game-system.ts:906</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A callback used for module resolution.
+									This is used to give cached modules during execution.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>buildingScripts: <span class="tsd-signature-type">object</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The scripts that are currently being built</p>
+									</div>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-index-signature">
+											<h5><span class="tsd-signature-symbol">[</span>path: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">Module</span></h5>
+										</li>
+									</ul>
+								</li>
+								<li>
+									<h5>modulePath: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The path of the module being resolved</p>
+									</div>
+								</li>
+								<li>
+									<h5>resourcesByFilename: <span class="tsd-signature-type">object</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A list of resources by their paths</p>
+									</div>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-index-signature">
+											<h5><span class="tsd-signature-symbol">[</span>filename: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="_src_resource_management_resource_.resource.html" class="tsd-signature-type">Resource</a></h5>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Module</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="addmessagetoqueue" class="tsd-anchor"></a>
+					<h3>add<wbr>Message<wbr>ToQueue</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Message<wbr>ToQueue<span class="tsd-signature-symbol">(</span>clients<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L612">src/core/systems/game-system.ts:612</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Add a chat message to the chat message queue to send to the message system.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>clients: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The clients to send the chat message to.</p>
+									</div>
+								</li>
+								<li>
+									<h5>message: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The chat message to send.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="changecomponentmeta" class="tsd-anchor"></a>
+					<h3>change<wbr>Component<wbr>Meta</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">change<wbr>Component<wbr>Meta<span class="tsd-signature-symbol">(</span>componentID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, property<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L653">src/core/systems/game-system.ts:653</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Change a component&#39;s meta info.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>componentID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the component to change the meta information for.</p>
+									</div>
+								</li>
+								<li>
+									<h5>property: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The name of the meta info property to change.</p>
+									</div>
+								</li>
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The value to set the meta info property to.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createentityat" class="tsd-anchor"></a>
+					<h3>create<wbr>Entity<wbr>At</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Entity<wbr>At<span class="tsd-signature-symbol">(</span>prefabID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L350">src/core/systems/game-system.ts:350</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create an entity at a particular position.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>prefabID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The prefab resource ID to create the entity from. Empty string is no prefab.</p>
+									</div>
+								</li>
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The x coordinate to create the entity at.</p>
+									</div>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The y coordinate to create the entity at.</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client creating the entity.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createplayer" class="tsd-anchor"></a>
+					<h3>create<wbr>Player</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Player<span class="tsd-signature-symbol">(</span>client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L155">src/core/systems/game-system.ts:155</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a player within the game isolate that is attached to a particular client.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to create the player of</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createprefab" class="tsd-anchor"></a>
+					<h3>create<wbr>Prefab</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Prefab<span class="tsd-signature-symbol">(</span>entityID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L330">src/core/systems/game-system.ts:330</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a prefab from an entity within the game isolate</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>entityID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the entity to create the prefab from</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to create the prefab for</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="deleteentity" class="tsd-anchor"></a>
+					<h3>delete<wbr>Entity</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">delete<wbr>Entity<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L418">src/core/systems/game-system.ts:418</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Delete a game entity of a particular ID</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the entity to delete.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="deleteplayer" class="tsd-anchor"></a>
+					<h3>delete<wbr>Player</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">delete<wbr>Player<span class="tsd-signature-symbol">(</span>client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L297">src/core/systems/game-system.ts:297</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Delete the game-side player of a particular client</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to delete the player of</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="handlekeyinput" class="tsd-anchor"></a>
+					<h3>handle<wbr>Key<wbr>Input</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">handle<wbr>Key<wbr>Input<span class="tsd-signature-symbol">(</span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L312">src/core/systems/game-system.ts:312</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Pass a key input to the game isolate</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>key: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The key code to pass</p>
+									</div>
+								</li>
+								<li>
+									<h5>state: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The state of the key</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client the key press comes from</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="loaddefaultcoderesources" class="tsd-anchor"></a>
+					<h3>load<wbr>Default<wbr>Code<wbr>Resources</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">load<wbr>Default<wbr>Code<wbr>Resources<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L621">src/core/systems/game-system.ts:621</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Send out the default code resources to be added to a shared resource listing.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="loadmap" class="tsd-anchor"></a>
+					<h3>load<wbr>Map</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">load<wbr>Map<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L751">src/core/systems/game-system.ts:751</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Load the map data from a database</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="recover" class="tsd-anchor"></a>
+					<h3>recover</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">recover<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L146">src/core/systems/game-system.ts:146</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Recover the GameSystem after a timeout was encountered.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="removecomponent" class="tsd-anchor"></a>
+					<h3>remove<wbr>Component</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Component<span class="tsd-signature-symbol">(</span>componentID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L437">src/core/systems/game-system.ts:437</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Remove a component from its entity</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>componentID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The component ID of the component to remove.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="rungenericplayerscript" class="tsd-anchor"></a>
+					<h3>run<wbr>Generic<wbr>Player<wbr>Script</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">run<wbr>Generic<wbr>Player<wbr>Script<span class="tsd-signature-symbol">(</span>script<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L494">src/core/systems/game-system.ts:494</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Execute a generic script from a string.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>script: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The script to execute.</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to execute the script under.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="runplayerscript" class="tsd-anchor"></a>
+					<h3>run<wbr>Player<wbr>Script</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">run<wbr>Player<wbr>Script<span class="tsd-signature-symbol">(</span>filename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, code<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a>, entityID<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span>, className<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L529">src/core/systems/game-system.ts:529</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Run a script using a code string.
+									If the code exports a component, it will add it to the entity.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>filename: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The file name to use for the script.</p>
+									</div>
+								</li>
+								<li>
+									<h5>code: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The code to execute.</p>
+									</div>
+								</li>
+								<li>
+									<h5>args: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The arguments to pass to the code.</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client that is executing the code.</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> entityID: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> className: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>The list of scripts that were built on success, undefined on failure.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="runresourceplayerscript" class="tsd-anchor"></a>
+					<h3>run<wbr>Resource<wbr>Player<wbr>Script</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">run<wbr>Resource<wbr>Player<wbr>Script<span class="tsd-signature-symbol">(</span>resourceID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a>, entityID<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L453">src/core/systems/game-system.ts:453</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Execute an existing resource script.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>resourceID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the script resource to execute.</p>
+									</div>
+								</li>
+								<li>
+									<h5>args: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The execution arguments to send to the resource.</p>
+									</div>
+								</li>
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to execute the resource under.</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> entityID: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="savemap" class="tsd-anchor"></a>
+					<h3>save<wbr>Map</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">save<wbr>Map<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L706">src/core/systems/game-system.ts:706</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Store the game map inside of a database.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setcomponentenablestate" class="tsd-anchor"></a>
+					<h3>set<wbr>Component<wbr>Enable<wbr>State</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Component<wbr>Enable<wbr>State<span class="tsd-signature-symbol">(</span>componentID<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L672">src/core/systems/game-system.ts:672</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set a component&#39;s enable state.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>componentID: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the component to set the enable state for.</p>
+									</div>
+								</li>
+								<li>
+									<h5>state: <span class="tsd-signature-type">boolean</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Whether to enable or disable the component.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setmapgenstate" class="tsd-anchor"></a>
+					<h3>set<wbr>Map<wbr>Gen<wbr>State</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Map<wbr>Gen<wbr>State<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L849">src/core/systems/game-system.ts:849</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set whether the map should auto generate or not.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">boolean</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>True if the map should auto generate, false if it shouldn&#39;t</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setplayercontrol" class="tsd-anchor"></a>
+					<h3>set<wbr>Player<wbr>Control</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Player<wbr>Control<span class="tsd-signature-symbol">(</span>client<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a>, entityID<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L634">src/core/systems/game-system.ts:634</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the entity that a player is controlling.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>client: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to set the player&#39;s control state for.</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> entityID: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setplayerentityinspection" class="tsd-anchor"></a>
+					<h3>set<wbr>Player<wbr>Entity<wbr>Inspection</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Player<wbr>Entity<wbr>Inspection<span class="tsd-signature-symbol">(</span>player<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a>, entityID<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L428">src/core/systems/game-system.ts:428</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set a player&#39;s inspected entity</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>player: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to set the player&#39;s inspected entity for.</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> entityID: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="update" class="tsd-anchor"></a>
+					<h3>update</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">update<span class="tsd-signature-symbol">(</span>mapJustLoaded<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_src_core_export_values_.exports.html" class="tsd-signature-type">Exports</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L118">src/core/systems/game-system.ts:118</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Update the GameSystem&#39;s game state by one tick</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> mapJustLoaded: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/_src_core_export_values_.exports.html" class="tsd-signature-type">Exports</a></h4>
+							<p>The exported values resulting from the game state change.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="updateresources" class="tsd-anchor"></a>
+					<h3>update<wbr>Resources</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">update<wbr>Resources<span class="tsd-signature-symbol">(</span>player<span class="tsd-signature-symbol">: </span><a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a>, resources<span class="tsd-signature-symbol">: </span><a href="_src_resource_management_resource_.resource.html" class="tsd-signature-type">Resource</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/AaronCFreytag/scriptbox/blob/2d398da/src/core/systems/game-system.ts#L690">src/core/systems/game-system.ts:690</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Update the internal code resource list kept in the game isolate.</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>memberof</dt>
+									<dd><p>GameSystem</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>player: <a href="_src_core_client_.client.html" class="tsd-signature-type">Client</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The client to update the resource of.</p>
+									</div>
+								</li>
+								<li>
+									<h5>resources: <a href="_src_resource_management_resource_.resource.html" class="tsd-signature-type">Resource</a><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The resources belonging to that client.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../globals.html"><em>Globals</em></a>
+					</li>
+					<li class="current tsd-kind-external-module">
+						<a href="../modules/_src_core_systems_game_system_.html">&quot;src/core/systems/game-<wbr>system&quot;</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class tsd-parent-kind-external-module">
+						<a href="_src_core_systems_game_system_.gamesystem.html" class="tsd-kind-icon">Game<wbr>System</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_cachedplayerscripts" class="tsd-kind-icon">_cached<wbr>Player<wbr>Scripts</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_collections" class="tsd-kind-icon">_collections</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_generatedchunkcollection" class="tsd-kind-icon">_generated<wbr>Chunk<wbr>Collection</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_maploaded" class="tsd-kind-icon">_map<wbr>Loaded</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_messagequeue" class="tsd-kind-icon">_message<wbr>Queue</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_playerfiledirs" class="tsd-kind-icon">_player<wbr>File<wbr>Dirs</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_playersexecutedthisframe" class="tsd-kind-icon">_players<wbr>Executed<wbr>This<wbr>Frame</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_scriptcollection" class="tsd-kind-icon">_script<wbr>Collection</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_scriptdir" class="tsd-kind-icon">_script<wbr>Dir</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_validplayermodules" class="tsd-kind-icon">_valid<wbr>Player<wbr>Modules</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#addresources" class="tsd-kind-icon">add<wbr>Resources</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#getplayerresources" class="tsd-kind-icon">get<wbr>Player<wbr>Resources</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#getresourcebyid" class="tsd-kind-icon">get<wbr>Resource<wbr>ByID</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#loadresource" class="tsd-kind-icon">load<wbr>Resource</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#loadresourcesync" class="tsd-kind-icon">load<wbr>Resource<wbr>Sync</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#makeprefabresource" class="tsd-kind-icon">make<wbr>Prefab<wbr>Resource</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static">
+								<a href="_src_core_systems_game_system_.gamesystem.html#scriptedserversubsystemdir" class="tsd-kind-icon">scripted<wbr>Server<wbr>Subsystem<wbr>Dir</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#maploaded" class="tsd-kind-icon">map<wbr>Loaded</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_getdirsrecursive" class="tsd-kind-icon">_get<wbr>Dirs<wbr>Recursive</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_loadscriptresource" class="tsd-kind-icon">_load<wbr>Script<wbr>Resource</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_loadscriptresourcesync" class="tsd-kind-icon">_load<wbr>Script<wbr>Resource<wbr>Sync</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_preresolvemodule" class="tsd-kind-icon">_preresolve<wbr>Module</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="_src_core_systems_game_system_.gamesystem.html#_resolvemodule" class="tsd-kind-icon">_resolve<wbr>Module</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#addmessagetoqueue" class="tsd-kind-icon">add<wbr>Message<wbr>ToQueue</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#changecomponentmeta" class="tsd-kind-icon">change<wbr>Component<wbr>Meta</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#createentityat" class="tsd-kind-icon">create<wbr>Entity<wbr>At</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#createplayer" class="tsd-kind-icon">create<wbr>Player</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#createprefab" class="tsd-kind-icon">create<wbr>Prefab</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#deleteentity" class="tsd-kind-icon">delete<wbr>Entity</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#deleteplayer" class="tsd-kind-icon">delete<wbr>Player</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#handlekeyinput" class="tsd-kind-icon">handle<wbr>Key<wbr>Input</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#loaddefaultcoderesources" class="tsd-kind-icon">load<wbr>Default<wbr>Code<wbr>Resources</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#loadmap" class="tsd-kind-icon">load<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#recover" class="tsd-kind-icon">recover</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#removecomponent" class="tsd-kind-icon">remove<wbr>Component</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#rungenericplayerscript" class="tsd-kind-icon">run<wbr>Generic<wbr>Player<wbr>Script</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#runplayerscript" class="tsd-kind-icon">run<wbr>Player<wbr>Script</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#runresourceplayerscript" class="tsd-kind-icon">run<wbr>Resource<wbr>Player<wbr>Script</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#savemap" class="tsd-kind-icon">save<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#setcomponentenablestate" class="tsd-kind-icon">set<wbr>Component<wbr>Enable<wbr>State</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#setmapgenstate" class="tsd-kind-icon">set<wbr>Map<wbr>Gen<wbr>State</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#setplayercontrol" class="tsd-kind-icon">set<wbr>Player<wbr>Control</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#setplayerentityinspection" class="tsd-kind-icon">set<wbr>Player<wbr>Entity<wbr>Inspection</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#update" class="tsd-kind-icon">update</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_src_core_systems_game_system_.gamesystem.html#updateresources" class="tsd-kind-icon">update<wbr>Resources</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

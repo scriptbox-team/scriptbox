@@ -10,6 +10,10 @@ export enum ComponentOptionType {
     Array = "array"
 }
 
+/**
+ * The information for one property of a component.
+ * @module resource-management
+ */
 export default class ComponentOption {
     public static serialize(
             id: string,

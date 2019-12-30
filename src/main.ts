@@ -2,6 +2,7 @@
 import "module-alias/register";
 import ModuleAlias from "module-alias";
 import * as path from "path";
+import fs from "fs-extra";
 
 ModuleAlias.addAliases({
   core: path.join(__dirname, "core"),
@@ -17,4 +18,13 @@ import Server from "core/server";
 /* tslint:enable */
 
 // Create and start the server
-const serv = new Server({port: 7777, resourcePort: 7778});
+
+try {
+  fs.readJSON(path.join(__dirname, "config.json"))
+    .then((config) => {
+      const serv = new Server(config);
+    });
+}
+catch (err) {
+  console.error(err);
+}

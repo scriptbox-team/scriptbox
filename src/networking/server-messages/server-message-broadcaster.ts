@@ -10,6 +10,7 @@ import ServerMessage from "./server-message";
  *
  * @export
  * @class ServerMessageBroadcaster
+ * @module networking
  */
 export default class ServerMessageBroadcaster {
     private _packetCallback: ((client: number, event: ServerNetEvent) => void) | undefined;

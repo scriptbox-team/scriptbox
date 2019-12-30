@@ -32,6 +32,7 @@ import ClientTokenRequestPacket from "./packets/client-token-request-packet";
  *
  * @export
  * @class NetEventHandler
+ * @module networking
  */
 export default class NetEventHandler {
     public playerCreate?: (connectionID: number, packet: ClientConnectionPacket) => Client;

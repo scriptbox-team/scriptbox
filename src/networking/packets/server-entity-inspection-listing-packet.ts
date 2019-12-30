@@ -2,6 +2,14 @@ import _ from "lodash";
 import ComponentInfo from "resource-management/component-info";
 import Packet from "./packet";
 
+/**
+ * A packet containing entity inspection and component data information sent to the client.
+ *
+ * @export
+ * @class ServerEntityInspectionListingPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerEntityInspectionListingPacket extends Packet {
     public static deserialize(obj: any): ServerEntityInspectionListingPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

@@ -27,6 +27,7 @@ export enum ServerEventType {
  *
  * @export
  * @class ServerNetEvent
+ * @module networking
  */
 export default class ServerNetEvent {
     /**

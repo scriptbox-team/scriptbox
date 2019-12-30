@@ -6,6 +6,7 @@ import hrtime from "browser-process-hrtime";
  *
  * @export
  * @class GameLoop
+ * @module core
  */
 export default class GameLoop {
     private _funcToLoop: (delta: number) => void;

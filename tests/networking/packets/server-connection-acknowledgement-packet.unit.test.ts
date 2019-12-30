@@ -1,7 +1,7 @@
 import ServerConnectionAcknowledgementPacket from "networking/packets/server-connection-acknowledgement-packet";
 
-const serializedPacket = {};
-const packet = new ServerConnectionAcknowledgementPacket();
+const serializedPacket = {resourceServerIP: "192.168.0.1:7778"};
+const packet = new ServerConnectionAcknowledgementPacket("192.168.0.1:7778");
 
 describe("ServerConnectionAcknowledgementPacket", () => {
     test("serializes", () => {

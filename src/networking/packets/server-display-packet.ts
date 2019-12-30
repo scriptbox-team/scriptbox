@@ -2,6 +2,14 @@ import _ from "lodash";
 import RenderObject from "resource-management/render-object";
 import Packet from "./packet";
 
+/**
+ * A packet containing visual display information sent to the client.
+ *
+ * @export
+ * @class ServerDisplayPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerDisplayPacket extends Packet {
     public static deserialize(obj: any): ServerDisplayPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing script text to apply to a script resource.
+ *
+ * @export
+ * @class ServerEntityInspectionListingPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerScriptTextPacket extends Packet {
     public static deserialize(obj: any): ServerScriptTextPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

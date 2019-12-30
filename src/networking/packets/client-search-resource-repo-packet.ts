@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing search terms to find resources from the global repository
+ *
+ * @export
+ * @class ClientSearchResourceRepoPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientSearchResourceRepoPacket extends Packet {
     public static deserialize(obj: any): ClientSearchResourceRepoPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

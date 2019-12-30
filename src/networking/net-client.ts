@@ -34,6 +34,7 @@ interface NetClientConstructorOptions {
  *
  * @export
  * @class NetClient
+ * @module networking
  */
 export default class NetClient {
     private _emitter: EventEmitter;

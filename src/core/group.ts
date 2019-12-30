@@ -5,6 +5,7 @@
  *
  * @export
  * @enum {number}
+ * @module core
  */
 export enum GroupType {
     All,
@@ -17,6 +18,7 @@ export enum GroupType {
  *
  * @export
  * @class PlayerGroup
+ * @module core
  */
 export default class Group<T> {
     public groupType: GroupType;

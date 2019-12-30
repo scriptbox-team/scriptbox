@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing the deletion of an entity by its ID.
+ *
+ * @export
+ * @class ClientEntityDeletionPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientEntityDeletionPacket extends Packet {
     public static deserialize(obj: any): ClientEntityDeletionPacket | undefined {
         if (typeof obj === "object" && obj !== null) {
