@@ -22,14 +22,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[REPL-Style Script Execution](#repl-style-script-execution)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Resource Script Execution](#resource-script-execution)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Applied Resource Script Execution](#applied-resource-script-execution)  
-[**Scripting**](#scripting)    
-&nbsp;&nbsp;&nbsp;&nbsp;[Basics](#basics)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Default Resources](#default-resources)  
-&nbsp;&nbsp;&nbsp;&nbsp;[Important Features](#important-features)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Entities](#entities)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Components](#components)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Aspects](#aspects)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Actions and Action Instances](#actions-and-action-instances)  
 
 ## Gameplay
 ### Account Creation
