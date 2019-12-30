@@ -1,11 +1,13 @@
 import Packet from "./packet";
 
-export enum MetaType {
-    Resource,
-    Entity,
-    Component
-}
-
+/**
+ * A packet containing a change to a resource's meta information.
+ *
+ * @export
+ * @class ClientModifyMetadataPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientModifyMetadataPacket extends Packet {
     public static deserialize(obj: any): ClientModifyMetadataPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing the beginning of an entity inspection from a client.
+ *
+ * @export
+ * @class ClientEntityInspectionPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientEntityInspectionPacket extends Packet {
     public static deserialize(obj: any) {
         if (typeof obj === "object" && obj !== null) {

@@ -1,5 +1,9 @@
 import ComponentOption from "./component-option";
 
+/**
+ * The information for a single component of an entity inspection.
+ * @module resource-management
+ */
 export default class ComponentInfo {
     public static serialize(
         id: string,

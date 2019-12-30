@@ -15,13 +15,24 @@ interface ResourceFile {
     mimetype: string;
 }
 
+/**
+ * An HTTP server which can host player resources. This server both hosts the files themselves
+ * and the endpoints which clients interact with to make changes to the resources.
+ * @module networking
+ */
 export default class ResourceServer {
-    public onFileUpload?: (token: number, file: ResourceFile, resource?: string) => Promise<void>;
+    public onFileUpload?: (token: number, file: ResourceFile, resource?: string) => Promise<any>;
     public onFileDelete?: (token: number, resource: string) => void;
     private _app: express.Application;
     private _port: string;
     private _resourcePath: string;
     private _resourceContentType: Map<string, string>;
+    /**
+     * Creates an instance of ResourceServer.
+     * This hosts the HTTP server.
+     * @param {ResourceServerOptions} options The options to use for the resource server.
+     * @memberof ResourceServer
+     */
     constructor(options: ResourceServerOptions) {
         this._app = express();
         this._app.use(fileUpload());

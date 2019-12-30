@@ -1,0 +1,5 @@
+{
+    "port": 7777,
+    "resourcePort": 7778,
+    "loginValidationURL": "http://[::1]:9000/validate"
+}

@@ -2,6 +2,14 @@ import _ from "lodash";
 import Resource from "resource-management/resource";
 import Packet from "./packet";
 
+/**
+ * A packet containing a list of resource information sent to the client.
+ *
+ * @export
+ * @class ServerResourceListingPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerResourceListingPacket extends Packet {
     public static deserialize(obj: any): ServerResourceListingPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

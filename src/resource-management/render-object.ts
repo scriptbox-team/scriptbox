@@ -1,3 +1,7 @@
+/**
+ * A single object to be rendered or removed from the rendering screen client-side.
+ * @module resource-management
+ */
 export default class RenderObject {
     public static serialize(
         ownerID: string,

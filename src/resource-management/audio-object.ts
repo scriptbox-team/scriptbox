@@ -1,3 +1,7 @@
+/**
+ * The data for a single audio play to execute on the client.
+ * @module resource-management
+ */
 export default class AudioObject {
     public static serialize(
             id: string,

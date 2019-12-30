@@ -2,6 +2,14 @@ import _ from "lodash";
 import AudioObject from "resource-management/audio-object";
 import Packet from "./packet";
 
+/**
+ * A packet containing sound information sent to the client.
+ *
+ * @export
+ * @class ServerSoundPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerSoundPacket extends Packet {
     public static deserialize(obj: any): ServerSoundPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

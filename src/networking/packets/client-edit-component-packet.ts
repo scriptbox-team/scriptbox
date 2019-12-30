@@ -1,5 +1,14 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing information about changes to be made to a property within a component.
+ * The data is stored as a string with associated type information.
+ *
+ * @export
+ * @class ClientEditComponentPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientEditComponentPacket extends Packet {
     public static deserialize(obj: any): ClientEditComponentPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

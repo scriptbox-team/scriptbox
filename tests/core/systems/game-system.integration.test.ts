@@ -1,7 +1,7 @@
+import Client from "core/client";
 import GameSystem from "core/systems/game-system";
 import _Collection from "database/collection";
 import path from "path";
-import Client from "core/client";
 
 jest.mock("database/collection");
 

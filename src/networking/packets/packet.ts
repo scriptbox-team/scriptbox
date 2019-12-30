@@ -5,6 +5,7 @@
  * @export
  * @abstract
  * @class Packet
+ * @module networking
  */
 export default abstract class Packet {
     /**

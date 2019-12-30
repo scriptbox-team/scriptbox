@@ -12,7 +12,7 @@ interface NetworkSystemConstructorOptions {
     port?: number;
     maxPlayers?: number;
     loginValidationURL: string;
-    useLoginServer: boolean;
+    loginServerIP?: string;
     resourceServerIPGetter: () => string;
 }
 
@@ -22,6 +22,7 @@ interface NetworkSystemConstructorOptions {
  *
  * @export
  * @class NetworkSystem
+ * @module networking
  */
 export default class NetworkSystem {
     private _netHost: NetHost;
@@ -51,9 +52,28 @@ export default class NetworkSystem {
 
         this._networkReceivingSubsystem = new NetworkReceivingSubsystem(
             this._netHost,
-            options.loginValidationURL,
-            options.useLoginServer);
+            options.loginValidationURL);
         this._networkSendingSubsystem = new NetworkSendingSubsystem(this._netHost, playerManager);
+    }
+
+    /**
+     * Set the URL for login validation.
+     *
+     * @param {string} [url] The URL to use for validation.
+     * @memberof NetworkSystem
+     */
+    public setValidationURL(url?: string) {
+        this._networkReceivingSubsystem.setValidationURL(url);
+    }
+
+    /**
+     * Update the network system.
+     * This resets packet throttling.
+     *
+     * @memberof NetworkSystem
+     */
+    public update() {
+        this._netHost.clearLimit();
     }
     /**
      * Open the system to new connections

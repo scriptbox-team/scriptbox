@@ -6,6 +6,7 @@ import Packet from "./packet";
  * @export
  * @class ClientChatMessagePacket
  * @extends {Packet}
+ * @module networking
  */
 export default class ClientChatMessagePacket extends Packet {
     public static deserialize(obj: any): ClientChatMessagePacket | undefined {

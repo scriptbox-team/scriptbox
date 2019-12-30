@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing information about a component that is to be added to an entity
+ *
+ * @export
+ * @class ClientAddComponentPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientAddComponentPacket extends Packet {
     public static deserialize(obj: any): ClientAddComponentPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

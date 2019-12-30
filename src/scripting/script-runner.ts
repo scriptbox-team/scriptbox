@@ -11,6 +11,7 @@ import Script from "./script";
  *
  * @export
  * @class ScriptExecutor
+ * @module scripting
  */
 export default class ScriptRunner {
     private _isolate: IVM.Isolate;
@@ -68,7 +69,19 @@ export default class ScriptRunner {
         return new Script(module, context, result);
     }
 
-    public buildSync(
+    /**
+     * Build and execute module code synchronously.
+     * 
+     * @param {string} code The code to execute.
+     * @param {object} [addIns={}] Objects to add to the code's global context.
+     * @param {(specifier: string, referrer: IVM.Module) => IVM.Module} [moduleResolutionHandler] A resolver
+     *      for module dependencies.
+     * @param {IVM.Context} [context] The context to use for the script
+     * @param {number} [timeout] The amount of time to wait before giving up on the script.
+     * @returns {Script} The executed script.
+     * @memberof ScriptRunner
+     */
+    public executeSync(
             code: string,
             addIns: object = {},
             moduleResolutionHandler?: (specifier: string, referrer: IVM.Module) => IVM.Module,
@@ -96,6 +109,15 @@ export default class ScriptRunner {
         return new Script(module, context, result);
     }
 
+    /**
+     * Build multiple modules at once.
+     *
+     * @param {{[s: string]: string}} pathsWithCode A list of sources to build, by path.
+     * @param {((specifier: string, referrer: IVM.Module) => [string, string] | undefined)} [moduleDependencyHandler] A
+     *      resolver for module dependencies.
+     * @returns {{[s: string]: IVM.Module}} A list of modules by path
+     * @memberof ScriptRunner
+     */
     public buildManySync(
         pathsWithCode: {[s: string]: string},
         moduleDependencyHandler?: (specifier: string, referrer: IVM.Module) => [string, string] | undefined,
@@ -131,6 +153,19 @@ export default class ScriptRunner {
         return modules;
     }
 
+    /**
+     * Run many pre-built modules at once.
+     *
+     * @param {{[s: string]: IVM.Module}} modules The pre-built modules, by path.
+     * @param {{[s: string]: Script}} [modulePaths={}] Existing scripts to include, by path.
+     * @param {object} [addIns={}] Objects to add to the execution context.
+     * @param {number} [timeout] The amount of time to wait before giving up on the script.
+     * @param {boolean} [globalAccess=true] Whether the scripts should have raised priveleges or not.
+     * @param {(specifier: string, referrer: IVM.Module) => IVM.Module} [moduleResolutionHandler] The callback
+     *      resolution handler to use for module resolution.
+     * @returns
+     * @memberof ScriptRunner
+     */
     public runManySync(
         modules: {[s: string]: IVM.Module},
         modulePaths: {[s: string]: Script} = {},
@@ -199,6 +234,14 @@ export default class ScriptRunner {
         return context;
     }
 
+    /**
+     * Add an object to a context.
+     *
+     * @private
+     * @param {IVM.Context} context The context to add to.
+     * @param {object} [addIns={}] The object to add to the context.
+     * @memberof ScriptRunner
+     */
     private _addToContext(context: IVM.Context, addIns: object = {}) {
         for (const [key, value] of Object.entries(addIns)) {
             let valueToCopy = value;
@@ -230,10 +273,27 @@ export default class ScriptRunner {
         }
     }
 
+    /**
+     * Log to the console.
+     *
+     * @private
+     * @param {string} message The message to log.
+     * @memberof ScriptRunner
+     */
     private _log(message: string) {
         console.log(message);
     }
 
+    /**
+     * A callback used for module instantiation when a method is not defined.
+     *
+     * @private
+     * @param {string} dir The dir where the script is located
+     * @param {string} requirePath The path to require
+     * @param {{[path: string]: IVM.Module}} modules A list of modules by their paths
+     * @returns The module at the path.
+     * @memberof ScriptRunner
+     */
     private _defaultModuleInstantiation(dir: string, requirePath: string, modules: {[path: string]: IVM.Module}) {
         let pathsToTry = [requirePath];
         const extension = path.extname(requirePath);

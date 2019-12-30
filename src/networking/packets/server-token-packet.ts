@@ -6,6 +6,14 @@ export enum TokenType {
     FileDelete = 3
 }
 
+/**
+ * A packet containinga token for use with other network functions sent to the client.
+ *
+ * @export
+ * @class ServerEntityInspectionListingPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerTokenPacket extends Packet {
     public static deserialize(obj: any): ServerTokenPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

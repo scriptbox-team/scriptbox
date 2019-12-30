@@ -6,6 +6,11 @@ export enum ResourceType {
     Unknown = "unknown"
 }
 
+/**
+ * The information of a single resource, including its type, owner, and other meta information. This does
+ * not include the actual binary data of the resource itself.
+ * @module resource-management
+ */
 export default class Resource {
     public static serialize(
         id: string,

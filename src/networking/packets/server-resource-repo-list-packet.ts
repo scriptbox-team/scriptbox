@@ -2,6 +2,14 @@ import _ from "lodash";
 import Resource from "resource-management/resource";
 import Packet from "./packet";
 
+/**
+ * A packet containing shared resource repository information sent to the client.
+ *
+ * @export
+ * @class ServerResourceRepoListPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ServerResourceRepoListPacket extends Packet {
     public static deserialize(obj: any): ServerResourceRepoListPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

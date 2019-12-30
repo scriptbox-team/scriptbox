@@ -1,5 +1,13 @@
 import Packet from "./packet";
 
+/**
+ * A packet containing a resource script execution.
+ *
+ * @export
+ * @class ClientExecuteScriptPacket
+ * @extends {Packet}
+ * @module networking
+ */
 export default class ClientExecuteScriptPacket extends Packet {
     public static deserialize(obj: any): ClientExecuteScriptPacket | undefined {
         if (typeof obj === "object" && obj !== null) {

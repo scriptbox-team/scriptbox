@@ -19,6 +19,16 @@ interface Sprite {
     depth: number;
 }
 
+/**
+ * A system of the server which handles transforming information returned from the update loop into data which can
+ * be sent to the clients. This includes objects to render, sounds to play, camera position, and entity
+ * inspection information.
+ *
+ * @export
+ * @class DisplaySystem
+ * @module core
+ * @extends {System}
+ */
 export default class DisplaySystem extends System {
     private _lastExportValues: Exports;
     private _renderDisplayObjectCallback?: (renderObjects: RenderObject[], clientGroup: Group<Client>) => void;
@@ -29,6 +39,10 @@ export default class DisplaySystem extends System {
         components: ComponentInfo[],
         controlledByInspector: boolean,
         playerGroup: Group<Client>) => void;
+    /**
+     * Creates an instance of DisplaySystem.
+     * @memberof DisplaySystem
+     */
     constructor() {
         super();
         this._lastExportValues = {
@@ -40,6 +54,12 @@ export default class DisplaySystem extends System {
             players: {}
         };
     }
+    /**
+     * Sends the entire stored display data to a specific client.
+     * This is useful for catching up a player with the current game state when they connect.
+     * @param {Client} player The player to send the display data too.
+     * @memberof DisplaySystem
+     */
     public sendFullDisplayToPlayer(player: Client) {
         const diff = new Difference<RenderObject>();
         diff.added = _.transform(this._lastExportValues.sprites, (acc, sprite, key) => {
@@ -52,6 +72,11 @@ export default class DisplaySystem extends System {
         this._sendDisplayObjectsToPlayer(updatesToSend, player);
     }
 
+    /**
+     * Broadcast display differences to all players based on a GameSystem export.
+     * @param {Exports} exportValues The GameSystem export to broadcast display differences from
+     * @memberof DisplaySystem
+     */
     public broadcastDisplay(exportValues: Exports) {
         const time = Date.now();
         const changes = this._getDisplayDifferences(this._lastExportValues, exportValues);
@@ -59,6 +84,13 @@ export default class DisplaySystem extends System {
         this._broadcastDisplayObjects(updatesToSend);
         this._lastExportValues = exportValues;
     }
+
+    /**
+     * Send camera data to each player based on a GameSystem export.
+     *
+     * @param {Exports} exportValues The GameSystem export to get camera data from.
+     * @memberof DisplaySystem
+     */
     public sendCameraData(exportValues: Exports) {
         _.each(exportValues.players, (playerData, id) => {
             if (this._cameraDataCallback !== undefined) {
@@ -68,6 +100,13 @@ export default class DisplaySystem extends System {
             }
         });
     }
+    /**
+     * Send sound data to each player based on a GameSystem export.
+     * This will also reduce the volume of far away sounds.
+     *
+     * @param {Exports} exportValues The GameSystem export to get sound data from.
+     * @memberof DisplaySystem
+     */
     public sendSoundData(exportValues: Exports) {
         _.each(exportValues.players, (playerData, id) => {
             const playerCamera = playerData.camera;
@@ -90,15 +129,44 @@ export default class DisplaySystem extends System {
             }
         });
     }
+    /**
+     * Set the callback to be called when render objects are broadcasted by the DisplaySystem.
+     *
+     * @param {(renderObjects: RenderObject[], playerGroup: Group<Client>) => void} callback The callback to use.
+     * @memberof DisplaySystem
+     */
     public onRenderObjectDisplay(callback: (renderObjects: RenderObject[], playerGroup: Group<Client>) => void) {
         this._renderDisplayObjectCallback = callback;
     }
+    /**
+     * Set the callback to be called when camera data is sent by the DisplaySystem
+     *
+     * @param {(
+     *      player: Client,
+     *      cameraData: {x: number, y: number, scale: number}) => void} callback The callback to use.
+     * @memberof DisplaySystem
+     */
     public onCameraData(callback: (player: Client, cameraData: {x: number, y: number, scale: number}) => void) {
         this._cameraDataCallback = callback;
     }
+    /**
+     * Set the callback to be called when sound data is sent by the DisplaySystem
+     *
+     * @param {(audioObjects: AudioObject[], playerGroup: Group<Client>) => void} callback The callback to use.
+     * @memberof DisplaySystem
+     */
     public onSoundData(callback: (audioObjects: AudioObject[], playerGroup: Group<Client>) => void) {
         this._soundDataCallback = callback;
     }
+    /**
+     * Set the callback to be called when entity inspection data is sent by the DisplaySystem
+     * @param {(
+     *      entityID: string,
+     *      components: ComponentInfo[],
+     *      controlledByInspector: boolean,
+     *      playerGroup: Group<Client>) => void} callback The callback to use.
+     * @memberof DisplaySystem
+     */
     public onEntityInspection(callback: (
             entityID: string,
             components: ComponentInfo[],
@@ -106,6 +174,11 @@ export default class DisplaySystem extends System {
             playerGroup: Group<Client>) => void) {
         this._entityInspectionCallback = callback;
     }
+    /**
+     * Send the entity inspection data to each player based on a GameSystem export.
+     * @param {Exports} exportValues The GameSystem export to get entity inspection data from.
+     * @memberof DisplaySystem
+     */
     public sendInspectedEntities(exportValues: Exports) {
         const players = Object.keys(exportValues.inspectedEntityInfo);
         for (const playerID of players) {
@@ -143,6 +216,14 @@ export default class DisplaySystem extends System {
             }
         }
     }
+    /**
+     * Convert a RenderObject difference list to a list of RenderObjects to send to a client.
+     *
+     * @private
+     * @param {Difference<RenderObject>} data The RenderObject difference list to convert.
+     * @returns An array of RenderObjects to send.
+     * @memberof DisplaySystem
+     */
     private _dataToDisplayObjects(data: Difference<RenderObject>) {
         let arr: RenderObject[] = [];
         for (const datum of [data.added, data.updated, data.removed]) {
@@ -153,12 +234,29 @@ export default class DisplaySystem extends System {
         }
         return arr;
     }
+    /**
+     * Send a RenderObject array to all players.
+     * This uses the render object display callback.
+     *
+     * @private
+     * @param {RenderObject[]} pack The RenderObject array to send.
+     * @memberof DisplaySystem
+     */
     private _broadcastDisplayObjects(pack: RenderObject[]) {
         this._renderDisplayObjectCallback!(
             pack,
             new Group(GroupType.All, [])
         );
     }
+    /**
+     * Send a RenderObject array to a single player.
+     * This uses the render object display callback.
+     *
+     * @private
+     * @param {RenderObject[]} pack The RenderObject array to send.
+     * @param {Client} player The player to send the display to.
+     * @memberof DisplaySystem
+     */
     private _sendDisplayObjectsToPlayer(pack: RenderObject[], player: Client) {
         this._renderDisplayObjectCallback!(
             pack,
@@ -166,6 +264,15 @@ export default class DisplaySystem extends System {
         );
     }
 
+    /**
+     * Get the display differences between two GameSystem exports.
+     *
+     * @private
+     * @param {Exports} lastExportValues The GameSystem export representing the previous state.
+     * @param {Exports} exportValues The GameSystem export representing the current state.
+     * @returns A list of differences between the object displays of the GameSystem exports.
+     * @memberof DisplaySystem
+     */
     private _getDisplayDifferences(lastExportValues: Exports, exportValues: Exports) {
         const diffs = _.transform(exportValues.sprites, (acc, sprite, key) => {
             const result = acc;
@@ -194,6 +301,15 @@ export default class DisplaySystem extends System {
         return diffs;
     }
 
+    /**
+     * Convert exported sprite data to a RenderObject
+     *
+     * @private
+     * @param {string} key The ID of the RenderObject
+     * @param {Sprite} sprite The sprite to convert to a RenderObject
+     * @returns The RenderObject created from the sprite information.
+     * @memberof DisplaySystem
+     */
     private _convertToRenderObject(key: string, sprite: Sprite) {
         return new RenderObject(
             sprite.ownerID,
@@ -207,6 +323,15 @@ export default class DisplaySystem extends System {
         );
     }
 
+    /**
+     * Check whether two sprites are the same
+     *
+     * @private
+     * @param {Sprite} currSprite The first sprite to compare
+     * @param {Sprite} prevSprite The second sprite to compare
+     * @returns True if the sprites are the same, false if they aren't
+     * @memberof DisplaySystem
+     */
     private _same(
             currSprite: Sprite,
             prevSprite: Sprite) {

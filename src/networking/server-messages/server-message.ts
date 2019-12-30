@@ -7,6 +7,7 @@ import ServerNetEvent from "networking/server-net-event";
  *
  * @export
  * @class ServerMessage
+ * @module networking
  */
 export default class ServerMessage {
     public recipient: Group<Client>;
@@ -14,7 +15,7 @@ export default class ServerMessage {
     /**
      * Creates an instance of ServerMessage.
      * @param {ServerNetEvent} message The ServerNetEvent to send
-     * @param {Group} recipient The recipient(s) of the message.
+     * @param {Group<Client>} recipient The recipient(s) of the message.
      * @memberof ServerMessage
      */
     constructor(message: ServerNetEvent, recipient: Group<Client>) {
