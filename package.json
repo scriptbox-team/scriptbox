@@ -59,7 +59,7 @@
     "file-type": "^12.4.0",
     "fs-extra": "^8.1.0",
     "isolated-vm": "^1.7.10",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "module-alias": "^2.2.0",
     "mongodb": "^3.3.3",
     "public-ip": "^4.0.0",
